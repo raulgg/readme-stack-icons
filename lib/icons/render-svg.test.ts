@@ -85,4 +85,38 @@ describe("renderIconSvg", () => {
     expect(svg).toContain('<svg x="52" y="52" width="40" height="40"');
     expect(svg).toContain('<svg x="0" y="104" width="40" height="40"');
   });
+
+  it("should use light assets for icons with dark variants when a light SVG is generated", async () => {
+    // Given
+    const parsedRequest = request({
+      icons: [icon("react")],
+      slugs: ["react"],
+      theme: "light",
+    });
+
+    // When
+    const svg = await renderIconSvg(parsedRequest);
+
+    // Then
+    expect(svg).toContain("#087EA4");
+    expect(svg).not.toContain("#58C4DC");
+  });
+
+  it("should use dark assets with light fallbacks when a dark SVG is generated", async () => {
+    // Given
+    const parsedRequest = request({
+      icons: [icon("react"), icon("typescript")],
+      slugs: ["react", "typescript"],
+      columns: 2,
+      theme: "dark",
+    });
+
+    // When
+    const svg = await renderIconSvg(parsedRequest);
+
+    // Then
+    expect(svg).toContain("#58C4DC");
+    expect(svg).not.toContain("#087EA4");
+    expect(svg).toContain("#3178C6");
+  });
 });
