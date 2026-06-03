@@ -1,33 +1,15 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import { renderIconRequestErrorSvg } from "@/lib/icons/error-svg";
+import { parseIconRequest } from "@/lib/icons/parse-request";
 import { getIconAssetPath } from "@/lib/icons/registry";
-import { parseIconRequest } from "@/lib/icons/request";
-import type { ParsedIconRequest } from "@/lib/icons/request";
+import { escapeXml } from "@/lib/icons/svg-utils";
+import type { ParsedIconRequest } from "@/lib/icons/parse-request";
 
 export const runtime = "nodejs";
 
 const iconSize = 48;
-
-function errorSvg(errors: readonly string[]): string {
-  const escapedMessage = escapeXml(errors.join(" "));
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="120" viewBox="0 0 640 120" role="img" aria-labelledby="title desc">
-  <title id="title">Invalid README Stack Icons request</title>
-  <desc id="desc">${escapedMessage}</desc>
-  <rect width="640" height="120" rx="12" fill="#fff1f2"/>
-  <text x="24" y="52" fill="#9f1239" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="700">Invalid icon request</text>
-  <text x="24" y="84" fill="#9f1239" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16">${escapedMessage}</text>
-</svg>`;
-}
-
-function escapeXml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
 
 function renderIconSvg({
   columns,
@@ -66,7 +48,7 @@ export function GET(request: Request) {
   const parsedRequest = parseIconRequest(new URL(request.url).searchParams);
 
   if (!parsedRequest.success) {
-    return new Response(errorSvg(parsedRequest.errors), {
+    return new Response(renderIconRequestErrorSvg(parsedRequest.errors), {
       status: 400,
       headers: {
         "Content-Type": "image/svg+xml",

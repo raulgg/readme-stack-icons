@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { listIconSlugs, listRegisteredIcons } from "./registry";
-import { parseIconRequest } from "./request";
+import { parseIconRequest } from "./parse-request";
 
 function params(query: string): URLSearchParams {
   return new URLSearchParams(query);
