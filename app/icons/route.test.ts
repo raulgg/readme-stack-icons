@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { GET } from "./route";
 
 describe("/icons route", () => {
-  it("should return one inlined light SVG icon when the icon request is valid", async () => {
+  it("should return an ordered icon grid when the icon request is valid", async () => {
     // Given
-    const request = new Request("http://localhost/icons?icons=typescript");
+    const request = new Request(
+      "http://localhost/icons?icons=typescript,react,typescript&columns=2&gap=12",
+    );
 
     // When
     const response = await GET(request);
@@ -18,10 +20,13 @@ describe("/icons route", () => {
       "public, max-age=31536000, s-maxage=31536000, immutable",
     );
     expect(body).toContain('<svg xmlns="http://www.w3.org/2000/svg"');
-    expect(body).toContain('width="40" height="40"');
-    expect(body).toContain("<desc id=\"desc\">TypeScript</desc>");
+    expect(body).toContain('width="92" height="92"');
+    expect(body).toContain("<desc id=\"desc\">TypeScript, React, TypeScript</desc>");
     expect(body).toContain("README Stack Icons");
-    expect(body).toContain("#3178C6");
+    expect(body.match(/#3178C6/g)).toHaveLength(2);
+    expect(body).toContain('<svg x="0" y="0" width="40" height="40"');
+    expect(body).toContain('<svg x="52" y="0" width="40" height="40"');
+    expect(body).toContain('<svg x="0" y="52" width="40" height="40"');
     expect(body).not.toContain("<image");
     expect(body).not.toMatch(/\bsrc=/);
     expect(body).not.toMatch(/\bhref=["'](?!#)/);
