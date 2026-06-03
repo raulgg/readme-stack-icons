@@ -22,13 +22,17 @@ export function normalizeTrustedSvgAsset({
   const preserveAspectRatio =
     readAttribute(rootAttributes, "preserveAspectRatio") ?? "xMidYMid meet";
   const idPrefix = `icon-${slug}-${occurrence}`;
+  const idMap = collectPrefixedIds(`${rootAttributes} ${body}`, idPrefix);
 
   return {
-    attributes: serializeRootAttributes(rootAttributes, {
-      preserveAspectRatio,
-      viewBox,
-    }),
-    body: prefixInternalIds(body.trim(), idPrefix),
+    attributes: serializeRootAttributes(
+      rewriteInternalIdReferences(rootAttributes, idMap),
+      {
+        preserveAspectRatio,
+        viewBox,
+      },
+    ),
+    body: rewriteInternalIdReferences(body.trim(), idMap),
     viewBox,
   };
 }
@@ -191,18 +195,41 @@ function rejectExternalReferences(svg: string): void {
   }
 }
 
-function prefixInternalIds(svg: string, prefix: string): string {
+function collectPrefixedIds(svg: string, prefix: string): Map<string, string> {
   const ids = Array.from(svg.matchAll(/\bid=(["'])([^"']+)\1/g), (match) => match[2]);
 
-  return ids.reduce((rewrittenSvg, id) => {
-    const prefixedId = `${prefix}-${id}`;
+  return new Map(ids.map((id) => [id, `${prefix}-${id}`]));
+}
+
+function rewriteInternalIdReferences(
+  svg: string,
+  idMap: ReadonlyMap<string, string>,
+): string {
+  return Array.from(idMap).reduce((rewrittenSvg, [id, prefixedId]) => {
     const escapedId = escapeRegExp(id);
 
     return rewrittenSvg
-      .replace(new RegExp(`\\bid=(["'])${escapedId}\\1`, "g"), `id="${
-        prefixedId
-      }"`)
-      .replace(new RegExp(`url\\(#${escapedId}\\)`, "g"), `url(#${prefixedId})`)
+      .replace(
+        new RegExp(`\\bid=(["'])${escapedId}\\1`, "g"),
+        (_, quote: string) => `id=${quote}${prefixedId}${quote}`,
+      )
+      .replace(
+        new RegExp(`url\\((["']?)#${escapedId}\\1\\)`, "g"),
+        (_, quote: string) => `url(${quote}#${prefixedId}${quote})`,
+      )
+      .replace(
+        /\b(aria-describedby|aria-labelledby)=(["'])([^"']*)\2/g,
+        (match, name: string, quote: string, value: string) => {
+          const rewrittenValue = value
+            .split(/\s+/)
+            .map((token) => (token === id ? prefixedId : token))
+            .join(" ");
+
+          return rewrittenValue === value
+            ? match
+            : `${name}=${quote}${rewrittenValue}${quote}`;
+        },
+      )
       .replace(new RegExp(`\\b(?:href|xlink:href)=(["'])#${escapedId}\\1`, "g"), (match) =>
         match.replace(`#${id}`, `#${prefixedId}`),
       );

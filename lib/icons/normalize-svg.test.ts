@@ -39,6 +39,64 @@ describe("normalizeTrustedSvgAsset", () => {
     expect(normalizedSvg.body).toContain("url(#icon-typescript-2-paint)");
   });
 
+  it("should prefix root and body IDs when internal references are normalized", () => {
+    // Given
+    const sourceSvg = `<svg id="root" width="24" height="24" aria-labelledby="root">
+  <defs>
+    <path id="shape" d="M0 0h24v24H0z"/>
+    <clipPath id="clip"><use href="#shape"/></clipPath>
+  </defs>
+  <use href="#shape" fill="url(#paint)"/>
+  <use xlink:href="#shape" clip-path="url('#clip')"/>
+  <linearGradient id="paint"><stop stop-color="#000"/></linearGradient>
+</svg>`;
+
+    // When
+    const normalizedSvg = normalizeTrustedSvgAsset({
+      occurrence: 3,
+      slug: "pnpm",
+      sourceSvg,
+    });
+
+    // Then
+    expect(normalizedSvg.attributes).toContain('id="icon-pnpm-3-root"');
+    expect(normalizedSvg.attributes).toContain('aria-labelledby="icon-pnpm-3-root"');
+    expect(normalizedSvg.body).toContain('id="icon-pnpm-3-shape"');
+    expect(normalizedSvg.body).toContain('id="icon-pnpm-3-clip"');
+    expect(normalizedSvg.body).toContain('id="icon-pnpm-3-paint"');
+    expect(normalizedSvg.body).toContain('href="#icon-pnpm-3-shape"');
+    expect(normalizedSvg.body).toContain('xlink:href="#icon-pnpm-3-shape"');
+    expect(normalizedSvg.body).toContain("url(#icon-pnpm-3-paint)");
+    expect(normalizedSvg.body).toContain("url('#icon-pnpm-3-clip')");
+  });
+
+  it("should produce distinct prefixed IDs when the same icon is normalized repeatedly", () => {
+    // Given
+    const sourceSvg = `<svg width="16" height="16">
+  <defs><linearGradient id="paint"><stop stop-color="#000"/></linearGradient></defs>
+  <path id="mark" fill="url(#paint)" d="M0 0h16v16H0z"/>
+</svg>`;
+
+    // When
+    const firstIcon = normalizeTrustedSvgAsset({
+      occurrence: 0,
+      slug: "typescript",
+      sourceSvg,
+    });
+    const repeatedIcon = normalizeTrustedSvgAsset({
+      occurrence: 1,
+      slug: "typescript",
+      sourceSvg,
+    });
+
+    // Then
+    expect(firstIcon.body).toContain('id="icon-typescript-0-mark"');
+    expect(firstIcon.body).toContain("url(#icon-typescript-0-paint)");
+    expect(repeatedIcon.body).toContain('id="icon-typescript-1-mark"');
+    expect(repeatedIcon.body).toContain("url(#icon-typescript-1-paint)");
+    expect(firstIcon.body).not.toBe(repeatedIcon.body);
+  });
+
   it("should derive a viewBox when numeric dimensions are available", () => {
     // Given
     const sourceSvg = `<svg width="24px" height="12" preserveAspectRatio="none">
@@ -95,5 +153,61 @@ describe("normalizeTrustedSvgAsset", () => {
     expect(normalize).toThrow(
       "Icon asset must include a viewBox or numeric width and height.",
     );
+  });
+
+  it("should reject SVGs when image elements could load remote or local resources", () => {
+    // Given
+    const sourceSvg = `<svg width="24" height="24">
+  <image href="https://example.com/icon.png" width="24" height="24"/>
+</svg>`;
+
+    // When
+    const normalize = () =>
+      normalizeTrustedSvgAsset({
+        occurrence: 0,
+        slug: "figma",
+        sourceSvg,
+      });
+
+    // Then
+    expect(normalize).toThrow("Icon asset must not include image references.");
+  });
+
+  it("should reject SVGs when external href or xlink references are present", () => {
+    // Given
+    const sourceSvg = `<svg width="24" height="24" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <use href="./local-symbol.svg#mark"/>
+  <use xlink:href="https://example.com/sprite.svg#mark"/>
+</svg>`;
+
+    // When
+    const normalize = () =>
+      normalizeTrustedSvgAsset({
+        occurrence: 0,
+        slug: "github",
+        sourceSvg,
+      });
+
+    // Then
+    expect(normalize).toThrow("Icon asset must not include external references.");
+  });
+
+  it("should reject SVGs when CSS imports or external URLs are present", () => {
+    // Given
+    const sourceSvg = `<svg width="24" height="24">
+  <style>@import url("https://example.com/icon.css");</style>
+  <path fill="url(https://example.com/paint.svg#paint)" d="M0 0h24v24H0z"/>
+</svg>`;
+
+    // When
+    const normalize = () =>
+      normalizeTrustedSvgAsset({
+        occurrence: 0,
+        slug: "tailwindcss",
+        sourceSvg,
+      });
+
+    // Then
+    expect(normalize).toThrow("Icon asset must not include external references.");
   });
 });
