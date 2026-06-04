@@ -2,11 +2,11 @@ import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { StackIconsEditor } from ".";
 import {
   DEFAULT_STACK_ICONS_EDITOR_STATE,
   getStackIconsEditorInitialState,
-  StackIconsEditor,
-} from "./StackIconsEditor";
+} from "./state";
 
 function setLocation(url: string) {
   window.history.replaceState(null, "", url);
@@ -19,7 +19,9 @@ describe("StackIconsEditor", () => {
 
   it("should reflect raw form state in the page query when fields change", async () => {
     // Given
-    render(<StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />);
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
     await screen.findByDisplayValue(
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwind%2Cvercel&columns=16&gap=8",
     );
@@ -73,9 +75,7 @@ describe("StackIconsEditor", () => {
     expect(await screen.findByDisplayValue("solid,typescript")).toBe(
       screen.getByLabelText("Icon slugs"),
     );
-    expect(screen.getByLabelText("Icon slugs")).toHaveValue(
-      "solid,typescript",
-    );
+    expect(screen.getByLabelText("Icon slugs")).toHaveValue("solid,typescript");
     expect(screen.getByLabelText("Columns")).toHaveValue(6);
     expect(screen.getByLabelText("Gap")).toHaveValue(10);
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
@@ -87,7 +87,9 @@ describe("StackIconsEditor", () => {
 
   it("should generate all icons when the icons field is empty", async () => {
     // Given
-    render(<StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />);
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
     await screen.findByDisplayValue(
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwind%2Cvercel&columns=16&gap=8",
     );
@@ -114,7 +116,9 @@ describe("StackIconsEditor", () => {
     const setItem = vi.spyOn(window.localStorage.__proto__, "setItem");
 
     // When
-    render(<StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />);
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "react" },
     });

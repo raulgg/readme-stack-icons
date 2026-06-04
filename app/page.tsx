@@ -1,9 +1,7 @@
 import React from "react";
 
-import {
-  getStackIconsEditorInitialState,
-  StackIconsEditor,
-} from "./_components/StackIconsEditor";
+import { StackIconsEditor } from "./_components/StackIconsEditor";
+import { getStackIconsEditorInitialState } from "./_components/StackIconsEditor/state";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
