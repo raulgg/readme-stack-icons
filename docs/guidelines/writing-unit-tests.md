@@ -15,13 +15,13 @@ Colocate unit tests **next to** the file under test. Use the same base name with
 
 This applies to components, hooks, utilities, services, API route handlers, and any other unit under test.
 
-Global Vitest setup (shared matchers, mocks) lives in `test/setup.ts` — not individual unit tests.
+Global Vitest setup (shared matchers, mocks) lives in `vitest.setup.ts` — not individual unit tests.
 
 ## Tooling
 
 - Use Vitest (`describe`, `it`, `expect`) and `@testing-library/react` for components.
 - Prefer queries by **role**, **label**, or **accessible name** over test IDs or DOM structure.
-- Global matchers come from `@testing-library/jest-dom` via `test/setup.ts`.
+- Global matchers come from `@testing-library/jest-dom` via `vitest.setup.ts`.
 
 ## Structure
 

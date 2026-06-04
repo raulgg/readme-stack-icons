@@ -19,18 +19,14 @@ Compose an ordered stack of technology slugs into one cached SVG image for GitHu
 
 ## Layout
 
-| Path          | Role                                     |
-| ------------- | ---------------------------------------- |
-| `app/`        | Routes, layouts, API route handlers      |
-| `components/` | Shared UI                                |
-| `lib/`        | Utilities                                |
-| `docs/`       | Project conventions (one topic per file) |
-| `test/`       | Vitest global setup only (`setup.ts`)    |
+| Path          | Role                                  |
+| ------------- | ------------------------------------- |
+| `app/`        | Routes, layouts, API route handlers   |
+| `components/` | Shared UI                             |
+| `lib/`        | Utilities                             |
+| `docs/`       | Project documentation and guidelines  |
+| `test/`       | Vitest global setup only (`setup.ts`) |
 
 Unit tests are colocated with source files (e.g. `Button.tsx` → `Button.test.tsx`). See [Writing unit tests](docs/guidelines/writing-unit-tests.md).
 
 Path alias `@/` resolves to the repo root (see `vitest.config.ts` and Next config).
-
-## Conventions
-
-- [Writing unit tests](docs/guidelines/writing-unit-tests.md)
