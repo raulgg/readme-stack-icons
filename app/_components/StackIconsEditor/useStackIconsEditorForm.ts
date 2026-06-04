@@ -2,7 +2,9 @@
 
 import React from "react";
 
+import { getIconGridDimensions } from "@/lib/icons/layout";
 import { parseIconRequest } from "@/lib/icons/parse-request";
+import { escapeXml } from "@/lib/utils";
 
 import type { StackIconsEditorState } from "./state";
 
@@ -19,11 +21,17 @@ function buildPageQuery(state: StackIconsEditorState): string {
 function buildIconRequestParams(state: StackIconsEditorState): URLSearchParams {
   const params = new URLSearchParams();
 
-  params.set("icons", state.icons.trim() === "" ? "all" : state.icons);
+  params.set("icons", state.icons);
   params.set("columns", state.columns);
   params.set("gap", state.gap);
 
   return params;
+}
+
+function isAllIconState(state: StackIconsEditorState): boolean {
+  const rawIcons = state.icons.trim();
+
+  return rawIcons === "all";
 }
 
 function buildIconsUrl(
@@ -38,6 +46,60 @@ function buildIconsUrl(
   url.search = buildIconRequestParams(state).toString();
 
   return url.toString();
+}
+
+function buildReadmeImageUrl(
+  state: StackIconsEditorState,
+  currentOrigin: string,
+): string {
+  if (currentOrigin === "") {
+    return "";
+  }
+
+  const url = new URL("/icons", currentOrigin);
+  const params = new URLSearchParams();
+
+  if (!isAllIconState(state)) {
+    params.set("icons", state.icons);
+  }
+
+  params.set("columns", state.columns);
+  params.set("gap", state.gap);
+  params.set("theme", "light");
+
+  url.search = params.toString();
+
+  return url.toString();
+}
+
+function buildReadmeHtml(
+  state: StackIconsEditorState,
+  currentOrigin: string,
+): string {
+  const parsedRequest = parseIconRequest(buildIconRequestParams(state));
+
+  if (!parsedRequest.success) {
+    return "";
+  }
+
+  const fallbackUrl = buildReadmeImageUrl(state, currentOrigin);
+
+  if (fallbackUrl === "") {
+    return "";
+  }
+
+  const labels = isAllIconState(state)
+    ? "All stack icons"
+    : parsedRequest.data.icons.map((icon) => icon.label).join(", ");
+  const { height, width } = getIconGridDimensions({
+    columns: parsedRequest.data.columns,
+    gap: parsedRequest.data.gap,
+    iconCount: parsedRequest.data.icons.length,
+  });
+
+  return `<picture>
+  <img src="${escapeXml(fallbackUrl)}" alt="${escapeXml(labels)}" title="${escapeXml(labels)}" width="${width}" height="${height}" />
+</picture>`;
 }
 
 function subscribeToCurrentOrigin() {
@@ -66,6 +128,8 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
 
   const generatedUrl =
     previewState === null ? "" : buildIconsUrl(previewState, currentOrigin);
+  const generatedHtml =
+    previewState === null ? "" : buildReadmeHtml(previewState, currentOrigin);
 
   function updateField<Field extends keyof StackIconsEditorState>(
     field: Field,
@@ -99,6 +163,7 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
 
   return {
     generatePreview,
+    generatedHtml,
     generatedUrl,
     state: editorState,
     updateField,

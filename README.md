@@ -2,6 +2,14 @@
 
 Compose an ordered stack of technology slugs into one cached SVG image for GitHub profile embeds.
 
+## Editor
+
+The public editor builds a GitHub README-safe HTML snippet from icon slugs,
+columns, and gap. The generated snippet uses the current site origin with the
+short `/icons` route and `icons`, `columns`, `gap`, and `theme=light` query
+params. Base URL and version/cache-busting query params are not exposed as
+editor form fields.
+
 ## Stack
 
 - **Runtime / package manager:** [Bun](https://bun.sh)

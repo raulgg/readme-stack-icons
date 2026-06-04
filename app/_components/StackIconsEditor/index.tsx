@@ -16,6 +16,7 @@ type StackIconsEditorProps = {
 
 export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const {
+    generatedHtml,
     generatedUrl,
     generatePreview,
     state,
@@ -111,6 +112,23 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
           readOnly
           type="text"
           value={generatedUrl}
+        />
+      </div>
+
+      <div className="mt-5">
+        <label
+          className="flex items-center gap-2 font-mono text-xs text-muted-foreground"
+          htmlFor="generated-readme-html"
+        >
+          <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+          README HTML
+        </label>
+        <textarea
+          className="mt-1 min-h-28 w-full resize-none rounded-md border bg-muted px-3 py-2 font-mono text-sm text-muted-foreground"
+          id="generated-readme-html"
+          placeholder="Generate a preview to create the README HTML"
+          readOnly
+          value={generatedHtml}
         />
       </div>
 

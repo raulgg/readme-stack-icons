@@ -23,6 +23,7 @@ describe("StackIconsEditor", () => {
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
     );
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
+    expect(screen.getByLabelText("README HTML")).toHaveValue("");
     expect(
       screen.queryByRole("img", { name: "Generated stack icons preview" }),
     ).not.toBeInTheDocument();
@@ -45,10 +46,11 @@ describe("StackIconsEditor", () => {
       expect(params.get("icons")).toBe("react,nextjs");
       expect(params.get("columns")).toBe("4");
       expect(params.get("gap")).toBe("12");
-      expect(params.has("v")).toBe(false);
       expect(params.has("baseUrl")).toBe(false);
+      expect(params.has("v")).toBe(false);
     });
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
+    expect(screen.getByLabelText("README HTML")).toHaveValue("");
   });
 
   it("should preserve raw state when rendered with page query params", async () => {
@@ -77,12 +79,12 @@ describe("StackIconsEditor", () => {
     expect(screen.getByLabelText("Icon slugs")).toHaveValue("solid,typescript");
     expect(screen.getByLabelText("Columns")).toHaveValue(6);
     expect(screen.getByLabelText("Gap")).toHaveValue(10);
-    expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
   });
 
-  it("should generate all icons when the icons field is empty", async () => {
+  it("should show validation errors when the icons field is empty", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -102,8 +104,82 @@ describe("StackIconsEditor", () => {
       expect(params.get("icons")).toBe("");
     });
     expect(screen.getByLabelText("SVG URL")).toHaveValue(
-      "http://localhost:3000/icons?icons=all&columns=16&gap=8",
+      "",
     );
+    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "`icons` must include at least one icon slug.",
+    );
+  });
+
+  it("should generate basic README HTML for explicit light icon output", async () => {
+    // Given
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
+    fireEvent.change(screen.getByLabelText("Icon slugs"), {
+      target: { value: "react,nextjs" },
+    });
+    fireEvent.change(screen.getByLabelText("Columns"), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByLabelText("Gap"), {
+      target: { value: "8" },
+    });
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+
+    // Then
+    const readmeHtml = screen.getByLabelText("README HTML");
+
+    expect(readmeHtml).toHaveValue(`<picture>
+  <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=light" alt="React, Next.js" title="React, Next.js" width="88" height="40" />
+</picture>`);
+    expect((readmeHtml as HTMLTextAreaElement).value).not.toContain(
+      "loading=",
+    );
+    expect((readmeHtml as HTMLTextAreaElement).value).not.toContain(
+      "decoding=",
+    );
+  });
+
+  it("should generate basic README HTML without icons param for explicit all icons", async () => {
+    // Given
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
+    fireEvent.change(screen.getByLabelText("Icon slugs"), {
+      target: { value: "all" },
+    });
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+
+    // Then
+    const readmeHtml = screen.getByLabelText("README HTML");
+
+    expect(readmeHtml).toHaveValue(`<picture>
+  <img src="http://localhost:3000/icons?columns=16&amp;gap=8&amp;theme=light" alt="All stack icons" title="All stack icons" width="760" height="184" />
+</picture>`);
+  });
+
+  it("should preserve README HTML URL param order and escape attribute separators", async () => {
+    // Given
+    render(
+      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+    );
+    fireEvent.change(screen.getByLabelText("Icon slugs"), {
+      target: { value: "typescript,react,nextjs" },
+    });
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+
+    // Then
+    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+  <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="136" height="40" />
+</picture>`);
   });
 
   it("should render a preview with the generated icons URL after explicit generation", async () => {
