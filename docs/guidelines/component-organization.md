@@ -4,7 +4,7 @@ Use component location and file names to show whether UI is shared across the ap
 
 ## File naming
 
-Name React component files with **PascalCase**. Match the main exported component name.
+Name standalone React component files with **PascalCase**. Match the main exported component name.
 
 | Component export   | File                         |
 | ------------------ | ---------------------------- |
@@ -14,6 +14,14 @@ Name React component files with **PascalCase**. Match the main exported componen
 | `useIconQuery`     | `useIconQuery.ts`            |
 
 Avoid kebab-case for component files, even inside route-private folders.
+
+For components with colocated helpers or hooks, use a **PascalCase folder** with the component exported from `index.tsx`.
+
+| Component export   | Folder files                                      |
+| ------------------ | ------------------------------------------------- |
+| `StackIconsEditor` | `StackIconsEditor/index.tsx`                      |
+| `StackIconsEditor` | `StackIconsEditor/useStackIconsEditorForm.ts`     |
+| `StackIconsEditor` | `StackIconsEditor/index.test.tsx`                 |
 
 ## Placement
 
@@ -38,3 +46,9 @@ When moving a component, move its colocated test with it and keep the same Pasca
 | ------------------------- | ---------------------------- |
 | `StackIconsEditor.tsx`    | `StackIconsEditor.test.tsx`  |
 | `IconGridPreview.tsx`     | `IconGridPreview.test.tsx`   |
+
+For component folders, keep the test next to the component entrypoint:
+
+| Source                              | Test                                      |
+| ----------------------------------- | ----------------------------------------- |
+| `StackIconsEditor/index.tsx`        | `StackIconsEditor/index.test.tsx`         |
