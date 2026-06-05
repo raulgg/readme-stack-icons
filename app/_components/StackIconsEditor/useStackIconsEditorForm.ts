@@ -243,14 +243,15 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
 
   async function copyGeneratedHtml() {
     const copyPreviewGenerationId = previewGenerationId.current;
+    const clipboard = navigator.clipboard;
 
-    if (generatedHtml === "" || navigator.clipboard === undefined) {
+    if (generatedHtml === "" || clipboard === undefined) {
       setCopyGeneratedHtmlStatus("failed");
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(generatedHtml);
+      await clipboard.writeText(generatedHtml);
       if (copyPreviewGenerationId !== previewGenerationId.current) {
         return;
       }
