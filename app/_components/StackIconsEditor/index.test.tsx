@@ -21,6 +21,14 @@ function mockClipboard(writeText: ReturnType<typeof vi.fn>) {
   });
 }
 
+function renderEditor() {
+  render(<StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />);
+}
+
+function generatePreview() {
+  fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+}
+
 describe("StackIconsEditor", () => {
   beforeEach(() => {
     setLocation("/");
@@ -170,9 +178,7 @@ describe("StackIconsEditor", () => {
 
   it("should show the Copy HTML button only after README HTML is generated", () => {
     // Given
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
+    renderEditor();
 
     // Then
     expect(
@@ -180,7 +186,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
     expect(screen.getByRole("button", { name: "Copy HTML" })).toBeEnabled();
@@ -190,9 +196,7 @@ describe("StackIconsEditor", () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
+    renderEditor();
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "react,nextjs" },
     });
@@ -202,7 +206,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(screen.getByLabelText("Gap"), {
       target: { value: "8" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     const readmeHtml = screen.getByLabelText("README HTML");
 
@@ -227,10 +231,8 @@ describe("StackIconsEditor", () => {
     // Given
     const writeText = vi.fn().mockRejectedValue(new Error("Denied"));
     mockClipboard(writeText);
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    renderEditor();
+    generatePreview();
     const readmeHtml = screen.getByLabelText("README HTML");
 
     // When
@@ -249,10 +251,8 @@ describe("StackIconsEditor", () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    renderEditor();
+    generatePreview();
     fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
     await screen.findByText("HTML copied.");
 
@@ -260,7 +260,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "react" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
     expect(screen.queryByText("HTML copied.")).not.toBeInTheDocument();
@@ -280,17 +280,15 @@ describe("StackIconsEditor", () => {
         }),
     );
     mockClipboard(writeText);
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    renderEditor();
+    generatePreview();
     fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
 
     // When
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "react" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
     await React.act(async () => {
       resolveWriteText();
     });
