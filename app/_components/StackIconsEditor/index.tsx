@@ -96,6 +96,45 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         </label>
       </div>
 
+      <div className="mt-4 rounded-md border bg-background px-3 py-3">
+        <label
+          className="flex items-center gap-3 font-mono text-sm font-medium text-card-foreground"
+          htmlFor="responsive"
+        >
+          <input
+            checked={state.responsive}
+            className="h-4 w-4 rounded border bg-background text-primary ring-ring transition focus:ring-2"
+            id="responsive"
+            onChange={(event) =>
+              updateField("responsive", event.target.checked)
+            }
+            type="checkbox"
+          />
+          Include responsive sources
+        </label>
+
+        <div className="mt-3">
+          <label
+            className="font-mono text-xs text-muted-foreground"
+            htmlFor="mobile-columns"
+          >
+            Mobile columns
+          </label>
+          <input
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!state.responsive}
+            id="mobile-columns"
+            max={20}
+            min={2}
+            onChange={(event) =>
+              updateField("mobileColumns", event.target.value)
+            }
+            type="number"
+            value={state.mobileColumns}
+          />
+        </div>
+      </div>
+
       <Button className="mt-5 w-full" onClick={generatePreview} type="button">
         <WandSparklesIcon className="h-4 w-4" aria-hidden="true" />
         Generate Preview

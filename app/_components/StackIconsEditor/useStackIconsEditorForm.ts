@@ -13,17 +13,22 @@ function buildPageQuery(state: StackIconsEditorState): string {
 
   params.set("icons", state.icons);
   params.set("columns", state.columns);
+  params.set("mobile-columns", state.mobileColumns);
   params.set("gap", state.gap);
   params.set("include-dark-theme", String(state.includeDarkTheme));
+  params.set("responsive", String(state.responsive));
 
   return params.toString();
 }
 
-function buildIconRequestParams(state: StackIconsEditorState): URLSearchParams {
+function buildIconRequestParams(
+  state: StackIconsEditorState,
+  columns = state.columns,
+): URLSearchParams {
   const params = new URLSearchParams();
 
   params.set("icons", state.icons);
-  params.set("columns", state.columns);
+  params.set("columns", columns);
   params.set("gap", state.gap);
 
   return params;
@@ -53,6 +58,7 @@ function buildReadmeImageUrl(
   state: StackIconsEditorState,
   currentOrigin: string,
   theme: "dark" | "light",
+  columns = state.columns,
 ): string {
   if (currentOrigin === "") {
     return "";
@@ -65,7 +71,7 @@ function buildReadmeImageUrl(
     params.set("icons", state.icons);
   }
 
-  params.set("columns", state.columns);
+  params.set("columns", columns);
   params.set("gap", state.gap);
   params.set("theme", theme);
 
@@ -102,14 +108,45 @@ function buildReadmeHtml(
   const darkSourceUrl = state.includeDarkTheme
     ? buildReadmeImageUrl(state, currentOrigin, "dark")
     : "";
-  const darkSource =
-    darkSourceUrl === ""
-      ? ""
-      : `  <source media="(prefers-color-scheme: dark)" srcset="${escapeXml(darkSourceUrl)}" />
-`;
+  const sources: string[] = [];
+
+  if (state.responsive) {
+    const mobileLightSourceUrl = buildReadmeImageUrl(
+      state,
+      currentOrigin,
+      "light",
+      state.mobileColumns,
+    );
+
+    if (state.includeDarkTheme) {
+      const mobileDarkSourceUrl = buildReadmeImageUrl(
+        state,
+        currentOrigin,
+        "dark",
+        state.mobileColumns,
+      );
+
+      sources.push(
+        `  <source media="(max-width: 520px) and (prefers-color-scheme: dark)" srcset="${escapeXml(mobileDarkSourceUrl)}" />`,
+      );
+    }
+
+    sources.push(
+      `  <source media="(max-width: 520px)" srcset="${escapeXml(mobileLightSourceUrl)}" />`,
+    );
+  }
+
+  if (darkSourceUrl !== "") {
+    sources.push(
+      `  <source media="(prefers-color-scheme: dark)" srcset="${escapeXml(darkSourceUrl)}" />`,
+    );
+  }
+
+  const sourceMarkup =
+    sources.length === 0 ? "" : `${sources.join("\n")}\n`;
 
   return `<picture>
-${darkSource}  <img src="${escapeXml(fallbackUrl)}" alt="${escapeXml(labels)}" title="${escapeXml(labels)}" width="${width}" height="${height}" />
+${sourceMarkup}  <img src="${escapeXml(fallbackUrl)}" alt="${escapeXml(labels)}" title="${escapeXml(labels)}" width="${width}" height="${height}" />
 </picture>`;
 }
 
@@ -161,10 +198,19 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
 
   function generatePreview() {
     const parsedRequest = parseIconRequest(buildIconRequestParams(editorState));
+    const parsedMobileRequest = parseIconRequest(
+      buildIconRequestParams(editorState, editorState.mobileColumns),
+    );
 
     if (!parsedRequest.success) {
       setPreviewState(null);
       setValidationErrors(parsedRequest.errors);
+      return;
+    }
+
+    if (editorState.responsive && !parsedMobileRequest.success) {
+      setPreviewState(null);
+      setValidationErrors(parsedMobileRequest.errors);
       return;
     }
 
