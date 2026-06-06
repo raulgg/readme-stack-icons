@@ -66,11 +66,11 @@ describe("StackIconsEditor", () => {
 
       expect(params.get("icons")).toBe("react,nextjs");
       expect(params.get("columns")).toBe("4");
-      expect(params.get("mobile-columns")).toBe("10");
       expect(params.get("gap")).toBe("12");
       expect(params.get("include-dark-theme")).toBe("true");
       expect(params.get("preview-theme")).toBe("light");
       expect(params.get("responsive")).toBe("false");
+      expect(params.has("mobile-columns")).toBe(false);
       expect(params.has("baseUrl")).toBe(false);
       expect(params.has("v")).toBe(false);
     });
@@ -108,8 +108,8 @@ describe("StackIconsEditor", () => {
     expect(screen.getByLabelText("Light")).toBeChecked();
     expect(screen.getByLabelText("Dark")).not.toBeChecked();
     expect(screen.getByLabelText("Include responsive sources")).not.toBeChecked();
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(10);
-    expect(screen.getByLabelText("Mobile columns")).toBeDisabled();
+    expect(screen.getByLabelText("Columns")).toBeEnabled();
+    expect(screen.queryByLabelText("Mobile columns")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
@@ -335,7 +335,7 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should generate README HTML with mobile sources when responsive is enabled and dark theme is disabled", async () => {
+  it("should generate README HTML with responsive sources when responsive is enabled and dark theme is disabled", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -358,9 +358,13 @@ describe("StackIconsEditor", () => {
     // Then
     const readmeHtml = screen.getByLabelText("README HTML");
 
-    expect(screen.getByLabelText("Mobile columns")).toBeEnabled();
+    expect(screen.getByLabelText("Columns")).toBeDisabled();
     expect(readmeHtml).toHaveValue(`<picture>
-  <source media="(max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 1280px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 481px) and (max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=light" />
+  <source media="(max-width: 480px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=light" />
   <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
 </picture>`);
     expect((readmeHtml as HTMLTextAreaElement).value).not.toContain(
@@ -369,7 +373,7 @@ describe("StackIconsEditor", () => {
     expect((readmeHtml as HTMLTextAreaElement).value).not.toContain("v=");
   });
 
-  it("should generate README HTML with mobile dark sources before desktop dark sources", async () => {
+  it("should generate README HTML with dark sources before light sources for each responsive tier", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -386,16 +390,20 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByLabelText("Include responsive sources"));
 
     // When
-    fireEvent.change(screen.getByLabelText("Mobile columns"), {
-      target: { value: "9" },
-    });
     fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
 
     // Then
     expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <source media="(max-width: 769px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=9&amp;gap=8&amp;theme=dark" />
-  <source media="(max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=9&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 1280px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 1280px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=light" />
+  <source media="(min-width: 481px) and (max-width: 769px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 481px) and (max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=light" />
+  <source media="(max-width: 480px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=dark" />
+  <source media="(max-width: 480px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=light" />
   <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
 </picture>`);
   });
@@ -684,7 +692,6 @@ describe("StackIconsEditor", () => {
       columns: "6",
       gap: "10",
       icons: "solid,typescript",
-      "mobile-columns": "8",
       responsive: "true",
     };
 
@@ -697,7 +704,6 @@ describe("StackIconsEditor", () => {
       gap: "10",
       icons: "solid,typescript",
       includeDarkTheme: true,
-      mobileColumns: "8",
       previewTheme: "light",
       responsive: true,
     });
@@ -721,7 +727,6 @@ describe("StackIconsEditor", () => {
       gap: "10",
       icons: "solid,typescript",
       includeDarkTheme: false,
-      mobileColumns: "10",
       previewTheme: "light",
       responsive: false,
     });
