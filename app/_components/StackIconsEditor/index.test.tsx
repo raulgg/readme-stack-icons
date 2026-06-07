@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { StackIconsEditor } from ".";
 import {
+  DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
   DEFAULT_STACK_ICONS_EDITOR_STATE,
   getStackIconsEditorInitialState,
 } from "./state";
@@ -115,6 +116,8 @@ describe("StackIconsEditor", () => {
     expect(screen.getByLabelText("Light")).toBeChecked();
     expect(screen.getByLabelText("Dark")).not.toBeChecked();
     expect(screen.getByLabelText("Columns")).toBeEnabled();
+    expect(screen.getByLabelText("Single layout")).toBeChecked();
+    expect(screen.getByLabelText("Responsive layout")).not.toBeChecked();
     expect(
       screen.queryByLabelText("Include responsive sources"),
     ).not.toBeInTheDocument();
@@ -622,6 +625,125 @@ describe("StackIconsEditor", () => {
     expect(setItem).not.toHaveBeenCalled();
   });
 
+  it("should switch to the default responsive column layouts", async () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("layout")).toBe("responsive");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
+      );
+    });
+    expect(screen.getByLabelText("Responsive layout")).toBeChecked();
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Breakpoint columns")).toHaveValue(18);
+    expect(screen.getByLabelText("Breakpoint min width")).toHaveValue(768);
+  });
+
+  it("should restore previous single and responsive layouts in the current editor session", async () => {
+    renderEditor();
+
+    fireEvent.change(screen.getByLabelText("Columns"), {
+      target: { value: "6" },
+    });
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    fireEvent.change(screen.getByLabelText("Base columns"), {
+      target: { value: "10" },
+    });
+    fireEvent.change(screen.getByLabelText("Breakpoint columns"), {
+      target: { value: "16" },
+    });
+    fireEvent.change(screen.getByLabelText("Breakpoint min width"), {
+      target: { value: "1024" },
+    });
+    fireEvent.click(screen.getByLabelText("Single layout"));
+
+    expect(screen.getByLabelText("Columns")).toHaveValue(6);
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("layout")).toBe("single");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify([{ columns: "6", minWidthPx: null }]),
+      );
+    });
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+
+    expect(screen.getByLabelText("Base columns")).toHaveValue(10);
+    expect(screen.getByLabelText("Breakpoint columns")).toHaveValue(16);
+    expect(screen.getByLabelText("Breakpoint min width")).toHaveValue(1024);
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("layout")).toBe("responsive");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify([
+          { columns: "10", minWidthPx: null },
+          { columns: "16", minWidthPx: "1024" },
+        ]),
+      );
+    });
+  });
+
+  it("should initialize inactive responsive memory to defaults from a single layout URL", async () => {
+    render(
+      <StackIconsEditor
+        initialState={getStackIconsEditorInitialState({
+          "column-layouts": JSON.stringify([
+            { columns: "6", minWidthPx: null },
+          ]),
+          layout: "single",
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
+      );
+    });
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Breakpoint columns")).toHaveValue(18);
+  });
+
+  it("should initialize inactive single memory to defaults from a responsive layout URL", async () => {
+    render(
+      <StackIconsEditor
+        initialState={getStackIconsEditorInitialState({
+          "column-layouts": JSON.stringify([
+            { columns: "8", minWidthPx: null },
+            { columns: "14", minWidthPx: "900" },
+          ]),
+          layout: "responsive",
+        })}
+      />,
+    );
+
+    expect(screen.getByLabelText("Base columns")).toHaveValue(8);
+    expect(screen.getByLabelText("Breakpoint columns")).toHaveValue(14);
+
+    fireEvent.click(screen.getByLabelText("Single layout"));
+
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("layout")).toBe("single");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify(DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts),
+      );
+    });
+    expect(screen.getByLabelText("Columns")).toHaveValue(18);
+  });
+
   it("should derive initial editor state when page query params are parsed", () => {
     // Given
     const searchParams = {
@@ -724,11 +846,64 @@ describe("StackIconsEditor", () => {
     });
   });
 
-  it("should fall back to default state when layout params are invalid for single layout", () => {
+  it("should derive responsive initial editor state when responsive page query params are valid", () => {
     const initialState = getStackIconsEditorInitialState({
       "column-layouts": JSON.stringify([
         { columns: "6", minWidthPx: null },
         { columns: "4", minWidthPx: "768" },
+      ]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "responsive",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: [
+        { columns: "6", minWidthPx: null },
+        { columns: "4", minWidthPx: "768" },
+      ],
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "responsive",
+    });
+  });
+
+  it("should use default responsive layouts when responsive layout params omit column layouts", () => {
+    const initialState = getStackIconsEditorInitialState({
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "responsive",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "responsive",
+    });
+  });
+
+  it("should fall back to default state when responsive layout has no breakpoint", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([{ columns: "6", minWidthPx: null }]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "responsive",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "single",
+    });
+  });
+
+  it("should fall back to default state when responsive breakpoint is out of range", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([
+        { columns: "6", minWidthPx: null },
+        { columns: "4", minWidthPx: "3841" },
       ]),
       gap: "10",
       icons: "solid,typescript",

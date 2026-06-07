@@ -6,10 +6,11 @@ const DEFAULT_PREVIEW_THEME = "light";
 
 export type StackIconsPreviewTheme = "dark" | "light";
 export type ColumnLayout = { columns: string; minWidthPx: string | null };
+export type LayoutMode = "single" | "responsive";
 
 type EditorState = {
   icons: string;
-  layoutMode: "single" | "responsive";
+  layoutMode: LayoutMode;
   columnLayouts: ColumnLayout[];
   gap: string;
   includeDarkTheme: boolean;
@@ -27,6 +28,11 @@ export const DEFAULT_STACK_ICONS_EDITOR_STATE: StackIconsEditorState = {
   previewTheme: DEFAULT_PREVIEW_THEME,
 };
 
+export const DEFAULT_RESPONSIVE_COLUMN_LAYOUTS: ColumnLayout[] = [
+  { columns: "12", minWidthPx: null },
+  { columns: DEFAULT_COLUMNS, minWidthPx: "768" },
+];
+
 type SearchParamValue = string | string[] | undefined;
 
 export function getStackIconsEditorInitialState(
@@ -35,26 +41,48 @@ export function getStackIconsEditorInitialState(
   const includeDarkTheme =
     getSearchParamValue(searchParams["include-dark-theme"]) ??
     getSearchParamValue(searchParams.includeDarkTheme);
-  const layoutMode = getSearchParamValue(searchParams.layout);
-  const columnLayouts = getColumnLayouts(searchParams);
-  const shouldUseDefaultLayout =
-    (layoutMode !== undefined && layoutMode !== "single") ||
-    columnLayouts === null;
+  const layoutMode = getLayoutMode(searchParams);
+  const columnLayouts = getColumnLayouts(searchParams, layoutMode);
+  const shouldUseDefaultLayout = layoutMode === null || columnLayouts === null;
+  const activeLayoutMode = shouldUseDefaultLayout ? "single" : layoutMode;
 
   return {
     icons: getSearchParamValue(searchParams.icons) ?? DEFAULT_ICONS,
-    layoutMode: "single",
+    layoutMode: activeLayoutMode,
     columnLayouts: shouldUseDefaultLayout
       ? DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts
-      : (columnLayouts ?? DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts),
+      : (columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode)),
     gap: getSearchParamValue(searchParams.gap) ?? DEFAULT_GAP,
     includeDarkTheme: includeDarkTheme !== "false",
     previewTheme: getPreviewTheme(searchParams),
   };
 }
 
+function getDefaultColumnLayouts(layoutMode: LayoutMode): ColumnLayout[] {
+  return layoutMode === "responsive"
+    ? DEFAULT_RESPONSIVE_COLUMN_LAYOUTS
+    : DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts;
+}
+
+function getLayoutMode(
+  searchParams: Record<string, SearchParamValue>,
+): LayoutMode | null {
+  const layoutMode = getSearchParamValue(searchParams.layout);
+
+  if (layoutMode === undefined || layoutMode === "single") {
+    return "single";
+  }
+
+  if (layoutMode === "responsive") {
+    return "responsive";
+  }
+
+  return null;
+}
+
 function getColumnLayouts(
   searchParams: Record<string, SearchParamValue>,
+  layoutMode: LayoutMode | null,
 ): ColumnLayout[] | null | undefined {
   const rawColumnLayouts = getSearchParamValue(searchParams["column-layouts"]);
 
@@ -65,19 +93,57 @@ function getColumnLayouts(
   try {
     const parsed = JSON.parse(rawColumnLayouts);
 
-    if (
-      !Array.isArray(parsed) ||
-      parsed.length !== 1 ||
-      !isColumnLayout(parsed[0]) ||
-      parsed[0].minWidthPx !== null
-    ) {
+    if (!Array.isArray(parsed)) {
       return null;
     }
 
-    return parsed;
+    if (layoutMode === "responsive") {
+      return getValidResponsiveColumnLayouts(parsed);
+    }
+
+    return getValidSingleColumnLayouts(parsed);
   } catch {
     return null;
   }
+}
+
+function getValidSingleColumnLayouts(parsed: unknown[]): ColumnLayout[] | null {
+  if (
+    parsed.length !== 1 ||
+    !isColumnLayout(parsed[0]) ||
+    parsed[0].minWidthPx !== null
+  ) {
+    return null;
+  }
+
+  return parsed as ColumnLayout[];
+}
+
+function getValidResponsiveColumnLayouts(
+  parsed: unknown[],
+): ColumnLayout[] | null {
+  if (parsed.length < 2) {
+    return null;
+  }
+
+  const [baseLayout, ...breakpointLayouts] = parsed;
+
+  if (!isColumnLayout(baseLayout) || baseLayout.minWidthPx !== null) {
+    return null;
+  }
+
+  if (
+    breakpointLayouts.some(
+      (layout) =>
+        !isColumnLayout(layout) ||
+        typeof layout.minWidthPx !== "string" ||
+        !isValidBreakpointPx(layout.minWidthPx),
+    )
+  ) {
+    return null;
+  }
+
+  return parsed as ColumnLayout[];
 }
 
 function isColumnLayout(value: unknown): value is ColumnLayout {
@@ -99,6 +165,18 @@ function isValidColumns(value: unknown): value is string {
   const columns = Number(value);
 
   return Number.isInteger(columns) && columns >= 2 && columns <= 20;
+}
+
+function isValidBreakpointPx(value: string): boolean {
+  if (value.trim() !== value || value === "") {
+    return false;
+  }
+
+  const breakpointPx = Number(value);
+
+  return (
+    Number.isInteger(breakpointPx) && breakpointPx >= 1 && breakpointPx <= 3840
+  );
 }
 
 function getSearchParamValue(value: SearchParamValue): string | undefined {

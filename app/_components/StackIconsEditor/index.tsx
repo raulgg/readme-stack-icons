@@ -30,13 +30,16 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     generatedUrl,
     generatePreview,
     state,
+    switchLayoutMode,
     updateBaseColumns,
     updateField,
+    updateFirstBreakpointLayout,
     validationErrors,
   } = useStackIconsEditorForm(initialState);
 
   const hasValidationErrors = validationErrors.length > 0;
   const baseColumnLayout = state.columnLayouts[0];
+  const firstBreakpointLayout = state.columnLayouts[1];
 
   return (
     <div className="rounded-lg border bg-card p-5 shadow-sm">
@@ -53,13 +56,43 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         value={state.icons}
       />
 
+      <fieldset className="mt-4">
+        <legend className="font-mono text-xs text-muted-foreground">
+          Layout mode
+        </legend>
+        <div className="mt-1 grid grid-cols-2 gap-2">
+          {(["single", "responsive"] as const).map((layoutMode) => (
+            <label
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-md border px-3 py-2 font-mono text-xs text-card-foreground transition focus-within:ring-2 focus-within:ring-ring",
+                state.layoutMode === layoutMode
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "bg-background",
+              )}
+              htmlFor={`layout-mode-${layoutMode}`}
+              key={layoutMode}
+            >
+              <input
+                checked={state.layoutMode === layoutMode}
+                className="sr-only"
+                id={`layout-mode-${layoutMode}`}
+                name="layout-mode"
+                onChange={() => switchLayoutMode(layoutMode)}
+                type="radio"
+              />
+              {layoutMode === "single" ? "Single layout" : "Responsive layout"}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <div>
           <label
             className="font-mono text-xs text-muted-foreground"
             htmlFor="columns"
           >
-            Columns
+            {state.layoutMode === "single" ? "Columns" : "Base columns"}
           </label>
           <input
             className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
@@ -89,6 +122,49 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
           />
         </div>
       </div>
+
+      {state.layoutMode === "responsive" && firstBreakpointLayout ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              className="font-mono text-xs text-muted-foreground"
+              htmlFor="breakpoint-columns"
+            >
+              Breakpoint columns
+            </label>
+            <input
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
+              id="breakpoint-columns"
+              max={20}
+              min={2}
+              onChange={(event) =>
+                updateFirstBreakpointLayout("columns", event.target.value)
+              }
+              type="number"
+              value={firstBreakpointLayout.columns}
+            />
+          </div>
+          <div>
+            <label
+              className="font-mono text-xs text-muted-foreground"
+              htmlFor="breakpoint-min-width"
+            >
+              Breakpoint min width
+            </label>
+            <input
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
+              id="breakpoint-min-width"
+              max={3840}
+              min={1}
+              onChange={(event) =>
+                updateFirstBreakpointLayout("minWidthPx", event.target.value)
+              }
+              type="number"
+              value={firstBreakpointLayout.minWidthPx ?? ""}
+            />
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-4 rounded-md border bg-background px-3 py-2">
         <label

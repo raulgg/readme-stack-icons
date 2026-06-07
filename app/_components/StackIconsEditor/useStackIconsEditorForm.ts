@@ -5,9 +5,19 @@ import React from "react";
 import { parseIconRequest } from "@/lib/icons/parse-request";
 import { escapeXml } from "@/lib/utils";
 
-import type { StackIconsEditorState } from "./state";
+import {
+  DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+  DEFAULT_STACK_ICONS_EDITOR_STATE,
+  type ColumnLayout,
+  type LayoutMode,
+  type StackIconsEditorState,
+} from "./state";
 
 type CopyGeneratedHtmlStatus = "failed" | "idle" | "succeeded";
+type LayoutMemoryState = {
+  singleColumnLayout: ColumnLayout;
+  responsiveColumnLayouts: ColumnLayout[];
+};
 
 function getBaseColumnLayout(state: StackIconsEditorState) {
   return state.columnLayouts[0];
@@ -24,6 +34,21 @@ function buildPageQuery(state: StackIconsEditorState): string {
   params.set("preview-theme", state.previewTheme);
 
   return params.toString();
+}
+
+function buildInitialLayoutMemory(
+  initialState: StackIconsEditorState,
+): LayoutMemoryState {
+  return {
+    singleColumnLayout:
+      initialState.layoutMode === "single"
+        ? { ...getBaseColumnLayout(initialState) }
+        : { ...getBaseColumnLayout(DEFAULT_STACK_ICONS_EDITOR_STATE) },
+    responsiveColumnLayouts:
+      initialState.layoutMode === "responsive"
+        ? initialState.columnLayouts.map((layout) => ({ ...layout }))
+        : DEFAULT_RESPONSIVE_COLUMN_LAYOUTS.map((layout) => ({ ...layout })),
+  };
 }
 
 function buildIconRequestParams(
@@ -148,6 +173,9 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
   const [copyGeneratedHtmlStatus, setCopyGeneratedHtmlStatus] =
     React.useState<CopyGeneratedHtmlStatus>("idle");
+  const [layoutMemory, setLayoutMemory] = React.useState<LayoutMemoryState>(
+    () => buildInitialLayoutMemory(initialState),
+  );
   const previewGenerationId = React.useRef(0);
 
   const generatedUrl =
@@ -186,9 +214,73 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   function updateBaseColumns(columns: string) {
     const nextState: StackIconsEditorState = {
       ...editorState,
-      columnLayouts: [{ ...getBaseColumnLayout(editorState), columns }],
+      columnLayouts: [
+        { ...getBaseColumnLayout(editorState), columns },
+        ...editorState.columnLayouts.slice(1),
+      ],
     };
 
+    setEditorState(nextState);
+
+    const nextQuery = buildPageQuery(nextState);
+    const nextUrl = `${window.location.pathname}?${nextQuery}`;
+
+    window.history.replaceState(null, "", nextUrl);
+  }
+
+  function updateFirstBreakpointLayout(
+    field: keyof ColumnLayout,
+    value: string,
+  ) {
+    const firstBreakpointLayout = editorState.columnLayouts[1];
+
+    if (firstBreakpointLayout === undefined) {
+      return;
+    }
+
+    const nextState: StackIconsEditorState = {
+      ...editorState,
+      columnLayouts: [
+        getBaseColumnLayout(editorState),
+        { ...firstBreakpointLayout, [field]: value },
+        ...editorState.columnLayouts.slice(2),
+      ],
+    };
+
+    setEditorState(nextState);
+
+    const nextQuery = buildPageQuery(nextState);
+    const nextUrl = `${window.location.pathname}?${nextQuery}`;
+
+    window.history.replaceState(null, "", nextUrl);
+  }
+
+  function switchLayoutMode(layoutMode: LayoutMode) {
+    if (layoutMode === editorState.layoutMode) {
+      return;
+    }
+
+    const nextMemory: LayoutMemoryState = {
+      singleColumnLayout:
+        editorState.layoutMode === "single"
+          ? { ...getBaseColumnLayout(editorState) }
+          : layoutMemory.singleColumnLayout,
+      responsiveColumnLayouts:
+        editorState.layoutMode === "responsive"
+          ? editorState.columnLayouts.map((layout) => ({ ...layout }))
+          : layoutMemory.responsiveColumnLayouts,
+    };
+    const nextColumnLayouts =
+      layoutMode === "single"
+        ? [{ ...nextMemory.singleColumnLayout }]
+        : nextMemory.responsiveColumnLayouts.map((layout) => ({ ...layout }));
+    const nextState: StackIconsEditorState = {
+      ...editorState,
+      layoutMode,
+      columnLayouts: nextColumnLayouts,
+    };
+
+    setLayoutMemory(nextMemory);
     setEditorState(nextState);
 
     const nextQuery = buildPageQuery(nextState);
@@ -244,8 +336,10 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     generatedHtml,
     generatedUrl,
     state: editorState,
+    switchLayoutMode,
     updateBaseColumns,
     updateField,
+    updateFirstBreakpointLayout,
     validationErrors,
   };
 }
