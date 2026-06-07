@@ -30,11 +30,13 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     generatedUrl,
     generatePreview,
     state,
+    updateBaseColumns,
     updateField,
     validationErrors,
   } = useStackIconsEditorForm(initialState);
 
   const hasValidationErrors = validationErrors.length > 0;
+  const baseColumnLayout = state.columnLayouts[0];
 
   return (
     <div className="rounded-lg border bg-card p-5 shadow-sm">
@@ -60,14 +62,13 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
             Columns
           </label>
           <input
-            className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={state.responsive}
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
             id="columns"
             max={20}
             min={2}
-            onChange={(event) => updateField("columns", event.target.value)}
+            onChange={(event) => updateBaseColumns(event.target.value)}
             type="number"
-            value={state.columns}
+            value={baseColumnLayout.columns}
           />
         </div>
         <div>
@@ -104,24 +105,6 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
             type="checkbox"
           />
           Include dark theme source
-        </label>
-      </div>
-
-      <div className="mt-4 rounded-md border bg-background px-3 py-3">
-        <label
-          className="flex items-center gap-3 font-mono text-sm font-medium text-card-foreground"
-          htmlFor="responsive"
-        >
-          <input
-            checked={state.responsive}
-            className="h-4 w-4 rounded border bg-background text-primary ring-ring transition focus:ring-2"
-            id="responsive"
-            onChange={(event) =>
-              updateField("responsive", event.target.checked)
-            }
-            type="checkbox"
-          />
-          Include responsive sources
         </label>
       </div>
 

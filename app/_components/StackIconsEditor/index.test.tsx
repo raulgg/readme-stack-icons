@@ -65,11 +65,15 @@ describe("StackIconsEditor", () => {
       const params = new URLSearchParams(window.location.search);
 
       expect(params.get("icons")).toBe("react,nextjs");
-      expect(params.get("columns")).toBe("4");
+      expect(params.get("layout")).toBe("single");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify([{ columns: "4", minWidthPx: null }]),
+      );
       expect(params.get("gap")).toBe("12");
       expect(params.get("include-dark-theme")).toBe("true");
       expect(params.get("preview-theme")).toBe("light");
-      expect(params.get("responsive")).toBe("false");
+      expect(params.has("columns")).toBe(false);
+      expect(params.has("responsive")).toBe(false);
       expect(params.has("mobile-columns")).toBe(false);
       expect(params.has("baseUrl")).toBe(false);
       expect(params.has("v")).toBe(false);
@@ -81,7 +85,7 @@ describe("StackIconsEditor", () => {
   it("should preserve raw state when rendered with page query params", async () => {
     // Given
     setLocation(
-      "/?icons=solid%2Ctypescript&columns=6&gap=10&v=rev-2&baseUrl=https%3A%2F%2Fcdn.example",
+      "/?icons=solid%2Ctypescript&layout=single&column-layouts=%5B%7B%22columns%22%3A%226%22%2C%22minWidthPx%22%3Anull%7D%5D&gap=10&v=rev-2&baseUrl=https%3A%2F%2Fcdn.example",
     );
 
     // When
@@ -89,9 +93,12 @@ describe("StackIconsEditor", () => {
       <StackIconsEditor
         initialState={getStackIconsEditorInitialState({
           baseUrl: "https://cdn.example",
-          columns: "6",
+          "column-layouts": JSON.stringify([
+            { columns: "6", minWidthPx: null },
+          ]),
           gap: "10",
           icons: "solid,typescript",
+          layout: "single",
           v: "rev-2",
         })}
       />,
@@ -107,8 +114,10 @@ describe("StackIconsEditor", () => {
     expect(screen.getByLabelText("Include dark theme source")).toBeChecked();
     expect(screen.getByLabelText("Light")).toBeChecked();
     expect(screen.getByLabelText("Dark")).not.toBeChecked();
-    expect(screen.getByLabelText("Include responsive sources")).not.toBeChecked();
     expect(screen.getByLabelText("Columns")).toBeEnabled();
+    expect(
+      screen.queryByLabelText("Include responsive sources"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Mobile columns")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
@@ -265,8 +274,8 @@ describe("StackIconsEditor", () => {
     // Then
     expect(screen.queryByText("HTML copied.")).not.toBeInTheDocument();
     expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=16&amp;gap=8&amp;theme=dark" />
-  <img src="http://localhost:3000/icons?icons=react&amp;columns=16&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
 </picture>`);
   });
 
@@ -297,8 +306,8 @@ describe("StackIconsEditor", () => {
     expect(screen.queryByText("HTML copied.")).not.toBeInTheDocument();
     expect(screen.queryByText("Could not copy HTML.")).not.toBeInTheDocument();
     expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=16&amp;gap=8&amp;theme=dark" />
-  <img src="http://localhost:3000/icons?icons=react&amp;columns=16&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
 </picture>`);
   });
 
@@ -335,79 +344,6 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should generate README HTML with responsive sources when responsive is enabled and dark theme is disabled", async () => {
-    // Given
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
-    fireEvent.change(screen.getByLabelText("Icon slugs"), {
-      target: { value: "typescript,react,nextjs" },
-    });
-    fireEvent.change(screen.getByLabelText("Columns"), {
-      target: { value: "16" },
-    });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "8" },
-    });
-    fireEvent.click(screen.getByLabelText("Include dark theme source"));
-    fireEvent.click(screen.getByLabelText("Include responsive sources"));
-
-    // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
-
-    // Then
-    const readmeHtml = screen.getByLabelText("README HTML");
-
-    expect(screen.getByLabelText("Columns")).toBeDisabled();
-    expect(readmeHtml).toHaveValue(`<picture>
-  <source media="(min-width: 1280px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 481px) and (max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=light" />
-  <source media="(max-width: 480px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=light" />
-  <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
-</picture>`);
-    expect((readmeHtml as HTMLTextAreaElement).value).not.toContain(
-      "baseUrl",
-    );
-    expect((readmeHtml as HTMLTextAreaElement).value).not.toContain("v=");
-  });
-
-  it("should generate README HTML with dark sources before light sources for each responsive tier", async () => {
-    // Given
-    render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
-    );
-    fireEvent.change(screen.getByLabelText("Icon slugs"), {
-      target: { value: "typescript,react,nextjs" },
-    });
-    fireEvent.change(screen.getByLabelText("Columns"), {
-      target: { value: "16" },
-    });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "8" },
-    });
-    fireEvent.click(screen.getByLabelText("Include responsive sources"));
-
-    // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
-
-    // Then
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <source media="(min-width: 1280px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=dark" />
-  <source media="(min-width: 1280px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=dark" />
-  <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=14&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=dark" />
-  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=10&amp;gap=8&amp;theme=light" />
-  <source media="(min-width: 481px) and (max-width: 769px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=dark" />
-  <source media="(min-width: 481px) and (max-width: 769px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=12&amp;gap=8&amp;theme=light" />
-  <source media="(max-width: 480px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=dark" />
-  <source media="(max-width: 480px)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=light" />
-  <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
-</picture>`);
-  });
-
   it("should generate basic README HTML without icons param for explicit all icons", async () => {
     // Given
     render(
@@ -424,8 +360,8 @@ describe("StackIconsEditor", () => {
     const readmeHtml = screen.getByLabelText("README HTML");
 
     expect(readmeHtml).toHaveValue(`<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?columns=16&amp;gap=8&amp;theme=dark" />
-  <img src="http://localhost:3000/icons?columns=16&amp;gap=8&amp;theme=light" alt="All stack icons" title="All stack icons" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?columns=18&amp;gap=8&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?columns=18&amp;gap=8&amp;theme=light" alt="All stack icons" title="All stack icons" width="100%" />
 </picture>`);
   });
 
@@ -443,8 +379,8 @@ describe("StackIconsEditor", () => {
 
     // Then
     expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=dark" />
-  <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
 </picture>`);
   });
 
@@ -520,13 +456,13 @@ describe("StackIconsEditor", () => {
 
     // Then
     const previewUrl =
-      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=16&gap=8&theme=dark";
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=dark";
 
     expect(screen.getByLabelText("Dark")).toBeChecked();
     expect(screen.getByLabelText("Include dark theme source")).not.toBeChecked();
     expect(screen.getByLabelText("SVG URL")).toHaveValue(previewUrl);
     expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
-  <img src="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=16&amp;gap=8&amp;theme=light" alt="TypeScript, Next.js, Tailwind CSS, Vercel" title="TypeScript, Next.js, Tailwind CSS, Vercel" width="100%" />
+  <img src="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=light" alt="TypeScript, Next.js, Tailwind CSS, Vercel" title="TypeScript, Next.js, Tailwind CSS, Vercel" width="100%" />
 </picture>`);
   });
 
@@ -538,9 +474,9 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
 
     const lightPreviewUrl =
-      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=16&gap=8&theme=light";
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light";
     const darkPreviewUrl =
-      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=16&gap=8&theme=dark";
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=dark";
 
     expect(screen.getByLabelText("SVG URL")).toHaveValue(lightPreviewUrl);
 
@@ -641,7 +577,7 @@ describe("StackIconsEditor", () => {
     // Then
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.getByLabelText("SVG URL")).toHaveValue(
-      "http://localhost:3000/icons?icons=react&columns=16&gap=8&theme=light",
+      "http://localhost:3000/icons?icons=react&columns=18&gap=8&theme=light",
     );
   });
 
@@ -652,7 +588,7 @@ describe("StackIconsEditor", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
     const generatedUrl =
-      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=16&gap=8&theme=light";
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light";
 
     expect(screen.getByLabelText("SVG URL")).toHaveValue(generatedUrl);
 
@@ -689,10 +625,10 @@ describe("StackIconsEditor", () => {
   it("should derive initial editor state when page query params are parsed", () => {
     // Given
     const searchParams = {
-      columns: "6",
+      "column-layouts": JSON.stringify([{ columns: "6", minWidthPx: null }]),
       gap: "10",
       icons: "solid,typescript",
-      responsive: "true",
+      layout: "single",
     };
 
     // When
@@ -700,22 +636,23 @@ describe("StackIconsEditor", () => {
 
     // Then
     expect(initialState).toEqual({
-      columns: "6",
+      columnLayouts: [{ columns: "6", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
       includeDarkTheme: true,
+      layoutMode: "single",
       previewTheme: "light",
-      responsive: true,
     });
   });
 
   it("should derive disabled dark theme state when page query params are parsed", () => {
     // Given
     const searchParams = {
-      columns: "6",
+      "column-layouts": JSON.stringify([{ columns: "6", minWidthPx: null }]),
       gap: "10",
       icons: "solid,typescript",
       "include-dark-theme": "false",
+      layout: "single",
     };
 
     // When
@@ -723,12 +660,86 @@ describe("StackIconsEditor", () => {
 
     // Then
     expect(initialState).toEqual({
-      columns: "6",
+      columnLayouts: [{ columns: "6", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
       includeDarkTheme: false,
+      layoutMode: "single",
       previewTheme: "light",
-      responsive: false,
+    });
+  });
+
+  it("should use the default single column layout state", () => {
+    expect(DEFAULT_STACK_ICONS_EDITOR_STATE).toMatchObject({
+      columnLayouts: [{ columns: "18", minWidthPx: null }],
+      layoutMode: "single",
+    });
+  });
+
+  it("should fall back to default state when column layouts JSON is malformed", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": "{bad-json",
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "single",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "single",
+    });
+  });
+
+  it("should fall back to default state when column layout columns are invalid", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([{ columns: "21", minWidthPx: null }]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "single",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "single",
+    });
+  });
+
+  it("should fall back to default state when column layout columns are not integers", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([{ columns: "abc", minWidthPx: null }]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "single",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "single",
+    });
+  });
+
+  it("should fall back to default state when layout params are invalid for single layout", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([
+        { columns: "6", minWidthPx: null },
+        { columns: "4", minWidthPx: "768" },
+      ]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "responsive",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts,
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "single",
     });
   });
 });
