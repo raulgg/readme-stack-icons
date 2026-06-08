@@ -14,8 +14,12 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  getEditableBaseColumnLayout,
+  getEditableBreakpointColumnLayouts,
+} from "@/lib/icons/column-layout";
 import { cn } from "@/lib/utils";
-import type { ColumnLayout, StackIconsEditorState } from "./state";
+import type { StackIconsEditorState } from "./state";
 import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
 export type { StackIconsEditorState } from "./state";
@@ -42,10 +46,10 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   } = useStackIconsEditorForm(initialState);
 
   const hasValidationErrors = validationErrors.length > 0;
-  const baseColumnLayout = state.columnLayouts.find(
-    (layout) => layout.minWidthPx === null,
+  const baseColumnLayout = getEditableBaseColumnLayout(state.columnLayouts);
+  const breakpointLayouts = getEditableBreakpointColumnLayouts(
+    state.columnLayouts,
   );
-  const breakpointLayouts = getOrderedBreakpointLayouts(state.columnLayouts);
 
   return (
     <div className="rounded-lg border bg-card p-5 shadow-sm">
@@ -385,34 +389,4 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
       </div>
     </div>
   );
-}
-
-function getOrderedBreakpointLayouts(columnLayouts: ColumnLayout[]) {
-  return columnLayouts
-    .map((layout, originalIndex) => ({ layout, originalIndex }))
-    .filter(({ layout }) => layout.minWidthPx !== null)
-    .sort((a, b) => {
-      const aMinWidth = getValidBreakpointMinWidth(a.layout.minWidthPx);
-      const bMinWidth = getValidBreakpointMinWidth(b.layout.minWidthPx);
-
-      if (aMinWidth !== null && bMinWidth !== null) {
-        return aMinWidth - bMinWidth;
-      }
-
-      return a.originalIndex - b.originalIndex;
-    });
-}
-
-function getValidBreakpointMinWidth(minWidthPx: string | null): number | null {
-  if (minWidthPx === null || minWidthPx.trim() !== minWidthPx || minWidthPx === "") {
-    return null;
-  }
-
-  const parsedMinWidth = Number(minWidthPx);
-
-  return Number.isInteger(parsedMinWidth) &&
-    parsedMinWidth >= 1 &&
-    parsedMinWidth <= 3840
-    ? parsedMinWidth
-    : null;
 }

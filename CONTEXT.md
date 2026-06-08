@@ -16,7 +16,7 @@ _Avoid_: Default layout, mobile breakpoint
 A configurable icon grid layout with a column count and an optional breakpoint. The base column layout has no breakpoint and is identified by a `null` minimum width, while breakpoint-specific column layouts have a `min-width` pixel threshold.
 _Avoid_: Layout rule, column preset, responsive layout
 
-Column layouts are presented from base to wider breakpoints. Generated README HTML emits breakpoint-specific sources from widest to narrowest so the browser selects the first matching source.
+Generated README HTML emits breakpoint-specific sources from widest to narrowest so the browser selects the first matching source.
 
 Column layout identity belongs to the layout values themselves, not to generated IDs. UI-only keys may be used while editing, but generated IDs are not part of the column layout language.
 

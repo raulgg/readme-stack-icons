@@ -435,7 +435,7 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should normalize valid responsive layouts before generating README HTML", () => {
+  it("should preserve user breakpoint order while sorting generated README HTML", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -451,8 +451,17 @@ describe("StackIconsEditor", () => {
       />,
     );
 
+    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(12);
+    expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(8);
+    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(640);
+
     generatePreview();
 
+    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(12);
+    expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(8);
+    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(640);
     expect(screen.getByLabelText("SVG URL")).toHaveValue(
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=4&gap=8&theme=light",
     );
@@ -946,7 +955,7 @@ describe("StackIconsEditor", () => {
     });
   });
 
-  it("should render and edit all responsive breakpoint layouts in ascending order", async () => {
+  it("should render and edit responsive breakpoint layouts in user order", async () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -963,10 +972,10 @@ describe("StackIconsEditor", () => {
 
     expect(screen.getByLabelText("Base columns")).toHaveValue(6);
     expect(screen.getAllByLabelText("Columns")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(4);
-    expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(640);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(9);
-    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(9);
+    expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(4);
+    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(640);
 
     fireEvent.change(screen.getByLabelText("Base columns"), {
       target: { value: "7" },
@@ -989,8 +998,8 @@ describe("StackIconsEditor", () => {
 
       expect(params.get("column-layouts")).toBe(
         JSON.stringify([
-          { columns: "7", minWidthPx: null },
           { columns: "8", minWidthPx: "768" },
+          { columns: "7", minWidthPx: null },
           { columns: "12", minWidthPx: "1280" },
         ]),
       );
@@ -1030,7 +1039,7 @@ describe("StackIconsEditor", () => {
     });
   });
 
-  it("should validate an empty added breakpoint row only when generating", () => {
+  it("should ignore a fully empty added breakpoint row when generating", () => {
     renderEditor();
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
@@ -1042,13 +1051,32 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "polite");
-    expect(
-      screen.getByText("Each column layout must use 2 to 20 columns."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Breakpoint px must be an integer from 1 to 3840."),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("SVG URL")).toHaveValue(
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=12&gap=8&theme=light",
+    );
+    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+  <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=dark" />
+  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=light" />
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=12&amp;gap=8&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=12&amp;gap=8&amp;theme=light" alt="TypeScript, Next.js, Tailwind CSS, Vercel" title="TypeScript, Next.js, Tailwind CSS, Vercel" width="100%" />
+</picture>`);
+  });
+
+  it("should reject a partially filled added breakpoint row when generating", () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
+    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+      target: { value: "20" },
+    });
+
+    generatePreview();
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Breakpoint rows must include columns and breakpoint px.",
+    );
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
     expect(screen.getByLabelText("README HTML")).toHaveValue("");
   });
