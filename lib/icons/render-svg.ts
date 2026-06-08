@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { getIconGridDimensions, iconSize } from "./layout";
+import { getIconGridLayout } from "./layout";
 import { normalizeTrustedSvgAsset } from "./normalize-svg";
 import { getIconAssetPath } from "./registry";
 import { escapeXml } from "../utils";
@@ -16,7 +16,7 @@ export async function renderIconSvg({
   icons,
   theme,
 }: ParsedIconRequest): Promise<string> {
-  const { height, width } = getIconGridDimensions({
+  const gridLayout = getIconGridLayout({
     columns,
     gap,
     iconCount: icons.length,
@@ -24,24 +24,28 @@ export async function renderIconSvg({
   const title = icons.map((icon) => icon.label).join(", ");
   const description = `Technology stack icons for ${title}.`;
   const iconMarkup = await Promise.all(
-    icons.map(async (icon, index) => {
-      const x = (index % columns) * (iconSize + gap);
-      const y = Math.floor(index / columns) * (iconSize + gap);
+    gridLayout.placements.map(async (placement) => {
+      const icon = icons[placement.index];
+
+      if (icon === undefined) {
+        throw new Error("Icon grid placement must reference a requested icon.");
+      }
+
       const assetPath = getIconAssetPath({ slug: icon.slug, theme });
       const assetSvg = await readRawSvgAsset(assetPath);
       const normalizedSvg = normalizeTrustedSvgAsset({
-        occurrence: index,
+        occurrence: placement.index,
         slug: icon.slug,
         sourceSvg: assetSvg,
       });
 
-      return `<svg x="${x}" y="${y}" width="${iconSize}" height="${iconSize}" ${normalizedSvg.attributes} aria-hidden="true" focusable="false">
+      return `<svg x="${placement.x}" y="${placement.y}" width="${placement.width}" height="${placement.height}" ${normalizedSvg.attributes} aria-hidden="true" focusable="false">
     ${normalizedSvg.body}
   </svg>`;
     }),
   );
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${gridLayout.width}" height="${gridLayout.height}" viewBox="0 0 ${gridLayout.width} ${gridLayout.height}" role="img" aria-labelledby="title desc">
   <title id="title">${escapeXml(title)}</title>
   <desc id="desc">${escapeXml(description)}</desc>
   ${iconMarkup.join("\n  ")}
