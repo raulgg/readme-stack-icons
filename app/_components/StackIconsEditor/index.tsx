@@ -7,6 +7,8 @@ import {
   CopyIcon,
   ImageIcon,
   LinkIcon,
+  PlusIcon,
+  Trash2Icon,
   WandSparklesIcon,
   XIcon,
 } from "lucide-react";
@@ -24,11 +26,13 @@ type StackIconsEditorProps = {
 
 export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const {
+    addBreakpointLayout,
     copyGeneratedHtml,
     copyGeneratedHtmlStatus,
     generatedHtml,
     generatedUrl,
     generatePreview,
+    removeBreakpointLayout,
     state,
     switchLayoutMode,
     updateBaseColumns,
@@ -125,61 +129,92 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         </div>
       </div>
 
-      {state.layoutMode === "responsive"
-        ? breakpointLayouts.map(({ layout, originalIndex }) => (
-            <div
-              className="mt-4 grid gap-3 sm:grid-cols-2"
-              key={originalIndex}
-            >
-              <div>
-                <label
-                  className="font-mono text-xs text-muted-foreground"
-                  htmlFor={`breakpoint-columns-${originalIndex}`}
-                >
-                  Columns
-                </label>
-                <input
-                  className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
-                  id={`breakpoint-columns-${originalIndex}`}
-                  max={20}
-                  min={2}
-                  onChange={(event) =>
-                    updateColumnLayout(
-                      originalIndex,
-                      "columns",
-                      event.target.value,
-                    )
-                  }
-                  type="number"
-                  value={layout.columns}
-                />
+      {state.layoutMode === "responsive" ? (
+        <div className="mt-4 grid gap-3">
+          {breakpointLayouts.map(({ layout, originalIndex }) => {
+            const isRemovable = breakpointLayouts.length > 1;
+            const breakpointLabel =
+              layout.minWidthPx === ""
+                ? "empty breakpoint"
+                : `${layout.minWidthPx}px breakpoint`;
+
+            return (
+              <div
+                className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
+                key={originalIndex}
+              >
+                <div>
+                  <label
+                    className="font-mono text-xs text-muted-foreground"
+                    htmlFor={`breakpoint-columns-${originalIndex}`}
+                  >
+                    Columns
+                  </label>
+                  <input
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
+                    id={`breakpoint-columns-${originalIndex}`}
+                    max={20}
+                    min={2}
+                    onChange={(event) =>
+                      updateColumnLayout(
+                        originalIndex,
+                        "columns",
+                        event.target.value,
+                      )
+                    }
+                    type="number"
+                    value={layout.columns}
+                  />
+                </div>
+                <div>
+                  <label
+                    className="font-mono text-xs text-muted-foreground"
+                    htmlFor={`breakpoint-min-width-${originalIndex}`}
+                  >
+                    Breakpoint px
+                  </label>
+                  <input
+                    className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
+                    id={`breakpoint-min-width-${originalIndex}`}
+                    max={3840}
+                    min={1}
+                    onChange={(event) =>
+                      updateColumnLayout(
+                        originalIndex,
+                        "minWidthPx",
+                        event.target.value,
+                      )
+                    }
+                    type="number"
+                    value={layout.minWidthPx ?? ""}
+                  />
+                </div>
+                {isRemovable ? (
+                  <Button
+                    aria-label={`Remove ${breakpointLabel}`}
+                    className="w-full sm:w-10"
+                    onClick={() => removeBreakpointLayout(originalIndex)}
+                    size="icon"
+                    type="button"
+                    variant="outline"
+                  >
+                    <Trash2Icon className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                ) : null}
               </div>
-              <div>
-                <label
-                  className="font-mono text-xs text-muted-foreground"
-                  htmlFor={`breakpoint-min-width-${originalIndex}`}
-                >
-                  Breakpoint px
-                </label>
-                <input
-                  className="mt-1 w-full rounded-md border bg-background px-3 py-2 font-mono text-sm outline-none ring-ring transition focus:ring-2"
-                  id={`breakpoint-min-width-${originalIndex}`}
-                  max={3840}
-                  min={1}
-                  onChange={(event) =>
-                    updateColumnLayout(
-                      originalIndex,
-                      "minWidthPx",
-                      event.target.value,
-                    )
-                  }
-                  type="number"
-                  value={layout.minWidthPx ?? ""}
-                />
-              </div>
-            </div>
-          ))
-        : null}
+            );
+          })}
+          <Button
+            className="w-full sm:w-fit"
+            onClick={addBreakpointLayout}
+            type="button"
+            variant="outline"
+          >
+            <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            Add breakpoint
+          </Button>
+        </div>
+      ) : null}
 
       <div className="mt-4 rounded-md border bg-background px-3 py-2">
         <label

@@ -997,6 +997,161 @@ describe("StackIconsEditor", () => {
     });
   });
 
+  it("should add an editable empty breakpoint row in responsive mode", async () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
+
+    expect(screen.getAllByLabelText("Columns")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Breakpoint px")).toHaveLength(2);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(null);
+    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(null);
+
+    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+      target: { value: "20" },
+    });
+    fireEvent.change(screen.getAllByLabelText("Breakpoint px")[1], {
+      target: { value: "1280" },
+    });
+
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(20);
+    expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(1280);
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify([
+          { columns: "12", minWidthPx: null },
+          { columns: "18", minWidthPx: "768" },
+          { columns: "20", minWidthPx: "1280" },
+        ]),
+      );
+    });
+  });
+
+  it("should validate an empty added breakpoint row only when generating", () => {
+    renderEditor();
+
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
+
+    expect(
+      screen.queryByText("Each column layout must use 2 to 20 columns."),
+    ).not.toBeInTheDocument();
+
+    generatePreview();
+
+    expect(
+      screen.getByText("Each column layout must use 2 to 20 columns."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Breakpoint min width must be an integer from 1 to 3840."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("SVG URL")).toHaveValue("");
+    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+  });
+
+  it("should not render remove controls for the base row or the last breakpoint row", () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          columnLayouts: [
+            { columns: "12", minWidthPx: null },
+            { columns: "18", minWidthPx: "768" },
+          ],
+          layoutMode: "responsive",
+        }}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
+    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+  });
+
+  it("should render remove controls only for optional breakpoint rows", () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          columnLayouts: [
+            { columns: "12", minWidthPx: null },
+            { columns: "16", minWidthPx: "768" },
+            { columns: "20", minWidthPx: "1280" },
+          ],
+          layoutMode: "responsive",
+        }}
+      />,
+    );
+
+    expect(screen.getAllByRole("button", { name: /Remove/u })).toHaveLength(2);
+    expect(
+      screen.queryByRole("button", { name: /Remove.*base/u }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should remove optional breakpoint rows without switching to single layout", async () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          columnLayouts: [
+            { columns: "12", minWidthPx: null },
+            { columns: "16", minWidthPx: "768" },
+            { columns: "20", minWidthPx: "1280" },
+          ],
+          layoutMode: "responsive",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove 768px breakpoint" }));
+
+    expect(screen.getByLabelText("Responsive layout")).toBeChecked();
+    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Columns")).toHaveValue(20);
+    expect(screen.getByLabelText("Breakpoint px")).toHaveValue(1280);
+    expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("layout")).toBe("responsive");
+      expect(params.get("column-layouts")).toBe(
+        JSON.stringify([
+          { columns: "12", minWidthPx: null },
+          { columns: "20", minWidthPx: "1280" },
+        ]),
+      );
+    });
+  });
+
+  it("should update responsive layout memory after removing a breakpoint", () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          columnLayouts: [
+            { columns: "12", minWidthPx: null },
+            { columns: "16", minWidthPx: "768" },
+            { columns: "20", minWidthPx: "1280" },
+          ],
+          layoutMode: "responsive",
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove 768px breakpoint" }));
+    fireEvent.click(screen.getByLabelText("Single layout"));
+    fireEvent.click(screen.getByLabelText("Responsive layout"));
+
+    expect(screen.getByLabelText("Responsive layout")).toBeChecked();
+    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Columns")).toHaveValue(20);
+    expect(screen.getByLabelText("Breakpoint px")).toHaveValue(1280);
+    expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
+  });
+
   it("should keep breakpoint rows stable while breakpoint px is temporarily invalid", async () => {
     render(
       <StackIconsEditor
@@ -1347,6 +1502,30 @@ describe("StackIconsEditor", () => {
       columnLayouts: [
         { columns: "6", minWidthPx: null },
         { columns: "4", minWidthPx: "3841" },
+      ],
+      gap: "10",
+      icons: "solid,typescript",
+      layoutMode: "responsive",
+    });
+  });
+
+  it("should preserve editable responsive state when added breakpoint inputs are empty", () => {
+    const initialState = getStackIconsEditorInitialState({
+      "column-layouts": JSON.stringify([
+        { columns: "6", minWidthPx: null },
+        { columns: "12", minWidthPx: "768" },
+        { columns: "", minWidthPx: "" },
+      ]),
+      gap: "10",
+      icons: "solid,typescript",
+      layout: "responsive",
+    });
+
+    expect(initialState).toMatchObject({
+      columnLayouts: [
+        { columns: "6", minWidthPx: null },
+        { columns: "12", minWidthPx: "768" },
+        { columns: "", minWidthPx: "" },
       ],
       gap: "10",
       icons: "solid,typescript",

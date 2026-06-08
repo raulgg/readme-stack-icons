@@ -454,6 +454,52 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     commitEditorState(nextState);
   }
 
+  function addBreakpointLayout() {
+    if (editorState.layoutMode !== "responsive") {
+      return;
+    }
+
+    const nextState: StackIconsEditorState = {
+      ...editorState,
+      columnLayouts: [
+        ...editorState.columnLayouts,
+        { columns: "", minWidthPx: "" },
+      ],
+    };
+
+    commitEditorState(nextState);
+  }
+
+  function removeBreakpointLayout(layoutIndex: number) {
+    if (editorState.layoutMode !== "responsive") {
+      return;
+    }
+
+    const targetLayout = editorState.columnLayouts[layoutIndex];
+    const breakpointLayoutCount = editorState.columnLayouts.filter(
+      (layout) => layout.minWidthPx !== null,
+    ).length;
+
+    if (
+      targetLayout === undefined ||
+      targetLayout.minWidthPx === null ||
+      breakpointLayoutCount <= 1
+    ) {
+      return;
+    }
+
+    const nextState: StackIconsEditorState = {
+      ...editorState,
+      columnLayouts: normalizeColumnLayoutsWhenBreakpointsAreValid(
+        editorState.columnLayouts.filter(
+          (_layout, currentIndex) => currentIndex !== layoutIndex,
+        ),
+      ),
+    };
+
+    commitEditorState(nextState);
+  }
+
   function switchLayoutMode(layoutMode: LayoutMode) {
     if (layoutMode === editorState.layoutMode) {
       return;
@@ -541,11 +587,13 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   }
 
   return {
+    addBreakpointLayout,
     copyGeneratedHtml,
     copyGeneratedHtmlStatus,
     generatePreview,
     generatedHtml,
     generatedUrl,
+    removeBreakpointLayout,
     state: editorState,
     switchLayoutMode,
     updateBaseColumns,

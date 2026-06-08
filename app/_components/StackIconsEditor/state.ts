@@ -132,7 +132,7 @@ function getValidResponsiveColumnLayouts(
   );
   const breakpointLayouts = parsed.filter(
     (layout): layout is ColumnLayout & { minWidthPx: string } =>
-      isColumnLayout(layout) && layout.minWidthPx !== null,
+      isEditableColumnLayout(layout) && layout.minWidthPx !== null,
   );
 
   if (baseLayouts.length !== 1 || breakpointLayouts.length === 0) {
@@ -164,11 +164,15 @@ function compareEditableBreakpointLayouts(
 }
 
 function isColumnLayout(value: unknown): value is ColumnLayout {
+  return isEditableColumnLayout(value) && isValidColumns(value.columns);
+}
+
+function isEditableColumnLayout(value: unknown): value is ColumnLayout {
   return (
     typeof value === "object" &&
     value !== null &&
     "columns" in value &&
-    isValidColumns(value.columns) &&
+    typeof value.columns === "string" &&
     "minWidthPx" in value &&
     (value.minWidthPx === null || typeof value.minWidthPx === "string")
   );
