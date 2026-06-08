@@ -508,7 +508,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Breakpoint min width values must be unique.",
+      "Breakpoint px values must be unique.",
     );
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
     expect(screen.getByLabelText("README HTML")).toHaveValue("");
@@ -531,7 +531,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Breakpoint min width must be an integer from 1 to 3840.",
+      "Breakpoint px must be an integer from 1 to 3840.",
     );
     expect(screen.getByLabelText("README HTML")).toHaveValue("");
   });
@@ -1042,11 +1042,12 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
+    expect(screen.getByRole("alert")).toHaveAttribute("aria-live", "polite");
     expect(
       screen.getByText("Each column layout must use 2 to 20 columns."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Breakpoint min width must be an integer from 1 to 3840."),
+      screen.getByText("Breakpoint px must be an integer from 1 to 3840."),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
     expect(screen.getByLabelText("README HTML")).toHaveValue("");

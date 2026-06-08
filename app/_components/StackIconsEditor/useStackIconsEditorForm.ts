@@ -223,14 +223,14 @@ function validateColumnLayouts(state: StackIconsEditorState): string[] {
         layout.minWidthPx > 3840,
     )
   ) {
-    errors.push("Breakpoint min width must be an integer from 1 to 3840.");
+    errors.push("Breakpoint px must be an integer from 1 to 3840.");
   }
 
   if (
     new Set(breakpointLayouts.map((layout) => layout.minWidthPx)).size !==
     breakpointLayouts.length
   ) {
-    errors.push("Breakpoint min width values must be unique.");
+    errors.push("Breakpoint px values must be unique.");
   }
 
   if (state.layoutMode === "single") {

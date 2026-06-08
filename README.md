@@ -5,10 +5,20 @@ Compose an ordered stack of technology slugs into one cached SVG image for GitHu
 ## Editor
 
 The public editor builds a GitHub README-safe HTML snippet from icon slugs,
-columns, and gap. The generated snippet uses the current site origin with the
-short `/icons` route and `icons`, `columns`, `gap`, and `theme=light` query
-params. Base URL and version/cache-busting query params are not exposed as
-editor form fields.
+layout mode, column layouts, and gap. Single layout uses one base column count.
+Responsive layout uses a base mobile column count plus one or more breakpoint
+rows, each with `Columns` and `Breakpoint px` values.
+
+The editor stores active form state in the page URL. Active layout state uses
+`layout` plus JSON-serialized `column-layouts`; inactive single/responsive
+layout memory is local to the current editor session.
+
+Generated README HTML still targets the unchanged short `/icons` route. Each
+image URL uses the current site origin with `/icons` and the same public API
+query params as before: `icons`, `columns`, `gap`, and `theme`. Responsive
+HTML emits multiple `<source>` URLs that differ only by `columns` and `theme`;
+the `/icons` API itself remains a single-layout SVG endpoint. Base URL and
+version/cache-busting query params are not exposed as editor form fields.
 
 ## Stack
 
