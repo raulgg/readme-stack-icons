@@ -121,7 +121,7 @@ describe("StackIconsEditor", () => {
     expect(
       screen.queryByLabelText("Include responsive sources"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Mobile columns")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Base columns")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
     expect(screen.getByLabelText("SVG URL")).toHaveValue("");
@@ -895,7 +895,7 @@ describe("StackIconsEditor", () => {
       );
     });
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
     expect(screen.getByLabelText("Columns")).toHaveValue(18);
     expect(screen.getByLabelText("Breakpoint px")).toHaveValue(768);
   });
@@ -907,7 +907,7 @@ describe("StackIconsEditor", () => {
       target: { value: "6" },
     });
     fireEvent.click(screen.getByLabelText("Responsive layout"));
-    fireEvent.change(screen.getByLabelText("Mobile columns"), {
+    fireEvent.change(screen.getByLabelText("Base columns"), {
       target: { value: "10" },
     });
     fireEvent.change(screen.getByLabelText("Columns"), {
@@ -930,7 +930,7 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(10);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(10);
     expect(screen.getByLabelText("Columns")).toHaveValue(16);
     expect(screen.getByLabelText("Breakpoint px")).toHaveValue(1024);
     await waitFor(() => {
@@ -961,14 +961,14 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(6);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(6);
     expect(screen.getAllByLabelText("Columns")).toHaveLength(2);
     expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(4);
     expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(640);
     expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(9);
     expect(screen.getAllByLabelText("Breakpoint px")[1]).toHaveValue(1024);
 
-    fireEvent.change(screen.getByLabelText("Mobile columns"), {
+    fireEvent.change(screen.getByLabelText("Base columns"), {
       target: { value: "7" },
     });
     fireEvent.change(screen.getAllByLabelText("Columns")[0], {
@@ -1068,7 +1068,7 @@ describe("StackIconsEditor", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
   });
 
   it("should render remove controls only for optional breakpoint rows", () => {
@@ -1110,7 +1110,7 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove 768px breakpoint" }));
 
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
     expect(screen.getByLabelText("Columns")).toHaveValue(20);
     expect(screen.getByLabelText("Breakpoint px")).toHaveValue(1280);
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
@@ -1147,7 +1147,7 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
     expect(screen.getByLabelText("Columns")).toHaveValue(20);
     expect(screen.getByLabelText("Breakpoint px")).toHaveValue(1280);
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
@@ -1208,7 +1208,7 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Mobile columns"), {
+    fireEvent.change(screen.getByLabelText("Base columns"), {
       target: { value: "10" },
     });
     fireEvent.change(screen.getAllByLabelText("Columns")[0], {
@@ -1226,7 +1226,7 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByLabelText("Single layout"));
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(10);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(10);
     expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(14);
     expect(screen.getAllByLabelText("Breakpoint px")[0]).toHaveValue(700);
     expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(18);
@@ -1249,7 +1249,7 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Mobile columns"), {
+    fireEvent.change(screen.getByLabelText("Base columns"), {
       target: { value: "6" },
     });
     fireEvent.change(screen.getAllByLabelText("Columns")[0], {
@@ -1300,7 +1300,7 @@ describe("StackIconsEditor", () => {
         JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
       );
     });
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(12);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(12);
     expect(screen.getByLabelText("Columns")).toHaveValue(18);
   });
 
@@ -1317,7 +1317,7 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Mobile columns")).toHaveValue(8);
+    expect(screen.getByLabelText("Base columns")).toHaveValue(8);
     expect(screen.getByLabelText("Columns")).toHaveValue(14);
 
     fireEvent.click(screen.getByLabelText("Single layout"));
