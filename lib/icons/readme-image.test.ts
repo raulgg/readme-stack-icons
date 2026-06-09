@@ -58,6 +58,43 @@ describe("README image", () => {
     });
   });
 
+  it("should generate only README image code sources when dark sources are excluded", () => {
+    const result = generateReadmeImage({
+      ...baseInput,
+      columnLayouts: [
+        { columns: "4", minWidthPx: null },
+        { columns: "8", minWidthPx: "640" },
+      ],
+      includeDarkTheme: false,
+      layoutMode: "responsive",
+    });
+
+    expect(result).toMatchObject({
+      success: true,
+      imageSources: [
+        {
+          columns: 4,
+          minWidthPx: null,
+          theme: "light",
+          url: "http://localhost:3000/icons?icons=react%2Cnextjs&columns=4&gap=8&theme=light",
+        },
+        {
+          columns: 8,
+          minWidthPx: 640,
+          theme: "light",
+          url: "http://localhost:3000/icons?icons=react%2Cnextjs&columns=8&gap=8&theme=light",
+        },
+      ],
+      readmeHtml: `<picture>
+  <source media="(min-width: 640px)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=light" />
+  <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=light" alt="React, Next.js" title="React, Next.js" width="100%" />
+</picture>`,
+    });
+    expect(result.success ? result.imageSources : []).not.toContainEqual(
+      expect.objectContaining({ theme: "dark" }),
+    );
+  });
+
   it("should generate responsive sources from widest breakpoint to narrowest in README image code", () => {
     const result = generateReadmeImage({
       ...baseInput,

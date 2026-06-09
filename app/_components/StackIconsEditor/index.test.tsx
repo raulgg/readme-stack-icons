@@ -711,7 +711,7 @@ describe("StackIconsEditor", () => {
 </picture>`);
   });
 
-  it("should fall back to the light generated image source when dark sources are excluded", () => {
+  it("should display an existing light generated image source when dark sources are excluded", () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
