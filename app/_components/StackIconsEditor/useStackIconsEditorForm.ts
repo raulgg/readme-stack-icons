@@ -10,7 +10,6 @@ import {
 import {
   generateReadmeImage,
   type GeneratedImageSource,
-  type ReadmeImageGenerationResult,
 } from "@/lib/icons/readme-image";
 
 import {
@@ -23,14 +22,18 @@ import {
 
 type CopyGeneratedHtmlStatus = "failed" | "idle" | "succeeded";
 type CopyImageUrlStatus = "failed" | "idle" | "succeeded";
+type CopyGeneratedHtmlState = {
+  signature: string;
+  status: CopyGeneratedHtmlStatus;
+};
+type CopyImageUrlState = {
+  signature: string;
+  statusByKey: Record<string, CopyImageUrlStatus>;
+};
 type LayoutMemoryState = {
   singleColumnLayout: ColumnLayout;
   responsiveColumnLayouts: ColumnLayout[];
 };
-type GeneratedReadmeImage = Extract<
-  ReadmeImageGenerationResult,
-  { success: true }
->;
 
 function getBaseColumnLayout(state: StackIconsEditorState) {
   return getEditableBaseColumnLayout(state.columnLayouts);
@@ -87,27 +90,6 @@ function replaceEditorUrl(state: StackIconsEditorState) {
   window.history.replaceState(null, "", nextUrl);
 }
 
-function getDisplayedSvgUrl({
-  generatedReadmeImage,
-  previewTheme,
-}: {
-  generatedReadmeImage: GeneratedReadmeImage | null;
-  previewTheme: StackIconsEditorState["previewTheme"];
-}): string {
-  if (generatedReadmeImage === null) {
-    return "";
-  }
-
-  const themedBaseSource = generatedReadmeImage.imageSources.find(
-    (source) => source.minWidthPx === null && source.theme === previewTheme,
-  );
-  const lightBaseSource = generatedReadmeImage.imageSources.find(
-    (source) => source.minWidthPx === null && source.theme === "light",
-  );
-
-  return themedBaseSource?.url ?? lightBaseSource?.url ?? "";
-}
-
 export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   const currentOrigin = React.useSyncExternalStore(
     subscribeToCurrentOrigin,
@@ -116,25 +98,49 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   );
   const [editorState, setEditorState] =
     React.useState<StackIconsEditorState>(initialState);
-  const [generatedReadmeImage, setGeneratedReadmeImage] =
-    React.useState<GeneratedReadmeImage | null>(null);
-  const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
-  const [copyGeneratedHtmlStatus, setCopyGeneratedHtmlStatus] =
-    React.useState<CopyGeneratedHtmlStatus>("idle");
-  const [copyImageUrlStatusByKey, setCopyImageUrlStatusByKey] = React.useState<
-    Record<string, CopyImageUrlStatus>
-  >({});
+  const [copyGeneratedHtmlState, setCopyGeneratedHtmlState] =
+    React.useState<CopyGeneratedHtmlState>({
+      signature: "",
+      status: "idle",
+    });
+  const [copyImageUrlState, setCopyImageUrlState] =
+    React.useState<CopyImageUrlState>({
+      signature: "",
+      statusByKey: {},
+    });
   const [layoutMemory, setLayoutMemory] = React.useState<LayoutMemoryState>(
     () => buildInitialLayoutMemory(initialState),
   );
-  const previewGenerationId = React.useRef(0);
-
-  const generatedUrl = getDisplayedSvgUrl({
-    generatedReadmeImage,
-    previewTheme: editorState.previewTheme,
+  const generatedReadmeImageResult = generateReadmeImage({
+    columnLayouts: editorState.columnLayouts,
+    currentOrigin,
+    gap: editorState.gap,
+    icons: editorState.icons,
+    includeDarkTheme: true,
+    layoutMode: editorState.layoutMode,
   });
+  const generatedReadmeImage = generatedReadmeImageResult.success
+    ? generatedReadmeImageResult
+    : null;
   const generatedHtml = generatedReadmeImage?.readmeHtml ?? "";
   const generatedImageSources = generatedReadmeImage?.imageSources ?? [];
+  const hasGeneratedOutput = generatedReadmeImage !== null;
+  const validationErrors = generatedReadmeImageResult.success
+    ? []
+    : generatedReadmeImageResult.errors;
+  const generatedOutputSignature = JSON.stringify({
+    generatedHtml,
+    generatedImageSources,
+    validationErrors,
+  });
+  const copyGeneratedHtmlStatus =
+    copyGeneratedHtmlState.signature === generatedOutputSignature
+      ? copyGeneratedHtmlState.status
+      : "idle";
+  const copyImageUrlStatusByKey =
+    copyImageUrlState.signature === generatedOutputSignature
+      ? copyImageUrlState.statusByKey
+      : {};
 
   function commitEditorState(nextState: StackIconsEditorState) {
     setEditorState(nextState);
@@ -264,84 +270,70 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     replaceEditorUrl(nextState);
   }
 
-  function generatePreview() {
-    previewGenerationId.current += 1;
-
-    const generatedReadmeImageResult = generateReadmeImage({
-      columnLayouts: editorState.columnLayouts,
-      currentOrigin,
-      gap: editorState.gap,
-      icons: editorState.icons,
-      includeDarkTheme: true,
-      layoutMode: editorState.layoutMode,
-    });
-
-    if (!generatedReadmeImageResult.success) {
-      setGeneratedReadmeImage(null);
-      setValidationErrors(generatedReadmeImageResult.errors);
-      setCopyGeneratedHtmlStatus("idle");
-      setCopyImageUrlStatusByKey({});
-      return;
-    }
-
-    setGeneratedReadmeImage(generatedReadmeImageResult);
-    setValidationErrors([]);
-    setCopyGeneratedHtmlStatus("idle");
-    setCopyImageUrlStatusByKey({});
-  }
-
   async function copyGeneratedHtml() {
-    const copyPreviewGenerationId = previewGenerationId.current;
+    const copyGeneratedOutputSignature = generatedOutputSignature;
     const clipboard = navigator.clipboard;
 
     if (generatedHtml === "" || clipboard === undefined) {
-      setCopyGeneratedHtmlStatus("failed");
+      setCopyGeneratedHtmlState({
+        signature: copyGeneratedOutputSignature,
+        status: "failed",
+      });
       return;
     }
 
     try {
       await clipboard.writeText(generatedHtml);
-      if (copyPreviewGenerationId !== previewGenerationId.current) {
-        return;
-      }
-      setCopyGeneratedHtmlStatus("succeeded");
+      setCopyGeneratedHtmlState({
+        signature: copyGeneratedOutputSignature,
+        status: "succeeded",
+      });
     } catch {
-      if (copyPreviewGenerationId !== previewGenerationId.current) {
-        return;
-      }
-      setCopyGeneratedHtmlStatus("failed");
+      setCopyGeneratedHtmlState({
+        signature: copyGeneratedOutputSignature,
+        status: "failed",
+      });
     }
   }
 
   async function copyImageUrl(source: GeneratedImageSource) {
     const sourceKey = getGeneratedImageSourceKey(source);
-    const copyPreviewGenerationId = previewGenerationId.current;
+    const copyGeneratedOutputSignature = generatedOutputSignature;
     const clipboard = navigator.clipboard;
 
     if (clipboard === undefined) {
-      setCopyImageUrlStatusByKey((currentStatus) => ({
-        ...currentStatus,
-        [sourceKey]: "failed",
+      setCopyImageUrlState((currentState) => ({
+        signature: copyGeneratedOutputSignature,
+        statusByKey: {
+          ...(currentState.signature === copyGeneratedOutputSignature
+            ? currentState.statusByKey
+            : {}),
+          [sourceKey]: "failed",
+        },
       }));
       return;
     }
 
     try {
       await clipboard.writeText(source.url);
-      if (copyPreviewGenerationId !== previewGenerationId.current) {
-        return;
-      }
-      setCopyImageUrlStatusByKey((currentStatus) => ({
-        ...currentStatus,
-        [sourceKey]: "succeeded",
+      setCopyImageUrlState((currentState) => ({
+        signature: copyGeneratedOutputSignature,
+        statusByKey: {
+          ...(currentState.signature === copyGeneratedOutputSignature
+            ? currentState.statusByKey
+            : {}),
+          [sourceKey]: "succeeded",
+        },
       }));
     } catch {
-      if (copyPreviewGenerationId !== previewGenerationId.current) {
-        return;
-      }
-      setCopyImageUrlStatusByKey((currentStatus) => ({
-        ...currentStatus,
-        [sourceKey]: "failed",
+      setCopyImageUrlState((currentState) => ({
+        signature: copyGeneratedOutputSignature,
+        statusByKey: {
+          ...(currentState.signature === copyGeneratedOutputSignature
+            ? currentState.statusByKey
+            : {}),
+          [sourceKey]: "failed",
+        },
       }));
     }
   }
@@ -352,10 +344,9 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     copyGeneratedHtmlStatus,
     copyImageUrl,
     copyImageUrlStatusByKey,
-    generatePreview,
     generatedHtml,
     generatedImageSources,
-    generatedUrl,
+    hasGeneratedOutput,
     removeBreakpointLayout,
     state: editorState,
     switchLayoutMode,

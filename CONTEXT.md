@@ -16,6 +16,10 @@ _Avoid_: Default layout, mobile breakpoint
 A configurable icon grid layout with a column count and an optional breakpoint. The base column layout has no breakpoint and is identified by a `null` minimum width, while breakpoint-specific column layouts have a `min-width` pixel threshold.
 _Avoid_: Layout rule, column preset, responsive layout
 
+**Column layout preview**:
+A visual inspection of one generated image source for a specific column layout and color theme. It does not simulate the full responsive README image selection behavior.
+_Avoid_: Responsive preview, full preview, image preview
+
 Generated README HTML emits breakpoint-specific sources from widest to narrowest so the browser selects the first matching source.
 
 Column layout identity belongs to the layout values themselves, not to generated IDs. UI-only keys may be used while editing, but generated IDs are not part of the column layout language.
@@ -31,6 +35,10 @@ _Avoid_: Breakpoint mode, advanced layout
 **README image**:
 The stack icon image setup generated for a GitHub README, consisting of generated image sources and README image code.
 _Avoid_: Embed, picture code, preview
+
+**README image editor**:
+The user-facing workspace for composing icon slugs, configuring column layouts, generating a README image, and copying README image code.
+_Avoid_: Editor, generator, builder
 
 **README image code**:
 Copy-pasteable HTML for a GitHub README that displays stack icon images, optionally with different sources for breakpoints and color schemes.

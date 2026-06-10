@@ -27,19 +27,47 @@ function renderEditor() {
 }
 
 function generatePreview() {
-  fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+  // Output is generated automatically from the current valid editor state.
 }
 
 function expectNoGeneratedPreview() {
   expect(
-    screen.queryByRole("img", { name: "Generated stack icons preview" }),
+    screen.queryByRole("img", { name: /column layout preview/u }),
   ).not.toBeInTheDocument();
 }
 
 function expectGeneratedPreviewUrl(url: string) {
+  if (screen.queryByRole("dialog") === null) {
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Preview base layout column layout",
+      }),
+    );
+  }
+
   expect(
-    screen.getByRole("img", { name: "Generated stack icons preview" }),
+    screen.getByRole("img", { name: /column layout preview/u }),
   ).toHaveAttribute("src", url);
+}
+
+function getColumnInputs() {
+  return screen.getAllByLabelText("Columns");
+}
+
+function getBaseColumnsInput() {
+  return getColumnInputs()[0];
+}
+
+function getBreakpointColumnsInput(index: number) {
+  return getColumnInputs()[index + 1];
+}
+
+function getMinWidthInputs() {
+  return screen.getAllByLabelText("Min width");
+}
+
+function closePreviewDialog() {
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
 }
 
 describe("StackIconsEditor", () => {
@@ -57,9 +85,9 @@ describe("StackIconsEditor", () => {
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
     );
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByLabelText("README image code")).not.toHaveValue("");
     expect(
-      screen.queryByRole("img", { name: "Generated stack icons preview" }),
+      screen.queryByRole("img", { name: /column layout preview/u }),
     ).not.toBeInTheDocument();
 
     // When
@@ -92,7 +120,10 @@ describe("StackIconsEditor", () => {
       expect(params.has("v")).toBe(false);
     });
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=12&amp;theme=dark" />
+  <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=12&amp;theme=light" alt="React, Next.js" title="React, Next.js" width="100%" />
+</picture>`);
   });
 
   it("should preserve raw state when rendered with page query params", async () => {
@@ -127,15 +158,12 @@ describe("StackIconsEditor", () => {
     expect(
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Light")).toBeChecked();
-    expect(screen.getByLabelText("Dark")).not.toBeChecked();
     expect(screen.getByLabelText("Columns")).toBeEnabled();
     expect(screen.getByLabelText("Single layout")).toBeChecked();
     expect(screen.getByLabelText("Responsive layout")).not.toBeChecked();
     expect(
       screen.queryByLabelText("Include responsive sources"),
     ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Default columns")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
     expectNoGeneratedPreview();
@@ -152,7 +180,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
     await waitFor(() => {
@@ -161,13 +189,17 @@ describe("StackIconsEditor", () => {
       expect(params.get("icons")).toBe("");
     });
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "`icons` must include at least one icon slug.",
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
+    expect(screen.getByLabelText("Icon slugs")).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
+    expect(
+      screen.getByText("`icons` must include at least one icon slug."),
+    ).toBeInTheDocument();
   });
 
-  it("should generate README HTML with dark source by default", async () => {
+  it("should generate README image code with dark source by default", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -183,10 +215,10 @@ describe("StackIconsEditor", () => {
     });
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
-    const readmeHtml = screen.getByLabelText("README HTML");
+    const readmeHtml = screen.getByLabelText("README image code");
 
     expect(readmeHtml).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=dark" />
@@ -198,23 +230,17 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should show the Copy HTML button only after README HTML is generated", () => {
+  it("should show the Copy README image code button when current editor state is valid", () => {
     // Given
     renderEditor();
 
     // Then
     expect(
-      screen.queryByRole("button", { name: "Copy HTML" }),
-    ).not.toBeInTheDocument();
-
-    // When
-    generatePreview();
-
-    // Then
-    expect(screen.getByRole("button", { name: "Copy HTML" })).toBeEnabled();
+      screen.getByRole("button", { name: "Copy README image code" }),
+    ).toBeEnabled();
   });
 
-  it("should copy generated README HTML exactly as displayed", async () => {
+  it("should copy generated README image code exactly as displayed", async () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
@@ -230,10 +256,12 @@ describe("StackIconsEditor", () => {
     });
     generatePreview();
 
-    const readmeHtml = screen.getByLabelText("README HTML");
+    const readmeHtml = screen.getByLabelText("README image code");
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy README image code" }),
+    );
 
     // Then
     await waitFor(() => {
@@ -242,7 +270,7 @@ describe("StackIconsEditor", () => {
       );
     });
     expect(writeText).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("HTML copied.")).toBeInTheDocument();
+    expect(screen.getByText("README image code copied.")).toBeInTheDocument();
     expect(readmeHtml).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=light" alt="React, Next.js" title="React, Next.js" width="100%" />
@@ -257,16 +285,15 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
     expect(
-      screen.getByRole("button", { name: "Copy default light image URL" }),
-    ).toBeDisabled();
+      screen.getByRole("button", { name: "Copy base layout light image URL" }),
+    ).toBeEnabled();
     expect(
       screen.getByRole("button", { name: "Copy 768px dark image URL" }),
-    ).toBeDisabled();
+    ).toBeEnabled();
 
     // When
-    generatePreview();
     fireEvent.click(
-      screen.getByRole("button", { name: "Copy default light image URL" }),
+      screen.getByRole("button", { name: "Copy base layout light image URL" }),
     );
     fireEvent.click(
       screen.getByRole("button", { name: "Copy 768px dark image URL" }),
@@ -290,28 +317,34 @@ describe("StackIconsEditor", () => {
     mockClipboard(writeText);
     renderEditor();
     generatePreview();
-    const readmeHtml = screen.getByLabelText("README HTML");
+    const readmeHtml = screen.getByLabelText("README image code");
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy README image code" }),
+    );
 
     // Then
     await waitFor(() => {
-      expect(screen.getByText("Could not copy HTML.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Could not copy README image code."),
+      ).toBeInTheDocument();
     });
     expect(writeText).toHaveBeenCalledWith(
       (readmeHtml as HTMLTextAreaElement).value,
     );
   });
 
-  it("should reset stale copy feedback after regenerating README HTML", async () => {
+  it("should reset stale copy feedback after regenerating README image code", async () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
     renderEditor();
     generatePreview();
-    fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
-    await screen.findByText("HTML copied.");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy README image code" }),
+    );
+    await screen.findByText("README image code copied.");
 
     // When
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
@@ -320,14 +353,16 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // Then
-    expect(screen.queryByText("HTML copied.")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(
+      screen.queryByText("README image code copied."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
 </picture>`);
   });
 
-  it("should ignore stale copy feedback when copy finishes after regenerating README HTML", async () => {
+  it("should ignore stale copy feedback when copy finishes after regenerating README image code", async () => {
     // Given
     let resolveWriteText: () => void = () => {};
     const writeText = vi.fn(
@@ -339,7 +374,9 @@ describe("StackIconsEditor", () => {
     mockClipboard(writeText);
     renderEditor();
     generatePreview();
-    fireEvent.click(screen.getByRole("button", { name: "Copy HTML" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy README image code" }),
+    );
 
     // When
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
@@ -351,9 +388,13 @@ describe("StackIconsEditor", () => {
     });
 
     // Then
-    expect(screen.queryByText("HTML copied.")).not.toBeInTheDocument();
-    expect(screen.queryByText("Could not copy HTML.")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(
+      screen.queryByText("README image code copied."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Could not copy README image code."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react&amp;columns=18&amp;gap=8&amp;theme=light" alt="React" title="React" width="100%" />
 </picture>`);
@@ -371,7 +412,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should generate responsive README HTML with dark breakpoint sources before light sources", () => {
+  it("should generate responsive README image code with dark breakpoint sources before light sources", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -390,7 +431,7 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=12&amp;gap=10&amp;theme=dark" />
   <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=12&amp;gap=10&amp;theme=light" />
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=8&amp;gap=10&amp;theme=dark" />
@@ -400,7 +441,7 @@ describe("StackIconsEditor", () => {
 </picture>`);
   });
 
-  it("should generate responsive README HTML with dark sources", () => {
+  it("should generate responsive README image code with dark sources", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -417,7 +458,7 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    const readmeHtml = screen.getByLabelText("README HTML");
+    const readmeHtml = screen.getByLabelText("README image code");
 
     expect(readmeHtml).toHaveValue(`<picture>
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=8&amp;gap=8&amp;theme=dark" />
@@ -446,8 +487,9 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    const value = (screen.getByLabelText("README HTML") as HTMLTextAreaElement)
-      .value;
+    const value = (
+      screen.getByLabelText("README image code") as HTMLTextAreaElement
+    ).value;
 
     expect(value.indexOf("(min-width: 1440px)")).toBeLessThan(
       value.indexOf("(min-width: 1024px)"),
@@ -457,7 +499,7 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should preserve user breakpoint order while sorting generated README HTML", () => {
+  it("should preserve user breakpoint order while sorting generated README image code", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -472,21 +514,23 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(12);
-    expect(screen.getAllByLabelText("Min width px")[0]).toHaveValue(1024);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(8);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(640);
+    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(4);
+    expect(screen.getAllByLabelText("Min width")[0]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(12);
+    expect(screen.getAllByLabelText("Min width")[1]).toHaveValue(640);
+    expect(screen.getAllByLabelText("Columns")[2]).toHaveValue(8);
 
     generatePreview();
 
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(12);
-    expect(screen.getAllByLabelText("Min width px")[0]).toHaveValue(1024);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(8);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(640);
+    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(4);
+    expect(screen.getAllByLabelText("Min width")[0]).toHaveValue(1024);
+    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(12);
+    expect(screen.getAllByLabelText("Min width")[1]).toHaveValue(640);
+    expect(screen.getAllByLabelText("Columns")[2]).toHaveValue(8);
     expectGeneratedPreviewUrl(
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=4&gap=8&theme=light",
     );
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=12&amp;gap=8&amp;theme=dark" />
   <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=12&amp;gap=8&amp;theme=light" />
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=8&amp;gap=8&amp;theme=dark" />
@@ -519,7 +563,7 @@ describe("StackIconsEditor", () => {
 
     expectGeneratedPreviewUrl(expectedUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByRole("img", { name: /column layout preview/u }),
     ).toHaveAttribute("src", expectedUrl);
   });
 
@@ -540,11 +584,13 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Breakpoint px values must be unique.",
-    );
+    expect(
+      screen.getAllByText("Min width values must be unique."),
+    ).toHaveLength(2);
+    expect(getMinWidthInputs()[0]).toHaveAttribute("aria-invalid", "true");
+    expect(getMinWidthInputs()[1]).toHaveAttribute("aria-invalid", "true");
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
   });
 
   it("should reject invalid responsive breakpoint min width on generation", () => {
@@ -563,10 +609,11 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Breakpoint px must be an integer from 1 to 3840.",
-    );
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(getMinWidthInputs()[0]).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByText("Min width must be an integer from 1 to 3840."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
   });
 
   it("should reject invalid column layout columns on generation", () => {
@@ -585,11 +632,15 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Each column layout must use 2 to 20 columns.",
+    expect(getBreakpointColumnsInput(0)).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
+    expect(
+      screen.getByText("Columns must be an integer from 2 to 20."),
+    ).toBeInTheDocument();
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
   });
 
   it("should reject missing base layout in single mode on generation", () => {
@@ -604,41 +655,45 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Exactly one base column layout is required.",
-    );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Single layout mode must have exactly one base layout.",
-    );
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(
+      screen.getByText(/Exactly one base column layout is required\./u),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Single layout mode must have exactly one base layout\./u,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
   });
 
   it("should clear stale generated output when column layout generation fails", () => {
     renderEditor();
     generatePreview();
 
-    expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("README HTML")).not.toHaveValue("");
+    expectGeneratedPreviewUrl(
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light",
+    );
+    closePreviewDialog();
+    expect(screen.getByLabelText("README image code")).not.toHaveValue("");
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
-    fireEvent.change(screen.getByLabelText("Columns"), {
+    fireEvent.change(getBaseColumnsInput(), {
       target: { value: "1" },
     });
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Each column layout must use 2 to 20 columns.",
-    );
-    expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(getBaseColumnsInput()).toHaveAttribute("aria-invalid", "true");
     expect(
-      screen.queryByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByText("Columns must be an integer from 2 to 20."),
+    ).toBeInTheDocument();
+    expectNoGeneratedPreview();
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
+    expect(
+      screen.queryByRole("img", { name: "column layout preview" }),
     ).not.toBeInTheDocument();
   });
 
-  it("should generate basic README HTML without icons param for explicit all icons", async () => {
+  it("should generate basic README image code without icons param for explicit all icons", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -648,10 +703,10 @@ describe("StackIconsEditor", () => {
     });
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
-    const readmeHtml = screen.getByLabelText("README HTML");
+    const readmeHtml = screen.getByLabelText("README image code");
 
     expect(readmeHtml).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?columns=18&amp;gap=8&amp;theme=dark" />
@@ -659,7 +714,7 @@ describe("StackIconsEditor", () => {
 </picture>`);
   });
 
-  it("should preserve README HTML URL param order and escape attribute separators", async () => {
+  it("should preserve README image code URL param order and escape attribute separators", async () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -669,10 +724,10 @@ describe("StackIconsEditor", () => {
     });
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=typescript%2Creact%2Cnextjs&amp;columns=18&amp;gap=8&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" width="100%" />
 </picture>`);
@@ -694,7 +749,7 @@ describe("StackIconsEditor", () => {
     });
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
     const expectedUrl =
@@ -702,7 +757,7 @@ describe("StackIconsEditor", () => {
 
     expectGeneratedPreviewUrl(expectedUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByRole("img", { name: /column layout preview/u }),
     ).toHaveAttribute("src", expectedUrl);
   });
 
@@ -717,23 +772,27 @@ describe("StackIconsEditor", () => {
     fireEvent.change(screen.getByLabelText("Columns"), {
       target: { value: "4" },
     });
-    fireEvent.click(screen.getByLabelText("Dark"));
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
+    expectGeneratedPreviewUrl(
+      "http://localhost:3000/icons?icons=react%2Cnextjs&columns=4&gap=8&theme=light",
+    );
+    fireEvent.click(screen.getByLabelText("Dark"));
+
     const previewUrl =
       "http://localhost:3000/icons?icons=react%2Cnextjs&columns=4&gap=8&theme=dark";
 
     expectGeneratedPreviewUrl(previewUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByRole("img", { name: /column layout preview/u }),
     ).toHaveAttribute("src", previewUrl);
     expect(
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;theme=light" alt="React, Next.js" title="React, Next.js" width="100%" />
 </picture>`);
@@ -742,23 +801,26 @@ describe("StackIconsEditor", () => {
   it("should keep using the selected dark preview when dark sources are always generated", () => {
     // Given
     render(
-      <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          previewTheme: "dark",
+        }}
+      />,
     );
 
     // When
-    fireEvent.click(screen.getByLabelText("Dark"));
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
     const previewUrl =
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=dark";
 
-    expect(screen.getByLabelText("Dark")).toBeChecked();
     expect(
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
     expectGeneratedPreviewUrl(previewUrl);
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=light" alt="TypeScript, Next.js, Tailwind CSS, Vercel" title="TypeScript, Next.js, Tailwind CSS, Vercel" width="100%" />
 </picture>`);
@@ -769,7 +831,7 @@ describe("StackIconsEditor", () => {
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     const lightPreviewUrl =
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light";
@@ -784,7 +846,7 @@ describe("StackIconsEditor", () => {
     // Then
     expectGeneratedPreviewUrl(darkPreviewUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByRole("img", { name: /column layout preview/u }),
     ).toHaveAttribute("src", darkPreviewUrl);
 
     // When
@@ -793,7 +855,7 @@ describe("StackIconsEditor", () => {
     // Then
     expectGeneratedPreviewUrl(lightPreviewUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
+      screen.getByRole("img", { name: /column layout preview/u }),
     ).toHaveAttribute("src", lightPreviewUrl);
   });
 
@@ -802,7 +864,11 @@ describe("StackIconsEditor", () => {
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
     );
-    const previewBox = screen.getByTestId("preview-box");
+    generatePreview();
+    expectGeneratedPreviewUrl(
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light",
+    );
+    const previewBox = screen.getByTestId("column-layout-preview-box");
 
     expect(previewBox).toHaveClass("bg-background");
     expect(previewBox).not.toHaveClass("bg-[#0d1117]");
@@ -825,19 +891,23 @@ describe("StackIconsEditor", () => {
     });
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Unknown icon slug: not-real.",
+    expect(screen.getByLabelText("Icon slugs")).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
+    expect(
+      screen.getByText("Unknown icon slug: not-real."),
+    ).toBeInTheDocument();
     expectNoGeneratedPreview();
     expect(
-      screen.queryByRole("img", { name: "Generated stack icons preview" }),
+      screen.queryByRole("img", { name: "column layout preview" }),
     ).not.toBeInTheDocument();
   });
 
-  it("should not show validation errors until preview generation is attempted", () => {
+  it("should show validation errors when edited input is invalid", () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
@@ -849,7 +919,13 @@ describe("StackIconsEditor", () => {
     });
 
     // Then
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Icon slugs")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(
+      screen.getByText("Unknown icon slug: not-real."),
+    ).toBeInTheDocument();
     expectNoGeneratedPreview();
   });
 
@@ -861,30 +937,39 @@ describe("StackIconsEditor", () => {
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "not-real" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Unknown icon slug: not-real.",
+    generatePreview();
+    expect(screen.getByLabelText("Icon slugs")).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
+    expect(
+      screen.getByText("Unknown icon slug: not-real."),
+    ).toBeInTheDocument();
 
     // When
     fireEvent.change(screen.getByLabelText("Icon slugs"), {
       target: { value: "react" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
 
     // Then
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Unknown icon slug: not-real."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Icon slugs")).not.toHaveAttribute(
+      "aria-invalid",
+    );
     expectGeneratedPreviewUrl(
       "http://localhost:3000/icons?icons=react&columns=18&gap=8&theme=light",
     );
   });
 
-  it("should not refresh the generated preview when edit form fields are changed", () => {
+  it("should refresh the generated preview when valid form fields are changed", () => {
     // Given
     render(
       <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Generate Preview" }));
+    generatePreview();
     const generatedUrl =
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light";
 
@@ -896,10 +981,13 @@ describe("StackIconsEditor", () => {
     });
 
     // Then
-    expectGeneratedPreviewUrl(generatedUrl);
+    const nextGeneratedUrl =
+      "http://localhost:3000/icons?icons=react%2Cnextjs&columns=18&gap=8&theme=light";
+
+    expectGeneratedPreviewUrl(nextGeneratedUrl);
     expect(
-      screen.getByRole("img", { name: "Generated stack icons preview" }),
-    ).toHaveAttribute("src", generatedUrl);
+      screen.getByRole("img", { name: /column layout preview/u }),
+    ).toHaveAttribute("src", nextGeneratedUrl);
   });
 
   it("should not use localStorage when editor state changes", () => {
@@ -934,9 +1022,9 @@ describe("StackIconsEditor", () => {
       );
     });
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Default columns")).toHaveValue(12);
-    expect(screen.getByLabelText("Columns")).toHaveValue(18);
-    expect(screen.getByLabelText("Min width px")).toHaveValue(768);
+    expect(getBaseColumnsInput()).toHaveValue(12);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(18);
+    expect(getMinWidthInputs()[0]).toHaveValue(768);
   });
 
   it("should restore previous single and responsive layouts in the current editor session", async () => {
@@ -946,13 +1034,13 @@ describe("StackIconsEditor", () => {
       target: { value: "6" },
     });
     fireEvent.click(screen.getByLabelText("Responsive layout"));
-    fireEvent.change(screen.getByLabelText("Default columns"), {
+    fireEvent.change(getBaseColumnsInput(), {
       target: { value: "10" },
     });
-    fireEvent.change(screen.getByLabelText("Columns"), {
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "16" },
     });
-    fireEvent.change(screen.getByLabelText("Min width px"), {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "1024" },
     });
     fireEvent.click(screen.getByLabelText("Single layout"));
@@ -969,9 +1057,9 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
-    expect(screen.getByLabelText("Default columns")).toHaveValue(10);
-    expect(screen.getByLabelText("Columns")).toHaveValue(16);
-    expect(screen.getByLabelText("Min width px")).toHaveValue(1024);
+    expect(getBaseColumnsInput()).toHaveValue(10);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(16);
+    expect(getMinWidthInputs()[0]).toHaveValue(1024);
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
 
@@ -1000,26 +1088,26 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Default columns")).toHaveValue(6);
-    expect(screen.getAllByLabelText("Columns")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(9);
-    expect(screen.getAllByLabelText("Min width px")[0]).toHaveValue(1024);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(4);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(640);
+    expect(getBaseColumnsInput()).toHaveValue(6);
+    expect(getColumnInputs()).toHaveLength(3);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(9);
+    expect(getMinWidthInputs()[0]).toHaveValue(1024);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(4);
+    expect(getMinWidthInputs()[1]).toHaveValue(640);
 
-    fireEvent.change(screen.getByLabelText("Default columns"), {
+    fireEvent.change(getBaseColumnsInput(), {
       target: { value: "7" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[0], {
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "8" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[0], {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "768" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+    fireEvent.change(getBreakpointColumnsInput(1), {
       target: { value: "12" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[1], {
+    fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1280" },
     });
 
@@ -1042,20 +1130,20 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByLabelText("Responsive layout"));
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
 
-    expect(screen.getAllByLabelText("Columns")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Min width px")).toHaveLength(2);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(null);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(null);
+    expect(getColumnInputs()).toHaveLength(3);
+    expect(getMinWidthInputs()).toHaveLength(2);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(null);
+    expect(getMinWidthInputs()[1]).toHaveValue(null);
 
-    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+    fireEvent.change(getBreakpointColumnsInput(1), {
       target: { value: "20" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[1], {
+    fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1280" },
     });
 
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(20);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(1280);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(20);
+    expect(getMinWidthInputs()[1]).toHaveValue(1280);
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
 
@@ -1076,16 +1164,21 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
 
     expect(
-      screen.queryByText("Each column layout must use 2 to 20 columns."),
+      screen.queryByText("Columns are required when min width is set."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Min width is required when columns are set."),
     ).not.toBeInTheDocument();
 
     generatePreview();
 
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Columns must be an integer from 2 to 20."),
+    ).not.toBeInTheDocument();
     expectGeneratedPreviewUrl(
       "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=12&gap=8&theme=light",
     );
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=dark" />
   <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=18&amp;gap=8&amp;theme=light" />
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;columns=12&amp;gap=8&amp;theme=dark" />
@@ -1098,17 +1191,18 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
-    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+    fireEvent.change(getBreakpointColumnsInput(1), {
       target: { value: "20" },
     });
 
     generatePreview();
 
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Breakpoint rows must include columns and breakpoint px.",
-    );
+    expect(getMinWidthInputs()[1]).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByText("Min width is required when columns are set."),
+    ).toBeInTheDocument();
     expectNoGeneratedPreview();
-    expect(screen.getByLabelText("README HTML")).toHaveValue("");
+    expect(screen.getByLabelText("README image code")).toHaveValue("");
   });
 
   it("should not render remove controls for the base row or the last breakpoint row", () => {
@@ -1126,7 +1220,7 @@ describe("StackIconsEditor", () => {
     );
 
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
-    expect(screen.getByLabelText("Default columns")).toHaveValue(12);
+    expect(getBaseColumnsInput()).toHaveValue(12);
   });
 
   it("should render remove controls only for optional breakpoint rows", () => {
@@ -1170,9 +1264,9 @@ describe("StackIconsEditor", () => {
     );
 
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Default columns")).toHaveValue(12);
-    expect(screen.getByLabelText("Columns")).toHaveValue(20);
-    expect(screen.getByLabelText("Min width px")).toHaveValue(1280);
+    expect(getBaseColumnsInput()).toHaveValue(12);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(20);
+    expect(getMinWidthInputs()[0]).toHaveValue(1280);
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
@@ -1209,9 +1303,9 @@ describe("StackIconsEditor", () => {
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
     expect(screen.getByLabelText("Responsive layout")).toBeChecked();
-    expect(screen.getByLabelText("Default columns")).toHaveValue(12);
-    expect(screen.getByLabelText("Columns")).toHaveValue(20);
-    expect(screen.getByLabelText("Min width px")).toHaveValue(1280);
+    expect(getBaseColumnsInput()).toHaveValue(12);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(20);
+    expect(getMinWidthInputs()[0]).toHaveValue(1280);
     expect(screen.queryByRole("button", { name: /Remove/u })).toBeNull();
   });
 
@@ -1230,17 +1324,17 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.change(screen.getAllByLabelText("Min width px")[0], {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[0], {
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "9" },
     });
 
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(9);
-    expect(screen.getAllByLabelText("Min width px")[0]).toHaveValue(null);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(12);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(1024);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(9);
+    expect(getMinWidthInputs()[0]).toHaveValue(null);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(12);
+    expect(getMinWidthInputs()[1]).toHaveValue(1024);
 
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
@@ -1270,32 +1364,32 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Default columns"), {
+    fireEvent.change(getBaseColumnsInput(), {
       target: { value: "10" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[0], {
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "14" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[0], {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "700" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+    fireEvent.change(getBreakpointColumnsInput(1), {
       target: { value: "18" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[1], {
+    fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1100" },
     });
     fireEvent.click(screen.getByLabelText("Single layout"));
     fireEvent.click(screen.getByLabelText("Responsive layout"));
 
-    expect(screen.getByLabelText("Default columns")).toHaveValue(10);
-    expect(screen.getAllByLabelText("Columns")[0]).toHaveValue(14);
-    expect(screen.getAllByLabelText("Min width px")[0]).toHaveValue(700);
-    expect(screen.getAllByLabelText("Columns")[1]).toHaveValue(18);
-    expect(screen.getAllByLabelText("Min width px")[1]).toHaveValue(1100);
+    expect(getBaseColumnsInput()).toHaveValue(10);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(14);
+    expect(getMinWidthInputs()[0]).toHaveValue(700);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(18);
+    expect(getMinWidthInputs()[1]).toHaveValue(1100);
   });
 
-  it("should generate responsive README HTML from edited breakpoint rows", () => {
+  it("should generate responsive README image code from edited breakpoint rows", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -1311,19 +1405,19 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Default columns"), {
+    fireEvent.change(getBaseColumnsInput(), {
       target: { value: "6" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[0], {
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "9" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[0], {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "700" },
     });
-    fireEvent.change(screen.getAllByLabelText("Columns")[1], {
+    fireEvent.change(getBreakpointColumnsInput(1), {
       target: { value: "15" },
     });
-    fireEvent.change(screen.getAllByLabelText("Min width px")[1], {
+    fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1100" },
     });
     generatePreview();
@@ -1331,7 +1425,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedPreviewUrl(
       "http://localhost:3000/icons?icons=react%2Cnextjs&columns=6&gap=8&theme=light",
     );
-    expect(screen.getByLabelText("README HTML")).toHaveValue(`<picture>
+    expect(screen.getByLabelText("README image code")).toHaveValue(`<picture>
   <source media="(min-width: 1100px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=15&amp;gap=8&amp;theme=dark" />
   <source media="(min-width: 1100px)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=15&amp;gap=8&amp;theme=light" />
   <source media="(min-width: 700px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=9&amp;gap=8&amp;theme=dark" />
@@ -1362,8 +1456,8 @@ describe("StackIconsEditor", () => {
         JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
       );
     });
-    expect(screen.getByLabelText("Default columns")).toHaveValue(12);
-    expect(screen.getByLabelText("Columns")).toHaveValue(18);
+    expect(getBaseColumnsInput()).toHaveValue(12);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(18);
   });
 
   it("should initialize inactive single memory to defaults from a responsive layout URL", async () => {
@@ -1379,8 +1473,8 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Default columns")).toHaveValue(8);
-    expect(screen.getByLabelText("Columns")).toHaveValue(14);
+    expect(getBaseColumnsInput()).toHaveValue(8);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(14);
 
     fireEvent.click(screen.getByLabelText("Single layout"));
 

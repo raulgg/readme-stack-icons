@@ -15,6 +15,8 @@
   --muted-foreground: 202 10% 38%;
   --accent: 12 82% 57%;
   --accent-foreground: 40 28% 97%;
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 40 28% 97%;
   --border: 205 15% 78%;
   --input: 205 15% 78%;
   --ring: 169 77% 24%;
@@ -36,4 +38,15 @@ body {
 
 .font-mono {
   font-family: "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
+}
+
+input[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: hsl(var(--destructive));
+  box-shadow: 0 0 0 1px hsl(var(--destructive) / 0.3);
+}
+
+input[aria-invalid="true"]:focus-visible,
+textarea[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 2px hsl(var(--destructive));
 }
