@@ -14,12 +14,14 @@ export async function renderIconSvg({
   columns,
   gap,
   icons,
+  size,
   theme,
 }: ParsedIconRequest): Promise<string> {
   const gridLayout = getIconGridLayout({
     columns,
     gap,
     iconCount: icons.length,
+    iconSize: size,
   });
   const title = icons.map((icon) => icon.label).join(", ");
   const description = `Technology stack icons for ${title}.`;

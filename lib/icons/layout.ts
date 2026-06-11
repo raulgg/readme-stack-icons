@@ -1,5 +1,3 @@
-export const iconSize = 40;
-
 export type IconGridPlacement = {
   height: number;
   index: number;
@@ -18,10 +16,12 @@ export function getIconGridLayout({
   columns,
   gap,
   iconCount,
+  iconSize,
 }: {
   columns: number;
   gap: number;
   iconCount: number;
+  iconSize: number;
 }): IconGridLayout {
   const rows = Math.ceil(iconCount / columns);
   const usedColumns = Math.min(columns, iconCount);
@@ -43,12 +43,19 @@ export function getIconGridDimensions({
   columns,
   gap,
   iconCount,
+  iconSize,
 }: {
   columns: number;
   gap: number;
   iconCount: number;
+  iconSize: number;
 }) {
-  const { height, width } = getIconGridLayout({ columns, gap, iconCount });
+  const { height, width } = getIconGridLayout({
+    columns,
+    gap,
+    iconCount,
+    iconSize,
+  });
 
   return { height, width };
 }

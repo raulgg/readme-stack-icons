@@ -32,6 +32,7 @@ type GenerateReadmeImageInput = {
   icons: string;
   includeDarkTheme: boolean;
   layoutMode: LayoutMode;
+  size: string;
 };
 
 export function generateReadmeImage({
@@ -41,6 +42,7 @@ export function generateReadmeImage({
   icons,
   includeDarkTheme,
   layoutMode,
+  size,
 }: GenerateReadmeImageInput): ReadmeImageGenerationResult {
   const columnLayoutResult = validateColumnLayouts({
     columnLayouts,
@@ -50,6 +52,7 @@ export function generateReadmeImage({
     buildIconRequestParams({
       gap,
       icons,
+      size,
     }),
   );
 
@@ -76,6 +79,7 @@ export function generateReadmeImage({
     gap,
     icons,
     includeDarkTheme,
+    size,
   });
   const labels = isAllIconInput(icons)
     ? "All stack icons"
@@ -94,12 +98,14 @@ function buildGeneratedImageSources({
   gap,
   icons,
   includeDarkTheme,
+  size,
 }: {
   columnLayouts: readonly ColumnLayout[];
   currentOrigin: string;
   gap: string;
   icons: string;
   includeDarkTheme: boolean;
+  size: string;
 }): GeneratedImageSource[] {
   return columnLayouts.flatMap((layout) => {
     const lightSource = buildGeneratedImageSource({
@@ -107,6 +113,7 @@ function buildGeneratedImageSources({
       currentOrigin,
       gap,
       icons,
+      size,
       theme: "light",
     });
 
@@ -121,6 +128,7 @@ function buildGeneratedImageSources({
         currentOrigin,
         gap,
         icons,
+        size,
         theme: "dark",
       }),
     ];
@@ -132,12 +140,14 @@ function buildGeneratedImageSource({
   currentOrigin,
   gap,
   icons,
+  size,
   theme,
 }: {
   columnLayout: ColumnLayout;
   currentOrigin: string;
   gap: string;
   icons: string;
+  size: string;
   theme: "dark" | "light";
 }): GeneratedImageSource {
   return {
@@ -149,6 +159,7 @@ function buildGeneratedImageSource({
       currentOrigin,
       gap,
       icons,
+      size,
       theme,
     }),
   };
@@ -203,7 +214,7 @@ function renderReadmeHtml({
     sourceMarkup.length === 0 ? "" : `${sourceMarkup.join("\n")}\n`;
 
   return `<picture>
-${sourceMarkupText}  <img src="${escapeXml(baseLightSource.url)}" alt="${escapeXml(labels)}" title="${escapeXml(labels)}" width="100%" />
+${sourceMarkupText}  <img src="${escapeXml(baseLightSource.url)}" alt="${escapeXml(labels)}" title="${escapeXml(labels)}" />
 </picture>`;
 }
 
@@ -211,9 +222,7 @@ function getResponsiveLightSources(
   imageSources: readonly GeneratedImageSource[],
 ): GeneratedImageSource[] {
   return imageSources
-    .filter(
-      (source) => source.theme === "light" && source.minWidthPx !== null,
-    )
+    .filter((source) => source.theme === "light" && source.minWidthPx !== null)
     .sort((a, b) => Number(b.minWidthPx) - Number(a.minWidthPx));
 }
 
@@ -250,14 +259,17 @@ function getGeneratedImageSource({
 function buildIconRequestParams({
   gap,
   icons,
+  size,
 }: {
   gap: string;
   icons: string;
+  size: string;
 }): URLSearchParams {
   const params = new URLSearchParams();
 
   params.set("icons", icons);
   params.set("gap", gap);
+  params.set("size", size);
 
   return params;
 }
@@ -267,12 +279,14 @@ function buildReadmeImageUrl({
   currentOrigin,
   gap,
   icons,
+  size,
   theme,
 }: {
   columns: number;
   currentOrigin: string;
   gap: string;
   icons: string;
+  size: string;
   theme: "dark" | "light";
 }): string {
   const url = new URL("/icons", currentOrigin);
@@ -284,6 +298,9 @@ function buildReadmeImageUrl({
 
   params.set("columns", String(columns));
   params.set("gap", gap);
+  // Icon size is always explicit so a generated image source never depends on
+  // the endpoint's back-compat default of 40 (ADR 0001).
+  params.set("size", size);
   params.set("theme", theme);
 
   url.search = params.toString();

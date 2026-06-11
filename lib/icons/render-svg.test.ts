@@ -21,6 +21,7 @@ function request(overrides: Partial<ParsedIconRequest>): ParsedIconRequest {
     slugs: ["typescript"],
     columns: 16,
     gap: 8,
+    size: 40,
     theme: "light",
     ...overrides,
   };
@@ -46,10 +47,10 @@ describe("renderIconSvg", () => {
     // Then
     expect(svg).toContain('role="img" aria-labelledby="title desc"');
     expect(svg).toContain(
-      "<title id=\"title\">TypeScript, React, TypeScript, Next.js</title>",
+      '<title id="title">TypeScript, React, TypeScript, Next.js</title>',
     );
     expect(svg).toContain(
-      "<desc id=\"desc\">Technology stack icons for TypeScript, React, TypeScript, Next.js.</desc>",
+      '<desc id="desc">Technology stack icons for TypeScript, React, TypeScript, Next.js.</desc>',
     );
     expect(svg.match(/#3178C6/g)).toHaveLength(2);
     expect(svg.indexOf("#3178C6")).toBeLessThan(svg.indexOf("#087EA4"));
@@ -84,6 +85,28 @@ describe("renderIconSvg", () => {
     expect(svg).toContain('<svg x="0" y="52" width="40" height="40"');
     expect(svg).toContain('<svg x="52" y="52" width="40" height="40"');
     expect(svg).toContain('<svg x="0" y="104" width="40" height="40"');
+  });
+
+  it("should scale grid dimensions and icon placements when a custom icon size is requested", async () => {
+    // Given
+    const parsedRequest = request({
+      icons: [icon("typescript"), icon("react"), icon("nextjs")],
+      slugs: ["typescript", "react", "nextjs"],
+      columns: 2,
+      gap: 8,
+      size: 56,
+    });
+
+    // When
+    const svg = await renderIconSvg(parsedRequest);
+
+    // Then
+    expect(svg).toContain(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img"',
+    );
+    expect(svg).toContain('<svg x="0" y="0" width="56" height="56"');
+    expect(svg).toContain('<svg x="64" y="0" width="56" height="56"');
+    expect(svg).toContain('<svg x="0" y="64" width="56" height="56"');
   });
 
   it("should use light assets for icons with dark variants when a light SVG is generated", async () => {
@@ -131,7 +154,7 @@ describe("renderIconSvg", () => {
     expect(svg).toContain("<svg");
     expect(svg).toContain("Invalid icon request");
     expect(svg).toContain("Unknown icon slug: not-real.");
-    expect(svg).toContain("role=\"img\"");
+    expect(svg).toContain('role="img"');
   });
 
   it("should escape validation error text when XML-sensitive characters are provided", () => {
@@ -157,7 +180,7 @@ describe("renderIconSvg", () => {
 
     // Then
     expect(svg).toContain(
-      "<desc id=\"desc\">Unknown icon slugs: rendeeer, liiinear, fiiigma, fuuuuuge, heyyouu, 123456789.</desc>",
+      '<desc id="desc">Unknown icon slugs: rendeeer, liiinear, fiiigma, fuuuuuge, heyyouu, 123456789.</desc>',
     );
     expect(svg).toContain(
       ">Unknown icon slugs: rendeeer, liiinear, fiiigma, fuuuuuge...</text>",
