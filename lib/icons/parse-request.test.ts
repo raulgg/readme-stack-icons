@@ -119,6 +119,7 @@ describe("icon request parser", () => {
       data: {
         columns: 16,
         gap: 8,
+        size: 40,
         theme: "light",
       },
     });
@@ -126,7 +127,9 @@ describe("icon request parser", () => {
 
   it("should accept valid bounds when layout params are parsed", () => {
     // Given
-    const searchParams = params("icons=typescript&columns=2&gap=24&theme=dark");
+    const searchParams = params(
+      "icons=typescript&columns=2&gap=24&size=64&theme=dark",
+    );
 
     // When
     const result = parseIconRequest(searchParams);
@@ -137,8 +140,98 @@ describe("icon request parser", () => {
       data: {
         columns: 2,
         gap: 24,
+        size: 64,
         theme: "dark",
       },
+    });
+  });
+
+  it("should default the icon size to 40 when the size param is absent", () => {
+    // Given — generated image source URLs copied before the size param existed
+    // must keep rendering at the pre-existing 40px icon size (ADR 0001).
+    const searchParams = params("icons=typescript&columns=2&gap=12");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result).toMatchObject({
+      data: {
+        size: 40,
+      },
+    });
+  });
+
+  it("should accept the minimum icon size when the size param is parsed", () => {
+    // Given
+    const searchParams = params("icons=typescript&size=24");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result).toMatchObject({
+      data: {
+        size: 24,
+      },
+    });
+  });
+
+  it("should reject an icon size below the minimum when the size param is parsed", () => {
+    // Given
+    const searchParams = params("icons=typescript&size=23");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: ["`size` must be at least 24."],
+    });
+  });
+
+  it("should reject an icon size above the maximum when the size param is parsed", () => {
+    // Given
+    const searchParams = params("icons=typescript&size=65");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: ["`size` must be at most 64."],
+    });
+  });
+
+  it("should reject non-integer icon sizes when the size param is parsed", () => {
+    // Given
+    const searchParams = params("icons=typescript&size=47.5");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: ["`size` must be an integer."],
+    });
+  });
+
+  it("should reject non-numeric icon sizes when the size param is parsed", () => {
+    // Given
+    const searchParams = params("icons=typescript&size=abc");
+
+    // When
+    const result = parseIconRequest(searchParams);
+
+    // Then
+    expect(result.success).toBe(false);
+    expect(result).toMatchObject({
+      errors: ["Invalid input: expected number, received NaN"],
     });
   });
 
@@ -186,7 +279,9 @@ describe("icon request parser", () => {
 
   it("should ignore the version param when semantic request values are parsed", () => {
     // Given
-    const withoutVersion = params("icons=typescript&columns=4&gap=12&theme=dark");
+    const withoutVersion = params(
+      "icons=typescript&columns=4&gap=12&theme=dark",
+    );
     const withVersion = params(
       "icons=typescript&columns=4&gap=12&theme=dark&v=cache-key",
     );

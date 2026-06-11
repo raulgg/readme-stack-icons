@@ -10,6 +10,7 @@ export type ParsedIconRequest = {
   slugs: IconSlug[];
   columns: number;
   gap: number;
+  size: number;
   theme: IconRequestTheme;
 };
 
@@ -48,6 +49,14 @@ const rawIconRequestSchema = z.object({
     .min(0, "`gap` must be at least 0.")
     .max(24, "`gap` must be at most 24.")
     .default(8),
+  // Generated image source URLs in the wild predate the `size` param, so an
+  // absent `size` keeps the pre-existing 40px icon size (ADR 0001).
+  size: z.coerce
+    .number()
+    .int("`size` must be an integer.")
+    .min(24, "`size` must be at least 24.")
+    .max(64, "`size` must be at most 64.")
+    .default(40),
   theme: z.enum(["light", "dark"]).default("light"),
   v: z.string().optional(),
 });
@@ -59,6 +68,7 @@ export function parseIconRequest(
     icons: searchParams.get("icons") ?? undefined,
     columns: searchParams.get("columns") ?? undefined,
     gap: searchParams.get("gap") ?? undefined,
+    size: searchParams.get("size") ?? undefined,
     theme: searchParams.get("theme") ?? undefined,
     v: searchParams.get("v") ?? undefined,
   });
@@ -103,6 +113,7 @@ export function parseIconRequest(
       slugs: registeredSlugs,
       columns: rawRequest.data.columns,
       gap: rawRequest.data.gap,
+      size: rawRequest.data.size,
       theme: rawRequest.data.theme,
     },
   };
