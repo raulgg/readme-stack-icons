@@ -1,5 +1,20 @@
 import "@testing-library/jest-dom/vitest";
 
+// jsdom does not implement matchMedia, which next-themes and sonner rely on.
+if (window.matchMedia === undefined) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+}
+
 // jsdom does not implement PointerEvent, which Radix UI primitives rely on.
 if (window.PointerEvent === undefined) {
   class PointerEventPolyfill extends MouseEvent {
