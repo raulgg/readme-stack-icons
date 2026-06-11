@@ -1,5 +1,3 @@
-import React from "react";
-
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -28,7 +26,7 @@ export default async function Home({ searchParams }: HomeProps = {}) {
               Stack<span className="text-accent-ink">Icons</span>
             </p>
             <p className="mt-px font-mono text-[16px] text-ink-3">
-              readme image composer
+              README tech-stack icons
             </p>
           </div>
         </div>
