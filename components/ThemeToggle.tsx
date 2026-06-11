@@ -1,5 +1,6 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import React from "react";
 
@@ -47,14 +48,14 @@ export function ThemeToggle() {
         label="Light"
         onActivate={() => setTheme("light")}
       >
-        <SunIcon />
+        <Sun aria-hidden size={16} />
       </ThemeToggleButton>
       <ThemeToggleButton
         isActive={activeTheme === "dark"}
         label="Dark"
         onActivate={() => setTheme("dark")}
       >
-        <MoonIcon />
+        <Moon aria-hidden size={16} />
       </ThemeToggleButton>
     </div>
   );
@@ -87,49 +88,5 @@ function ThemeToggleButton({
       {children}
       {label}
     </button>
-  );
-}
-
-function SunIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height={16}
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      width={16}
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="m6.34 17.66-1.41 1.41" />
-      <path d="m19.07 4.93-1.41 1.41" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height={16}
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      width={16}
-    >
-      <path d="M12 3a6.364 6.364 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-    </svg>
   );
 }
