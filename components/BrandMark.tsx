@@ -15,9 +15,9 @@ export function BrandMark({ className }: BrandMarkProps) {
       aria-hidden="true"
       className={className}
       fill="none"
-      height={44}
+      height={52}
       viewBox="0 0 36 36"
-      width={44}
+      width={52}
     >
       <rect
         fill="hsl(var(--accent-soft))"
