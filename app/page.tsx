@@ -25,7 +25,7 @@ export default async function Home({ searchParams }: HomeProps = {}) {
             <p className="text-[27px] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground">
               Stack<span className="text-accent-ink">Icons</span>
             </p>
-            <p className="mt-px font-mono text-[16px] text-ink-3">
+            <p className="mt-[3px] font-mono text-[16px] leading-none text-ink-3">
               README tech-stack icons
             </p>
           </div>
