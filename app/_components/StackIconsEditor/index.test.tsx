@@ -285,18 +285,26 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByLabelText("Responsive layout"));
     expect(
-      screen.getByRole("button", { name: "Copy base layout light image URL" }),
+      screen.getByRole("button", { name: "Copy base layout image URL" }),
     ).toBeEnabled();
     expect(
-      screen.getByRole("button", { name: "Copy 768px dark image URL" }),
+      screen.getByRole("button", { name: "Copy 768px image URL" }),
     ).toBeEnabled();
 
     // When
     fireEvent.click(
-      screen.getByRole("button", { name: "Copy base layout light image URL" }),
+      screen.getByRole("button", { name: "Copy base layout image URL" }),
     );
     fireEvent.click(
-      screen.getByRole("button", { name: "Copy 768px dark image URL" }),
+      screen.getByRole("menuitem", {
+        name: "Copy base layout light image URL",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy 768px image URL" }),
+    );
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: "Copy 768px dark image URL" }),
     );
 
     // Then
@@ -309,6 +317,113 @@ describe("StackIconsEditor", () => {
       );
     });
     expect(writeText).toHaveBeenCalledTimes(2);
+  });
+
+  it("should copy light and dark image URLs from the row copy menu and show copied state", async () => {
+    // Given
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    renderEditor();
+
+    // When
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy base layout image URL" }),
+    );
+
+    // Then
+    const lightItem = screen.getByRole("menuitem", {
+      name: "Copy base layout light image URL",
+    });
+    const darkItem = screen.getByRole("menuitem", {
+      name: "Copy base layout dark image URL",
+    });
+
+    expect(lightItem).toBeEnabled();
+    expect(darkItem).toBeEnabled();
+    expect(lightItem).toHaveTextContent("Copy light image URL");
+    expect(darkItem).toHaveTextContent("Copy dark image URL");
+
+    // When
+    fireEvent.click(lightItem);
+
+    // Then
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=light",
+      );
+    });
+    await waitFor(() => {
+      expect(lightItem).toHaveTextContent("Copied");
+    });
+    expect(darkItem).toHaveTextContent("Copy dark image URL");
+
+    // When
+    fireEvent.click(darkItem);
+
+    // Then
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(
+        "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=18&gap=8&theme=dark",
+      );
+    });
+    await waitFor(() => {
+      expect(darkItem).toHaveTextContent("Copied");
+    });
+    expect(lightItem).toHaveTextContent("Copied");
+    expect(writeText).toHaveBeenCalledTimes(2);
+  });
+
+  it("should show a copy failed state in the row copy menu when clipboard writing fails", async () => {
+    // Given
+    const writeText = vi.fn().mockRejectedValue(new Error("Denied"));
+    mockClipboard(writeText);
+    renderEditor();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Copy base layout image URL" }),
+    );
+
+    const lightItem = screen.getByRole("menuitem", {
+      name: "Copy base layout light image URL",
+    });
+
+    // When
+    fireEvent.click(lightItem);
+
+    // Then
+    await waitFor(() => {
+      expect(lightItem).toHaveTextContent("Copy failed");
+    });
+  });
+
+  it("should copy the current page URL when the Copy link button is clicked", async () => {
+    // Given
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    mockClipboard(writeText);
+    renderEditor();
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+
+    // Then
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(window.location.href);
+    });
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Link copied.")).toBeInTheDocument();
+  });
+
+  it("should show copy link failure feedback when the clipboard is unavailable", async () => {
+    // Given clipboard is undefined from beforeEach
+    renderEditor();
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+
+    // Then
+    await waitFor(() => {
+      expect(screen.getByText("Could not copy link.")).toBeInTheDocument();
+    });
   });
 
   it("should show copy failure feedback when clipboard writing fails", async () => {
