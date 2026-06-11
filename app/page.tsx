@@ -22,11 +22,11 @@ export default async function Home({ searchParams }: HomeProps = {}) {
         <div className="flex items-center gap-3">
           <BrandMark />
           <div>
-            <p className="text-[27px] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground">
+            <p className="mb-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground">
               Stack<span className="text-accent-ink">Icons</span>
             </p>
-            <p className="mt-[3px] font-mono text-[16px] leading-none text-ink-3">
-              README tech-stack icons
+            <p className="font-mono text-[12px] uppercase leading-none text-ink-3">
+              Tech Stack Icons Composer
             </p>
           </div>
         </div>
@@ -41,8 +41,7 @@ export default async function Home({ searchParams }: HomeProps = {}) {
           Pick the tools you actually ship with, drag them into order, and walk
           away with one tidy{" "}
           <code className="font-mono text-[0.9em]">&lt;picture&gt;</code>{" "}
-          snippet that drops straight into any README — crisp in light{" "}
-          <em>and</em> dark.
+          snippet that drops straight into any README — crisp in light and dark.
         </p>
       </section>
 
