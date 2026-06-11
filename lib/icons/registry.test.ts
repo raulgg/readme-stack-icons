@@ -9,10 +9,12 @@ import {
   getIconLabels,
   iconRegistry,
   isIconSlug,
+  listIconCategories,
   listIconSlugs,
   listRegisteredIcons,
+  listRegisteredIconsByCategory,
 } from "./registry";
-import type { IconRegistryEntry } from "./registry";
+import type { IconCategory, IconRegistryEntry } from "./registry";
 
 describe("icon registry", () => {
   it("should return icon metadata when a registered slug is looked up", () => {
@@ -26,6 +28,7 @@ describe("icon registry", () => {
     expect(icon).toEqual({
       slug: "github",
       label: "GitHub",
+      category: "Tools",
       light: "assets/icons/github.svg",
       dark: "assets/icons/github-dark.svg",
     });
@@ -95,6 +98,69 @@ describe("icon registry", () => {
     expect(isIconSlug(knownSlug)).toBe(true);
     expect(isIconSlug(unknownSlug)).toBe(false);
     expect(isIconSlug(inheritedPropertyName)).toBe(false);
+  });
+
+  it("should expose picker filter chips in stable order when icon categories are listed", () => {
+    // Given / When
+    const categories = listIconCategories();
+
+    // Then
+    expect(categories).toEqual([
+      "Languages",
+      "Frameworks",
+      "Databases",
+      "Cloud",
+      "Tools",
+    ]);
+  });
+
+  it("should return only matching icons in registry order when registered icons are filtered by category", () => {
+    // Given
+    const category: IconCategory = "Databases";
+
+    // When
+    const databaseIcons = listRegisteredIconsByCategory(category);
+
+    // Then
+    expect(databaseIcons.map((icon) => icon.slug)).toEqual([
+      "prisma",
+      "postgresql",
+      "neon",
+      "redis",
+      "mongodb",
+      "mysql",
+    ]);
+    expect(databaseIcons.every((icon) => icon.category === category)).toBe(
+      true,
+    );
+  });
+
+  it("should cover every registered icon exactly once when each category filter is combined", () => {
+    // Given
+    const categories = listIconCategories();
+
+    // When
+    const filteredSlugs = categories.flatMap((category) =>
+      listRegisteredIconsByCategory(category).map((icon) => icon.slug),
+    );
+
+    // Then
+    expect(filteredSlugs.toSorted()).toEqual(listIconSlugs().toSorted());
+  });
+
+  it("should assign a valid category when every registry entry is inspected", () => {
+    // Given
+    const validCategories = new Set<string>(listIconCategories());
+    const registryEntries: IconRegistryEntry[] = Object.values(iconRegistry);
+
+    // When
+    const invalidCategoryLabels = registryEntries
+      .filter((entry) => !validCategories.has(entry.category))
+      .map((entry) => entry.label);
+
+    // Then
+    expect(registryEntries.length).toBeGreaterThan(0);
+    expect(invalidCategoryLabels).toEqual([]);
   });
 
   it("should reference committed SVG files when registry assets are listed", () => {
