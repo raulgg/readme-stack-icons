@@ -301,13 +301,6 @@ export function getIconLabel(slug: string): string | undefined {
   return getIconBySlug(slug)?.label;
 }
 
-export function getIconLabels(slugs: readonly string[]): string[] {
-  return slugs.flatMap((slug) => {
-    const label = getIconLabel(slug);
-    return label ? [label] : [];
-  });
-}
-
 export function getIconAssetPath({
   slug,
   theme,
@@ -332,12 +325,6 @@ export function listIconSlugs(): readonly IconSlug[] {
 
 export function listIconCategories(): readonly IconCategory[] {
   return ICON_CATEGORIES;
-}
-
-export function listRegisteredIconsByCategory(
-  category: IconCategory,
-): readonly RegisteredIcon[] {
-  return listRegisteredIcons().filter((icon) => icon.category === category);
 }
 
 export function isIconSlug(slug: string): slug is IconSlug {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getIconGridDimensions, getIconGridLayout } from "./layout";
+import { getIconGridLayout } from "./layout";
 
 describe("icon layout", () => {
   it("should compute single-row dimensions when icon count is less than columns", () => {
@@ -13,10 +13,10 @@ describe("icon layout", () => {
     };
 
     // When
-    const dimensions = getIconGridDimensions(layout);
+    const { height, width } = getIconGridLayout(layout);
 
     // Then
-    expect(dimensions).toEqual({
+    expect({ height, width }).toEqual({
       height: 40,
       width: 136,
     });
@@ -32,10 +32,10 @@ describe("icon layout", () => {
     };
 
     // When
-    const dimensions = getIconGridDimensions(layout);
+    const { height, width } = getIconGridLayout(layout);
 
     // Then
-    expect(dimensions).toEqual({
+    expect({ height, width }).toEqual({
       height: 144,
       width: 92,
     });
@@ -103,10 +103,10 @@ describe("icon layout", () => {
     };
 
     // When
-    const dimensions = getIconGridDimensions(layout);
+    const { height, width } = getIconGridLayout(layout);
 
     // Then
-    expect(dimensions).toEqual({
+    expect({ height, width }).toEqual({
       height: 40,
       width: 40,
     });

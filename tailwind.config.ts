@@ -18,16 +18,6 @@ const config: Config = {
         "Arial",
         "sans-serif",
       ],
-      // Charter is gone; serif headings render with the UI system stack.
-      serif: [
-        "-apple-system",
-        "BlinkMacSystemFont",
-        '"Segoe UI"',
-        '"Noto Sans"',
-        "Helvetica",
-        "Arial",
-        "sans-serif",
-      ],
       mono: [
         "ui-monospace",
         "SFMono-Regular",
@@ -76,7 +66,6 @@ const config: Config = {
           ink: "hsl(var(--accent-ink))",
           bright: "hsl(var(--accent-bright))",
           soft: "hsl(var(--accent-soft))",
-          "soft-2": "hsl(var(--accent-soft-2))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -94,7 +83,6 @@ const config: Config = {
         code: {
           bg: "hsl(var(--code-bg))",
           "bg-2": "hsl(var(--code-bg-2))",
-          ink: "hsl(var(--code-ink))",
         },
         syntax: {
           tag: "hsl(var(--syntax-tag))",
@@ -107,7 +95,6 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        pill: "var(--radius-pill)",
       },
       boxShadow: {
         // Primer has only two shadows: a subtle button bevel and an

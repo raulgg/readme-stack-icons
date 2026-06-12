@@ -167,17 +167,6 @@ export function validateColumnLayouts({
   };
 }
 
-export function getReadmeSourceColumnLayouts(
-  columnLayouts: readonly ColumnLayout[],
-): Array<ColumnLayout & { minWidthPx: number }> {
-  return [...columnLayouts]
-    .filter(
-      (layout): layout is ColumnLayout & { minWidthPx: number } =>
-        layout.minWidthPx !== null,
-    )
-    .sort((a, b) => b.minWidthPx - a.minWidthPx);
-}
-
 export function copyEditableColumnLayouts(
   columnLayouts: readonly EditableColumnLayout[],
 ): EditableColumnLayout[] {

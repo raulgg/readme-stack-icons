@@ -6,7 +6,6 @@ import {
   getDefaultColumnLayouts,
   getEditableBaseColumnLayout,
   getEditableBreakpointColumnLayouts,
-  getReadmeSourceColumnLayouts,
   parseEditableColumnLayouts,
   validateColumnLayouts,
 } from "./column-layout";
@@ -141,19 +140,6 @@ describe("column layouts", () => {
       success: false,
       errors: ["Breakpoint px values must be unique."],
     });
-  });
-
-  it("should order README source column layouts from widest to narrowest", () => {
-    expect(
-      getReadmeSourceColumnLayouts([
-        { columns: 12, minWidthPx: null },
-        { columns: 16, minWidthPx: 768 },
-        { columns: 20, minWidthPx: 1280 },
-      ]),
-    ).toEqual([
-      { columns: 20, minWidthPx: 1280 },
-      { columns: 16, minWidthPx: 768 },
-    ]);
   });
 
   it("should find the editable base column layout", () => {

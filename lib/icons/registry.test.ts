@@ -6,15 +6,13 @@ import {
   getIconAssetPath,
   getIconBySlug,
   getIconLabel,
-  getIconLabels,
   iconRegistry,
   isIconSlug,
   listIconCategories,
   listIconSlugs,
   listRegisteredIcons,
-  listRegisteredIconsByCategory,
 } from "./registry";
-import type { IconCategory, IconRegistryEntry } from "./registry";
+import type { IconRegistryEntry } from "./registry";
 
 describe("icon registry", () => {
   it("should return icon metadata when a registered slug is looked up", () => {
@@ -77,17 +75,6 @@ describe("icon registry", () => {
     expect(fallbackAssetPath).toBe("assets/icons/typescript.svg");
   });
 
-  it("should expose ordered labels when downstream text is generated from slugs", () => {
-    // Given
-    const slugs = ["typescript", "react", "nextjs", "unknown"];
-
-    // When
-    const labels = getIconLabels(slugs);
-
-    // Then
-    expect(labels).toEqual(["TypeScript", "React", "Next.js"]);
-  });
-
   it("should identify known slugs when user input is checked", () => {
     // Given
     const knownSlug = "codex";
@@ -112,40 +99,6 @@ describe("icon registry", () => {
       "Cloud",
       "Tools",
     ]);
-  });
-
-  it("should return only matching icons in registry order when registered icons are filtered by category", () => {
-    // Given
-    const category: IconCategory = "Databases";
-
-    // When
-    const databaseIcons = listRegisteredIconsByCategory(category);
-
-    // Then
-    expect(databaseIcons.map((icon) => icon.slug)).toEqual([
-      "prisma",
-      "postgresql",
-      "neon",
-      "redis",
-      "mongodb",
-      "mysql",
-    ]);
-    expect(databaseIcons.every((icon) => icon.category === category)).toBe(
-      true,
-    );
-  });
-
-  it("should cover every registered icon exactly once when each category filter is combined", () => {
-    // Given
-    const categories = listIconCategories();
-
-    // When
-    const filteredSlugs = categories.flatMap((category) =>
-      listRegisteredIconsByCategory(category).map((icon) => icon.slug),
-    );
-
-    // Then
-    expect(filteredSlugs.toSorted()).toEqual(listIconSlugs().toSorted());
   });
 
   it("should assign a valid category when every registry entry is inspected", () => {

@@ -38,24 +38,3 @@ export function getIconGridLayout({
     width: usedColumns * iconSize + Math.max(usedColumns - 1, 0) * gap,
   };
 }
-
-export function getIconGridDimensions({
-  columns,
-  gap,
-  iconCount,
-  iconSize,
-}: {
-  columns: number;
-  gap: number;
-  iconCount: number;
-  iconSize: number;
-}) {
-  const { height, width } = getIconGridLayout({
-    columns,
-    gap,
-    iconCount,
-    iconSize,
-  });
-
-  return { height, width };
-}

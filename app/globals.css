@@ -34,7 +34,6 @@
 
   /* Shape */
   --radius: 6px;
-  --radius-pill: 999px;
 
   /* Primer tokens without a shadcn slot */
   --ink-2: 211.4 10.6% 39%; /* #59636e */
@@ -52,12 +51,9 @@
   /* Code */
   --code-bg: 210 28.6% 97.3%; /* #f6f8fa */
   --code-bg-2: 208 19.5% 84.9%; /* #d1d9e0 */
-  --code-ink: 213.3 12.7% 13.9%; /* #1f2328 */
 
   /* Buttons */
-  --button-bg: 210 28.6% 97.3%; /* #f6f8fa */
   --button-bg-hover: 210 21.4% 94.5%; /* #eef1f4 */
-  --button-border: 208 19.5% 84.9%; /* #d1d9e0 */
 
   /* Syntax highlighting */
   --syntax-tag: 137.6 70.7% 22.7%; /* #116329 */
@@ -113,12 +109,9 @@
   /* Code */
   --code-bg: 215 21.4% 11%; /* #161b22 */
   --code-bg-2: 212.3 11.9% 21.4%; /* #30363d */
-  --code-ink: 207.7 35.1% 92.7%; /* #e6edf3 */
 
   /* Buttons */
-  --button-bg: 215 15.4% 15.3%; /* #21262d */
   --button-bg-hover: 212.3 11.9% 21.4%; /* #30363d */
-  --button-border: 213.8 11.6% 27.1%; /* #3d444d */
 
   /* Syntax highlighting */
   --syntax-tag: 125.1 68.6% 70%; /* #7ee787 */
