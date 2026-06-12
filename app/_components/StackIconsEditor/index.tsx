@@ -21,8 +21,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getEditableBaseColumnLayout,
@@ -37,11 +37,13 @@ import {
   SelectedIconChips,
   StackIconPicker,
 } from "./IconPicker";
-import type { StackIconsEditorState } from "./state";
 import {
-  DEFAULT_ICON_SIZE,
-  useStackIconsEditorForm,
-} from "./useStackIconsEditorForm";
+  ICON_SIZE_STEP,
+  MAX_ICON_SIZE,
+  MIN_ICON_SIZE,
+  type StackIconsEditorState,
+} from "./state";
+import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
 export type { StackIconsEditorState } from "./state";
 
@@ -367,34 +369,32 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         onToggle={() => toggleSection("spacing")}
         sectionKey="spacing"
         stepNumber={3}
-        summary={`${DEFAULT_ICON_SIZE}px · gap ${state.gap}px`}
+        summary={`${state.iconSize}px · gap ${state.gap}px`}
         title="Spacing & size"
       >
-        <Field
-          className="max-w-xs"
-          data-invalid={hasErrors(fieldValidation.gap) || undefined}
-        >
-          <FieldLabel
-            className="font-mono text-xs text-muted-foreground"
-            htmlFor="gap"
-          >
-            Gap
-          </FieldLabel>
-          <Input
-            className="mt-1 font-mono"
-            aria-describedby={
+        <div>
+          <SpacingSliderRow
+            label="Icon size"
+            max={MAX_ICON_SIZE}
+            min={MIN_ICON_SIZE}
+            onChange={(iconSize) => updateField("iconSize", iconSize)}
+            step={ICON_SIZE_STEP}
+            value={state.iconSize}
+          />
+          <div aria-hidden="true" className="my-[18px] border-t" />
+          <SpacingSliderRow
+            describedBy={
               hasErrors(fieldValidation.gap) ? "gap-error" : undefined
             }
-            aria-invalid={hasErrors(fieldValidation.gap) || undefined}
-            id="gap"
+            label="Gap between icons"
             max={24}
             min={0}
-            onChange={(event) => updateField("gap", event.target.value)}
-            type="number"
+            onChange={(gap) => updateField("gap", gap)}
+            step={1}
             value={state.gap}
           />
           <FieldError errors={fieldValidation.gap} id="gap-error" />
-        </Field>
+        </div>
       </EditorSection>
 
       <Card>
@@ -624,6 +624,54 @@ function hasErrors(
   errors: readonly string[] | undefined,
 ): errors is readonly string[] {
   return errors !== undefined && errors.length > 0;
+}
+
+type SpacingSliderRowProps = {
+  describedBy?: string;
+  label: string;
+  max: number;
+  min: number;
+  onChange: (value: string) => void;
+  step: number;
+  value: string;
+};
+
+// One Spacing & size row: mono uppercase label above, slider with a live
+// value readout right-aligned next to it.
+function SpacingSliderRow({
+  describedBy,
+  label,
+  max,
+  min,
+  onChange,
+  step,
+  value,
+}: SpacingSliderRowProps) {
+  const numericValue = Number(value);
+  const sliderValue = Number.isFinite(numericValue) ? numericValue : min;
+
+  return (
+    <div>
+      <p className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
+        {label}
+      </p>
+      <div className="mt-2 flex items-center gap-4">
+        <Slider
+          aria-describedby={describedBy}
+          aria-label={label}
+          className="flex-1"
+          max={max}
+          min={min}
+          onValueChange={([nextValue]) => onChange(String(nextValue))}
+          step={step}
+          value={[sliderValue]}
+        />
+        <span className="min-w-[54px] text-right font-mono text-[15px] font-semibold">
+          {value}px
+        </span>
+      </div>
+    </div>
+  );
 }
 
 type LayoutModeSegmentedButtonProps = {

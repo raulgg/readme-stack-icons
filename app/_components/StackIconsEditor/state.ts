@@ -10,6 +10,14 @@ const DEFAULT_ICONS = "typescript,nextjs,tailwindcss,vercel";
 const DEFAULT_GAP = "8";
 const DEFAULT_PREVIEW_THEME = "light";
 
+// Product default icon size emitted in every generated image source (ADR
+// 0001). It deliberately differs from the endpoint's back-compat default of
+// 40.
+export const DEFAULT_ICON_SIZE = "48";
+export const MIN_ICON_SIZE = 24;
+export const MAX_ICON_SIZE = 64;
+export const ICON_SIZE_STEP = 2;
+
 export type StackIconsPreviewTheme = "dark" | "light";
 export type ColumnLayout = EditableColumnLayout;
 export type { LayoutMode };
@@ -18,6 +26,7 @@ type EditorState = {
   icons: string;
   layoutMode: LayoutMode;
   columnLayouts: ColumnLayout[];
+  iconSize: string;
   gap: string;
   previewTheme: StackIconsPreviewTheme;
 };
@@ -28,6 +37,7 @@ export const DEFAULT_STACK_ICONS_EDITOR_STATE: StackIconsEditorState = {
   icons: DEFAULT_ICONS,
   layoutMode: "responsive",
   columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+  iconSize: DEFAULT_ICON_SIZE,
   gap: DEFAULT_GAP,
   previewTheme: DEFAULT_PREVIEW_THEME,
 };
@@ -48,6 +58,7 @@ export function getStackIconsEditorInitialState(
     icons: getSearchParamValue(searchParams.icons) ?? DEFAULT_ICONS,
     layoutMode: activeLayoutMode,
     columnLayouts: columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode),
+    iconSize: getIconSize(searchParams),
     gap: getSearchParamValue(searchParams.gap) ?? DEFAULT_GAP,
     previewTheme: getPreviewTheme(searchParams),
   };
@@ -61,6 +72,7 @@ export function buildStackIconsEditorPageQuery(
   params.set("icons", state.icons);
   params.set("layout", state.layoutMode);
   params.set("column-layouts", JSON.stringify(state.columnLayouts));
+  params.set("size", state.iconSize);
   params.set("gap", state.gap);
   params.set("preview-theme", state.previewTheme);
 
@@ -104,6 +116,38 @@ function getColumnLayouts(
   } catch {
     return null;
   }
+}
+
+// Shared URLs can carry any `size` value, so the icon size is validated on
+// parse: integers clamp into the slider range (snapped to its step) and
+// anything else falls back to the default icon size.
+function getIconSize(searchParams: Record<string, SearchParamValue>): string {
+  const rawIconSize = getSearchParamValue(searchParams.size);
+
+  if (rawIconSize === undefined) {
+    return DEFAULT_ICON_SIZE;
+  }
+
+  const iconSize = Number(rawIconSize);
+
+  if (
+    rawIconSize.trim() !== rawIconSize ||
+    rawIconSize === "" ||
+    !Number.isInteger(iconSize)
+  ) {
+    return DEFAULT_ICON_SIZE;
+  }
+
+  const clampedIconSize = Math.min(
+    Math.max(iconSize, MIN_ICON_SIZE),
+    MAX_ICON_SIZE,
+  );
+  const snappedIconSize =
+    MIN_ICON_SIZE +
+    Math.round((clampedIconSize - MIN_ICON_SIZE) / ICON_SIZE_STEP) *
+      ICON_SIZE_STEP;
+
+  return String(Math.min(snappedIconSize, MAX_ICON_SIZE));
 }
 
 function getSearchParamValue(value: SearchParamValue): string | undefined {

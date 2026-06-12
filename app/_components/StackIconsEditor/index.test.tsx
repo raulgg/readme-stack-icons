@@ -75,6 +75,40 @@ function getMinWidthInputs() {
   return screen.getAllByLabelText("Min width");
 }
 
+function getIconSizeSlider() {
+  return screen.getByRole("slider", { name: "Icon size" });
+}
+
+function getGapSlider() {
+  return screen.getByRole("slider", { name: "Gap between icons" });
+}
+
+function setSliderValue(getSlider: () => HTMLElement, targetValue: number) {
+  let currentValue = Number(getSlider().getAttribute("aria-valuenow"));
+
+  while (currentValue !== targetValue) {
+    fireEvent.keyDown(getSlider(), {
+      key: targetValue > currentValue ? "ArrowRight" : "ArrowLeft",
+    });
+
+    const nextValue = Number(getSlider().getAttribute("aria-valuenow"));
+
+    if (nextValue === currentValue) {
+      throw new Error(`Slider stuck at ${currentValue}`);
+    }
+
+    currentValue = nextValue;
+  }
+}
+
+function setIconSizeSliderValue(targetIconSize: number) {
+  setSliderValue(getIconSizeSlider, targetIconSize);
+}
+
+function setGapSliderValue(targetGap: number) {
+  setSliderValue(getGapSlider, targetGap);
+}
+
 describe("StackIconsEditor", () => {
   beforeEach(() => {
     setLocation("/");
@@ -96,9 +130,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "4" },
     });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "12" },
-    });
+    setGapSliderValue(12);
 
     // Then
     await waitFor(() => {
@@ -109,6 +141,7 @@ describe("StackIconsEditor", () => {
       expect(params.get("column-layouts")).toBe(
         JSON.stringify([{ columns: "4", minWidthPx: null }]),
       );
+      expect(params.get("size")).toBe("48");
       expect(params.get("gap")).toBe("12");
       expect(params.has("include-dark-theme")).toBe(false);
       expect(params.get("preview-theme")).toBe("light");
@@ -122,6 +155,43 @@ describe("StackIconsEditor", () => {
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=12&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=12&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`);
+  });
+
+  it("should render icon size and gap sliders at their defaults when the editor opens", () => {
+    // Given
+    renderEditor();
+
+    // When — visitor opens the editor with default state (render is the action)
+
+    // Then
+    expect(getIconSizeSlider()).toHaveAttribute("aria-valuenow", "48");
+    expect(getIconSizeSlider()).toHaveAttribute("aria-valuemin", "24");
+    expect(getIconSizeSlider()).toHaveAttribute("aria-valuemax", "64");
+    expect(getGapSlider()).toHaveAttribute("aria-valuenow", "8");
+    expect(getGapSlider()).toHaveAttribute("aria-valuemin", "0");
+    expect(getGapSlider()).toHaveAttribute("aria-valuemax", "24");
+    expect(screen.getByText("48px")).toBeInTheDocument();
+    expect(screen.getByText("8px")).toBeInTheDocument();
+  });
+
+  it("should step icon size by 2 and update generated image sources and URL when arrow keys move the slider", async () => {
+    // Given
+    renderSingleLayoutEditor();
+
+    // When
+    fireEvent.keyDown(getIconSizeSlider(), { key: "ArrowRight" });
+
+    // Then
+    expect(getIconSizeSlider()).toHaveAttribute("aria-valuenow", "50");
+    expect(screen.getByText("50px")).toBeInTheDocument();
+    expectGeneratedImageSourceUrl(
+      "http://localhost:3000/icons?icons=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&columns=4&gap=8&size=50&theme=light",
+    );
+    await waitFor(() => {
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.get("size")).toBe("50");
+    });
   });
 
   it("should preserve raw state when rendered with page query params", async () => {
@@ -154,7 +224,7 @@ describe("StackIconsEditor", () => {
     );
     expect(iconSlugsTextarea).toHaveValue("solid,typescript");
     expect(getBaseColumnsInput()).toHaveValue(6);
-    expect(screen.getByLabelText("Gap")).toHaveValue(10);
+    expect(getGapSlider()).toHaveAttribute("aria-valuenow", "10");
     expect(
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
@@ -208,9 +278,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "4" },
     });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "8" },
-    });
+    setGapSliderValue(8);
 
     // When
     generatePreview();
@@ -249,9 +317,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "4" },
     });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "8" },
-    });
+    setGapSliderValue(8);
     generatePreview();
 
     const readmeHtml = screen.getByLabelText("README image code");
@@ -687,9 +753,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "4" },
     });
-    fireEvent.change(screen.getByLabelText("Gap"), {
-      target: { value: "12" },
-    });
+    setGapSliderValue(12);
 
     // When
     generatePreview();
@@ -1347,6 +1411,7 @@ describe("StackIconsEditor", () => {
     // Then
     expect(initialState).toEqual({
       columnLayouts: [{ columns: "6", minWidthPx: null }],
+      iconSize: "48",
       gap: "10",
       icons: "solid,typescript",
       layoutMode: "single",
@@ -1370,6 +1435,7 @@ describe("StackIconsEditor", () => {
     // Then
     expect(initialState).toEqual({
       columnLayouts: [{ columns: "6", minWidthPx: null }],
+      iconSize: "48",
       gap: "10",
       icons: "solid,typescript",
       layoutMode: "single",
@@ -1742,7 +1808,7 @@ describe("StackIconsEditor", () => {
       );
       expect(screen.queryByLabelText("Search icons")).not.toBeInTheDocument();
       expect(getBaseColumnsInput()).toBeInTheDocument();
-      expect(screen.getByLabelText("Gap")).toBeInTheDocument();
+      expect(getGapSlider()).toBeInTheDocument();
 
       // When — expand the Icons section again
       fireEvent.click(getSectionToggle("icons"));
@@ -1840,11 +1906,13 @@ describe("StackIconsEditor", () => {
 
       expect(getSectionSummary("spacing")).toHaveTextContent("48px · gap 8px");
 
-      fireEvent.change(screen.getByLabelText("Gap"), {
-        target: { value: "12" },
-      });
+      setGapSliderValue(12);
 
       expect(getSectionSummary("spacing")).toHaveTextContent("48px · gap 12px");
+
+      setIconSizeSliderValue(56);
+
+      expect(getSectionSummary("spacing")).toHaveTextContent("56px · gap 12px");
     });
 
     it("should keep README image code output rendered outside the accordion sections", () => {

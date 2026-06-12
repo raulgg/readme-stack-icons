@@ -30,3 +30,15 @@ if (window.PointerEvent === undefined) {
 
   window.PointerEvent = PointerEventPolyfill as typeof PointerEvent;
 }
+
+// jsdom does not implement ResizeObserver, which the Radix slider relies on.
+if (window.ResizeObserver === undefined) {
+  class ResizeObserverPolyfill {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  window.ResizeObserver =
+    ResizeObserverPolyfill as unknown as typeof ResizeObserver;
+}

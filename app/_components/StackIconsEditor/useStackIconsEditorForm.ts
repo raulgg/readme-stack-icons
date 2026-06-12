@@ -11,17 +11,14 @@ import { generateReadmeImage } from "@/lib/icons/readme-image";
 
 import {
   buildStackIconsEditorPageQuery,
+  DEFAULT_ICON_SIZE,
   DEFAULT_STACK_ICONS_EDITOR_STATE,
   type ColumnLayout,
   type LayoutMode,
   type StackIconsEditorState,
 } from "./state";
 
-// Product default icon size emitted in every generated image source (ADR
-// 0001). It deliberately differs from the endpoint's back-compat default of
-// 40. The icon size slider is a separate issue; until it lands the README
-// image editor always emits this constant.
-export const DEFAULT_ICON_SIZE = "48";
+export { DEFAULT_ICON_SIZE };
 
 type CopyGeneratedHtmlStatus = "failed" | "idle" | "succeeded";
 type CopyGeneratedHtmlState = {
@@ -111,7 +108,7 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     icons: editorState.icons,
     includeDarkTheme: true,
     layoutMode: editorState.layoutMode,
-    size: DEFAULT_ICON_SIZE,
+    size: editorState.iconSize,
   });
   const generatedReadmeImage = generatedReadmeImageResult.success
     ? generatedReadmeImageResult
