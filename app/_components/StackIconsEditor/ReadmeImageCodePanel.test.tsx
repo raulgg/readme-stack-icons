@@ -65,14 +65,12 @@ describe("ReadmeImageCodePanel", () => {
     );
   });
 
-  it("should hide the code but keep copying available when the disclosure collapses", () => {
+  it("should hide the code and its copy button when the disclosure collapses", () => {
     // Given
-    const onCopy = vi.fn();
-
     render(
       <ReadmeImageCodePanel
         hasSelectedIcons
-        onCopy={onCopy}
+        onCopy={vi.fn()}
         readmeImageCode={README_IMAGE_CODE}
       />,
     );
@@ -81,13 +79,14 @@ describe("ReadmeImageCodePanel", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "README code · <picture>" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Copy README code" }));
 
     // Then
     expect(
       screen.queryByLabelText("README image code"),
     ).not.toBeInTheDocument();
-    expect(onCopy).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole("button", { name: "Copy README code" }),
+    ).not.toBeInTheDocument();
   });
 
   describe("copied feedback", () => {
@@ -116,12 +115,16 @@ describe("ReadmeImageCodePanel", () => {
       });
 
       // Then — feedback shows, then reverts after the timeout
-      expect(getCopyButton()).toHaveTextContent("Copied");
+      expect(
+        screen.getByRole("button", { name: "Copied" }),
+      ).toBeInTheDocument();
       await act(async () => {
         vi.advanceTimersByTime(2000);
       });
-      expect(getCopyButton()).not.toHaveTextContent("Copied");
-      expect(getCopyButton()).toHaveTextContent("Copy");
+      expect(
+        screen.queryByRole("button", { name: "Copied" }),
+      ).not.toBeInTheDocument();
+      expect(getCopyButton()).toBeInTheDocument();
     });
 
     it("should keep showing Copy when copying fails", async () => {
@@ -140,8 +143,10 @@ describe("ReadmeImageCodePanel", () => {
       });
 
       // Then
-      expect(getCopyButton()).toHaveTextContent("Copy");
-      expect(getCopyButton()).not.toHaveTextContent("Copied");
+      expect(getCopyButton()).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Copied" }),
+      ).not.toBeInTheDocument();
     });
   });
 

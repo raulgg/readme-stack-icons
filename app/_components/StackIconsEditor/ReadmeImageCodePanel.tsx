@@ -102,9 +102,9 @@ type ReadmeImageCodePanelProps = {
 };
 
 // Bottom panel of the column layout preview card: a collapsible, syntax
-// highlighted view of the generated README image code with a copy button.
-// Disclosure state is ephemeral UI state; copying works even while the code
-// is collapsed because the clipboard payload is the generated string itself.
+// highlighted view of the generated README image code with a copy button
+// overlaid on the code block, GitHub-style. Disclosure state is ephemeral UI
+// state; collapsing hides the copy button along with the code.
 export function ReadmeImageCodePanel({
   hasSelectedIcons,
   onCopy,
@@ -143,63 +143,73 @@ export function ReadmeImageCodePanel({
 
   return (
     <div className="mx-5 mb-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          aria-controls="readme-image-code-block"
-          aria-expanded={isCodeVisible}
-          className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2"
-          onClick={() => setIsCodeVisible((isVisible) => !isVisible)}
-          type="button"
-        >
-          <ChevronDownIcon
-            aria-hidden="true"
-            className={cn(
-              "h-[13px] w-[13px] transition-transform duration-[180ms]",
-              !isCodeVisible && "-rotate-90",
-            )}
-          />
-          {"README code · <picture>"}
-        </button>
-        <button
-          aria-label="Copy README code"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink hover:underline disabled:pointer-events-none disabled:opacity-45"
-          disabled={!hasReadmeImageCode}
-          onClick={copyWithCopiedFeedback}
-          type="button"
-        >
-          {isCopied ? (
-            <CheckIcon aria-hidden="true" className="h-3.5 w-3.5" />
-          ) : (
-            <CopyIcon aria-hidden="true" className="h-3.5 w-3.5" />
+      <button
+        aria-controls="readme-image-code-block"
+        aria-expanded={isCodeVisible}
+        className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2"
+        onClick={() => setIsCodeVisible((isVisible) => !isVisible)}
+        type="button"
+      >
+        <ChevronDownIcon
+          aria-hidden="true"
+          className={cn(
+            "h-[13px] w-[13px] transition-transform duration-[180ms]",
+            !isCodeVisible && "-rotate-90",
           )}
-          {isCopied ? "Copied" : "Copy"}
-        </button>
-      </div>
+        />
+        {"README code · <picture>"}
+      </button>
       {isCodeVisible ? (
-        <pre
-          aria-label="README image code"
-          className="mt-3 max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[12.5px] leading-[1.75]"
-          id="readme-image-code-block"
-        >
-          {hasReadmeImageCode ? (
-            <code>
-              {tokenizeReadmeImageCode(readmeImageCode).map((token, index) => (
-                <span
-                  className={TOKEN_KIND_CLASS_NAMES[token.kind] || undefined}
-                  key={index}
-                >
-                  {token.text}
-                </span>
-              ))}
-            </code>
-          ) : (
-            <code className="text-syntax-punctuation">
-              {hasSelectedIcons
-                ? FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER
-                : ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER}
-            </code>
-          )}
-        </pre>
+        <div className="relative mt-3">
+          <pre
+            aria-label="README image code"
+            className="max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[12.5px] leading-[1.75]"
+            id="readme-image-code-block"
+          >
+            {hasReadmeImageCode ? (
+              <code>
+                {tokenizeReadmeImageCode(readmeImageCode).map(
+                  (token, index) => (
+                    <span
+                      className={
+                        TOKEN_KIND_CLASS_NAMES[token.kind] || undefined
+                      }
+                      key={index}
+                    >
+                      {token.text}
+                    </span>
+                  ),
+                )}
+              </code>
+            ) : (
+              <code className="text-syntax-punctuation">
+                {hasSelectedIcons
+                  ? FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER
+                  : ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER}
+              </code>
+            )}
+          </pre>
+          {/* Pinned to the non-scrolling wrapper, not the scrollable code
+              block, so it stays in the corner when the code scrolls
+              horizontally — same treatment as the preview theme switch. */}
+          <button
+            aria-label={isCopied ? "Copied" : "Copy README code"}
+            aria-live="polite"
+            className={cn(
+              "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color] disabled:pointer-events-none disabled:opacity-45",
+              isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
+            )}
+            disabled={!hasReadmeImageCode}
+            onClick={copyWithCopiedFeedback}
+            type="button"
+          >
+            {isCopied ? (
+              <CheckIcon aria-hidden="true" size={15} />
+            ) : (
+              <CopyIcon aria-hidden="true" size={15} />
+            )}
+          </button>
+        </div>
       ) : null}
     </div>
   );

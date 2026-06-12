@@ -387,33 +387,29 @@ describe("StackIconsEditor", () => {
     // Then
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "Copy README code" }),
-      ).toHaveTextContent("Copied");
+        screen.getByRole("button", { name: "Copied" }),
+      ).toBeInTheDocument();
     });
     expect(showToast).not.toHaveBeenCalled();
   });
 
-  it("should hide the code but still copy the README image code when the disclosure is collapsed", async () => {
+  it("should hide the code and its copy button when the disclosure is collapsed", () => {
     // Given
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    mockClipboard(writeText);
     renderSingleLayoutEditor();
     generatePreview();
-    const readmeImageCode = getReadmeImageCodeText();
 
     // When
     fireEvent.click(
       screen.getByRole("button", { name: "README code · <picture>" }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Copy README code" }));
 
     // Then
     expect(
       screen.queryByLabelText("README image code"),
     ).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(readmeImageCode);
-    });
+    expect(
+      screen.queryByRole("button", { name: "Copy README code" }),
+    ).not.toBeInTheDocument();
   });
 
   it("should show the add-icons placeholder and disable copying when no icons are selected", () => {
