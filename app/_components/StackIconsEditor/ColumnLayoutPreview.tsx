@@ -183,6 +183,7 @@ function getPreviewIconUrl({
 
 type ColumnLayoutPreviewProps = {
   codePanel?: React.ReactNode;
+  downloadAction?: React.ReactNode;
   columnLayouts: readonly EditableColumnLayout[];
   gap: string;
   iconSize: string;
@@ -201,6 +202,7 @@ type ColumnLayoutPreviewProps = {
 export function ColumnLayoutPreview({
   codePanel,
   columnLayouts,
+  downloadAction,
   gap,
   iconSize,
   layoutMode,
@@ -255,25 +257,28 @@ export function ColumnLayoutPreview({
             inline svg · in-browser
           </span>
         </div>
-        <div
-          aria-label="Preview theme"
-          className="inline-flex items-center gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]"
-          role="group"
-        >
-          <PreviewThemeSegmentedButton
-            isActive={previewTheme === "light"}
-            label="Light"
-            onActivate={() => onPreviewThemeChange("light")}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div
+            aria-label="Preview theme"
+            className="inline-flex items-center gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]"
+            role="group"
           >
-            <SunIcon aria-hidden="true" size={16} />
-          </PreviewThemeSegmentedButton>
-          <PreviewThemeSegmentedButton
-            isActive={previewTheme === "dark"}
-            label="Dark"
-            onActivate={() => onPreviewThemeChange("dark")}
-          >
-            <MoonIcon aria-hidden="true" size={16} />
-          </PreviewThemeSegmentedButton>
+            <PreviewThemeSegmentedButton
+              isActive={previewTheme === "light"}
+              label="Light"
+              onActivate={() => onPreviewThemeChange("light")}
+            >
+              <SunIcon aria-hidden="true" size={16} />
+            </PreviewThemeSegmentedButton>
+            <PreviewThemeSegmentedButton
+              isActive={previewTheme === "dark"}
+              label="Dark"
+              onActivate={() => onPreviewThemeChange("dark")}
+            >
+              <MoonIcon aria-hidden="true" size={16} />
+            </PreviewThemeSegmentedButton>
+          </div>
+          {downloadAction}
         </div>
       </div>
       <div

@@ -15,6 +15,7 @@ import { formatUnknownSlugsMessage } from "@/lib/icons/parse-request";
 import { getIconLabel } from "@/lib/icons/registry";
 import { cn } from "@/lib/utils";
 import { ColumnLayoutPreview } from "./ColumnLayoutPreview";
+import { DownloadImagesPopover } from "./DownloadImagesPopover";
 import { EditorSection, type EditorSectionKey } from "./EditorSection";
 import { parseIconSlugs, StackIconPicker } from "./IconPicker";
 import { ReadmeImageCodePanel } from "./ReadmeImageCodePanel";
@@ -47,6 +48,8 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     addBreakpointLayout,
     copyReadmeImageCode,
     generatedHtml,
+    generatedImageSources,
+    hasGeneratedOutput,
     removeBreakpointLayout,
     state,
     switchLayoutMode,
@@ -406,6 +409,12 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
           />
         }
         columnLayouts={state.columnLayouts}
+        downloadAction={
+          <DownloadImagesPopover
+            generatedImageSources={generatedImageSources}
+            isDisabled={selectedIconSlugs.length === 0 || !hasGeneratedOutput}
+          />
+        }
         gap={state.gap}
         iconSize={state.iconSize}
         layoutMode={state.layoutMode}
