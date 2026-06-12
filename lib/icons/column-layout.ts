@@ -24,15 +24,16 @@ export type ColumnLayoutValidationResult =
       errors: string[];
     };
 
-const DEFAULT_SINGLE_COLUMNS = "18";
+const DEFAULT_BASE_COLUMNS = "4";
 
 export const DEFAULT_SINGLE_COLUMN_LAYOUTS: EditableColumnLayout[] = [
-  { columns: DEFAULT_SINGLE_COLUMNS, minWidthPx: null },
+  { columns: DEFAULT_BASE_COLUMNS, minWidthPx: null },
 ];
 
 export const DEFAULT_RESPONSIVE_COLUMN_LAYOUTS: EditableColumnLayout[] = [
-  { columns: "12", minWidthPx: null },
-  { columns: DEFAULT_SINGLE_COLUMNS, minWidthPx: "768" },
+  { columns: DEFAULT_BASE_COLUMNS, minWidthPx: null },
+  { columns: "8", minWidthPx: "768" },
+  { columns: "12", minWidthPx: "1200" },
 ];
 
 export function getDefaultColumnLayouts(
@@ -252,9 +253,7 @@ function parseBreakpointColumnLayout(
   }
 
   return [
-    columns === null || minWidthPx === null
-      ? null
-      : { columns, minWidthPx },
+    columns === null || minWidthPx === null ? null : { columns, minWidthPx },
   ];
 }
 

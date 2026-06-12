@@ -1,6 +1,5 @@
 import {
   DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
-  DEFAULT_SINGLE_COLUMN_LAYOUTS,
   getDefaultColumnLayouts,
   parseEditableColumnLayouts,
   type EditableColumnLayout,
@@ -27,8 +26,8 @@ export type StackIconsEditorState = EditorState;
 
 export const DEFAULT_STACK_ICONS_EDITOR_STATE: StackIconsEditorState = {
   icons: DEFAULT_ICONS,
-  layoutMode: "single",
-  columnLayouts: DEFAULT_SINGLE_COLUMN_LAYOUTS,
+  layoutMode: "responsive",
+  columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
   gap: DEFAULT_GAP,
   previewTheme: DEFAULT_PREVIEW_THEME,
 };
@@ -41,16 +40,14 @@ export function getStackIconsEditorInitialState(
   searchParams: Record<string, SearchParamValue>,
 ): StackIconsEditorState {
   const layoutMode = getLayoutMode(searchParams);
-  const columnLayouts = getColumnLayouts(searchParams, layoutMode);
-  const shouldUseDefaultLayout = layoutMode === null || columnLayouts === null;
-  const activeLayoutMode = shouldUseDefaultLayout ? "single" : layoutMode;
+  const activeLayoutMode = layoutMode ?? "responsive";
+  const columnLayouts =
+    layoutMode === null ? null : getColumnLayouts(searchParams, layoutMode);
 
   return {
     icons: getSearchParamValue(searchParams.icons) ?? DEFAULT_ICONS,
     layoutMode: activeLayoutMode,
-    columnLayouts: shouldUseDefaultLayout
-      ? DEFAULT_STACK_ICONS_EDITOR_STATE.columnLayouts
-      : (columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode)),
+    columnLayouts: columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode),
     gap: getSearchParamValue(searchParams.gap) ?? DEFAULT_GAP,
     previewTheme: getPreviewTheme(searchParams),
   };
@@ -75,12 +72,12 @@ function getLayoutMode(
 ): LayoutMode | null {
   const layoutMode = getSearchParamValue(searchParams.layout);
 
-  if (layoutMode === undefined || layoutMode === "single") {
-    return "single";
+  if (layoutMode === undefined || layoutMode === "responsive") {
+    return "responsive";
   }
 
-  if (layoutMode === "responsive") {
-    return "responsive";
+  if (layoutMode === "single") {
+    return "single";
   }
 
   return null;

@@ -14,11 +14,12 @@ import {
 describe("column layouts", () => {
   it("should expose default single and responsive column layouts", () => {
     expect(DEFAULT_SINGLE_COLUMN_LAYOUTS).toEqual([
-      { columns: "18", minWidthPx: null },
+      { columns: "4", minWidthPx: null },
     ]);
     expect(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS).toEqual([
-      { columns: "12", minWidthPx: null },
-      { columns: "18", minWidthPx: "768" },
+      { columns: "4", minWidthPx: null },
+      { columns: "8", minWidthPx: "768" },
+      { columns: "12", minWidthPx: "1200" },
     ]);
     expect(getDefaultColumnLayouts("single")).toEqual(
       DEFAULT_SINGLE_COLUMN_LAYOUTS,
@@ -59,10 +60,7 @@ describe("column layouts", () => {
   it("should reject malformed editable column layout values", () => {
     expect(parseEditableColumnLayouts({ columns: "6" }, "single")).toBeNull();
     expect(
-      parseEditableColumnLayouts(
-        [{ columns: 6, minWidthPx: null }],
-        "single",
-      ),
+      parseEditableColumnLayouts([{ columns: 6, minWidthPx: null }], "single"),
     ).toBeNull();
     expect(
       parseEditableColumnLayouts(

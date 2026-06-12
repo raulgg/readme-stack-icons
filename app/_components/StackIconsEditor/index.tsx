@@ -1,18 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import React from "react";
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   CopyIcon,
-  EyeIcon,
-  ImageIcon,
   LinkIcon,
-  MoonIcon,
   PlusIcon,
-  SunIcon,
   Trash2Icon,
   XIcon,
 } from "lucide-react";
@@ -25,36 +20,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   getEditableBaseColumnLayout,
   getEditableBreakpointColumnLayouts,
 } from "@/lib/icons/column-layout";
 import { formatUnknownSlugsMessage } from "@/lib/icons/parse-request";
-import type { GeneratedImageSource } from "@/lib/icons/readme-image";
 import { getIconLabel } from "@/lib/icons/registry";
 import { cn } from "@/lib/utils";
 import { EditorSection, type EditorSectionKey } from "./EditorSection";
@@ -75,10 +49,6 @@ type StackIconsEditorProps = {
   initialState: StackIconsEditorState;
 };
 
-type PreviewTarget = {
-  label: string;
-  minWidthPx: string | number | null;
-};
 type StackIconsEditorFieldValidation = {
   baseColumns: string[];
   gap: string[];
@@ -93,11 +63,7 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     addBreakpointLayout,
     copyGeneratedHtml,
     copyGeneratedHtmlStatus,
-    copyImageUrl,
-    copyImageUrlStatusByKey,
     generatedHtml,
-    generatedImageSources,
-    hasGeneratedOutput,
     removeBreakpointLayout,
     state,
     switchLayoutMode,
@@ -107,8 +73,6 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     updateField,
     validationErrors,
   } = useStackIconsEditorForm(initialState);
-  const [previewTarget, setPreviewTarget] =
-    React.useState<PreviewTarget | null>(null);
   const [isPlainTextSlugEditorOpen, setIsPlainTextSlugEditorOpen] =
     React.useState(false);
   const [openSections, setOpenSections] = React.useState<
@@ -151,467 +115,349 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   });
 
   return (
-    <TooltipProvider>
-      <div className="grid gap-4">
-        <EditorSection
-          isDone={selectedIconSlugs.length > 0}
-          isOpen={openSections.icons}
-          onToggle={() => toggleSection("icons")}
-          sectionKey="icons"
-          stepNumber={1}
-          summary={getIconsSummary(selectedIconSlugs)}
-          title="Icons"
-        >
-          <Field data-invalid={hasErrors(fieldValidation.icons) || undefined}>
-            <p className="font-mono text-sm font-medium text-card-foreground">
-              Icons
-            </p>
-            <FieldDescription className="font-mono">
-              Chip order is the icon order in the generated image.
-            </FieldDescription>
-            <SelectedIconChips
-              onRemoveSlug={removeIconSlugAt}
-              slugs={selectedIconSlugs}
-            />
-            <StackIconPicker
-              describedBy={
-                hasErrors(fieldValidation.icons) ? "icons-error" : undefined
+    <div className="grid gap-4">
+      <EditorSection
+        isDone={selectedIconSlugs.length > 0}
+        isOpen={openSections.icons}
+        onToggle={() => toggleSection("icons")}
+        sectionKey="icons"
+        stepNumber={1}
+        summary={getIconsSummary(selectedIconSlugs)}
+        title="Icons"
+      >
+        <Field data-invalid={hasErrors(fieldValidation.icons) || undefined}>
+          <p className="font-mono text-sm font-medium text-card-foreground">
+            Icons
+          </p>
+          <FieldDescription className="font-mono">
+            Chip order is the icon order in the generated image.
+          </FieldDescription>
+          <SelectedIconChips
+            onRemoveSlug={removeIconSlugAt}
+            slugs={selectedIconSlugs}
+          />
+          <StackIconPicker
+            describedBy={
+              hasErrors(fieldValidation.icons) ? "icons-error" : undefined
+            }
+            onToggleSlug={toggleIconSlug}
+            selectedSlugs={selectedIconSlugs}
+          />
+          <div>
+            <Button
+              aria-controls="icons-plain-text-editor"
+              aria-expanded={isPlainTextSlugEditorOpen}
+              className="h-8 px-2 font-mono text-xs text-muted-foreground"
+              onClick={() =>
+                setIsPlainTextSlugEditorOpen((isEditorOpen) => !isEditorOpen)
               }
-              onToggleSlug={toggleIconSlug}
-              selectedSlugs={selectedIconSlugs}
-            />
-            <div>
-              <Button
-                aria-controls="icons-plain-text-editor"
-                aria-expanded={isPlainTextSlugEditorOpen}
-                className="h-8 px-2 font-mono text-xs text-muted-foreground"
-                onClick={() =>
-                  setIsPlainTextSlugEditorOpen((isEditorOpen) => !isEditorOpen)
-                }
-                size="sm"
-                type="button"
-                variant="ghost"
-              >
-                {isPlainTextSlugEditorOpen ? (
-                  <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
-                ) : (
-                  <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
-                )}
-                Edit slugs as text
-              </Button>
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
               {isPlainTextSlugEditorOpen ? (
-                <div id="icons-plain-text-editor">
-                  <FieldLabel className="sr-only" htmlFor="icons">
-                    Icon slugs
-                  </FieldLabel>
-                  <Textarea
-                    className="mt-2 min-h-24 resize-none font-mono"
-                    aria-describedby={
-                      hasErrors(fieldValidation.icons)
-                        ? "icons-error"
-                        : undefined
-                    }
-                    aria-invalid={hasErrors(fieldValidation.icons) || undefined}
-                    id="icons"
-                    onChange={(event) =>
-                      updateField("icons", event.target.value)
-                    }
-                    value={state.icons}
-                  />
-                </div>
-              ) : null}
-            </div>
-            <FieldError errors={fieldValidation.icons} id="icons-error" />
-          </Field>
-        </EditorSection>
-
-        <EditorSection
-          isDone
-          isOpen={openSections.layout}
-          onToggle={() => toggleSection("layout")}
-          sectionKey="layout"
-          stepNumber={2}
-          summary={getLayoutSummary(state)}
-          title="Layout"
-        >
-          <div className="grid gap-5">
-            <fieldset>
-              <legend className="font-mono text-xs text-muted-foreground">
-                Layout mode
-              </legend>
-              <ToggleGroup
-                aria-label="Layout mode"
-                className="mt-2 grid grid-cols-2"
-                onValueChange={(layoutMode) => {
-                  if (layoutMode === "single" || layoutMode === "responsive") {
-                    switchLayoutMode(layoutMode);
+                <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+              )}
+              Edit slugs as text
+            </Button>
+            {isPlainTextSlugEditorOpen ? (
+              <div id="icons-plain-text-editor">
+                <FieldLabel className="sr-only" htmlFor="icons">
+                  Icon slugs
+                </FieldLabel>
+                <Textarea
+                  className="mt-2 min-h-24 resize-none font-mono"
+                  aria-describedby={
+                    hasErrors(fieldValidation.icons) ? "icons-error" : undefined
                   }
-                }}
-                type="single"
-                value={state.layoutMode}
+                  aria-invalid={hasErrors(fieldValidation.icons) || undefined}
+                  id="icons"
+                  onChange={(event) => updateField("icons", event.target.value)}
+                  value={state.icons}
+                />
+              </div>
+            ) : null}
+          </div>
+          <FieldError errors={fieldValidation.icons} id="icons-error" />
+        </Field>
+      </EditorSection>
+
+      <EditorSection
+        isDone
+        isOpen={openSections.layout}
+        onToggle={() => toggleSection("layout")}
+        sectionKey="layout"
+        stepNumber={2}
+        summary={getLayoutSummary(state)}
+        title="Layout"
+      >
+        <div className="grid gap-5">
+          <fieldset>
+            <legend className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
+              Layout mode
+            </legend>
+            <div className="mt-2 inline-flex gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]">
+              <LayoutModeSegmentedButton
+                ariaLabel="Single layout"
+                isActive={state.layoutMode === "single"}
+                onSelect={() => switchLayoutMode("single")}
               >
-                <ToggleGroupItem
-                  aria-label="Single layout"
-                  className="w-full font-mono"
-                  value="single"
-                >
-                  Single layout
-                </ToggleGroupItem>
-                <ToggleGroupItem
-                  aria-label="Responsive layout"
-                  className="w-full font-mono"
-                  value="responsive"
-                >
-                  Responsive layout
-                </ToggleGroupItem>
-              </ToggleGroup>
-            </fieldset>
+                Single
+              </LayoutModeSegmentedButton>
+              <LayoutModeSegmentedButton
+                ariaLabel="Responsive layout"
+                isActive={state.layoutMode === "responsive"}
+                onSelect={() => switchLayoutMode("responsive")}
+              >
+                Responsive
+              </LayoutModeSegmentedButton>
+            </div>
+          </fieldset>
 
-            <div>
-              <p className="font-mono text-xs text-muted-foreground">
-                Column layouts
-              </p>
-              <FieldError
-                errors={fieldValidation.layout}
-                id="column-layouts-error"
-              />
-              <div className="mt-2 grid gap-3">
-                <ColumnLayoutRow
-                  actionsLabel="base layout"
-                  badgeLabel="All widths"
-                  copyImageUrl={copyImageUrl}
-                  copyImageUrlStatusByKey={copyImageUrlStatusByKey}
-                  generatedImageSources={generatedImageSources}
-                  hasGeneratedOutput={hasGeneratedOutput}
-                  minWidthPx={null}
-                  onOpenPreview={() =>
-                    setPreviewTarget({
-                      label: "Base layout",
-                      minWidthPx: null,
-                    })
-                  }
-                  title="Base layout"
-                >
-                  <Field
-                    data-invalid={
-                      hasErrors(fieldValidation.baseColumns) || undefined
-                    }
-                  >
-                    <FieldLabel
-                      className="font-mono text-xs text-muted-foreground"
-                      htmlFor="columns"
-                    >
-                      Columns
-                    </FieldLabel>
-                    <Input
-                      className="mt-1 font-mono"
-                      aria-describedby={
-                        hasErrors(fieldValidation.baseColumns)
-                          ? "base-columns-error"
-                          : undefined
-                      }
-                      aria-invalid={
-                        hasErrors(fieldValidation.baseColumns) || undefined
-                      }
-                      id="columns"
-                      max={20}
-                      min={2}
-                      onChange={(event) =>
-                        updateBaseColumns(event.target.value)
-                      }
-                      type="number"
-                      value={baseColumnLayout?.columns ?? ""}
-                    />
-                    <FieldError
-                      errors={fieldValidation.baseColumns}
-                      id="base-columns-error"
-                    />
-                  </Field>
-                </ColumnLayoutRow>
-
-                {state.layoutMode === "responsive"
-                  ? breakpointLayouts.map(({ layout, originalIndex }) => {
-                      const isRemovable = breakpointLayouts.length > 1;
-                      const breakpointLabel =
-                        layout.minWidthPx === ""
-                          ? "breakpoint"
-                          : `${layout.minWidthPx}px`;
-                      const badgeLabel =
-                        layout.minWidthPx === ""
-                          ? "Missing min width"
-                          : `${layout.minWidthPx}px and up`;
-
-                      return (
-                        <ColumnLayoutRow
-                          actionsLabel={breakpointLabel}
-                          badgeLabel={badgeLabel}
-                          copyImageUrl={copyImageUrl}
-                          copyImageUrlStatusByKey={copyImageUrlStatusByKey}
-                          generatedImageSources={generatedImageSources}
-                          hasGeneratedOutput={hasGeneratedOutput}
-                          key={originalIndex}
-                          minWidthPx={layout.minWidthPx}
-                          onOpenPreview={() =>
-                            setPreviewTarget({
-                              label:
-                                layout.minWidthPx === ""
-                                  ? "Breakpoint"
-                                  : `${layout.minWidthPx}px breakpoint`,
-                              minWidthPx: layout.minWidthPx,
-                            })
-                          }
-                          onRemove={
-                            isRemovable
-                              ? () => removeBreakpointLayout(originalIndex)
-                              : undefined
-                          }
-                          title="Breakpoint"
-                        >
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <Field
-                              data-invalid={
-                                hasErrors(
-                                  fieldValidation.breakpointColumnsByIndex[
-                                    originalIndex
-                                  ],
-                                ) || undefined
-                              }
-                            >
-                              <FieldLabel
-                                className="font-mono text-xs text-muted-foreground"
-                                htmlFor={`breakpoint-columns-${originalIndex}`}
-                              >
-                                Columns
-                              </FieldLabel>
-                              <Input
-                                className="mt-1 font-mono"
-                                aria-describedby={
-                                  hasErrors(
-                                    fieldValidation.breakpointColumnsByIndex[
-                                      originalIndex
-                                    ],
-                                  )
-                                    ? `breakpoint-columns-error-${originalIndex}`
-                                    : undefined
-                                }
-                                aria-invalid={
-                                  hasErrors(
-                                    fieldValidation.breakpointColumnsByIndex[
-                                      originalIndex
-                                    ],
-                                  ) || undefined
-                                }
-                                id={`breakpoint-columns-${originalIndex}`}
-                                max={20}
-                                min={2}
-                                onChange={(event) =>
-                                  updateColumnLayout(
-                                    originalIndex,
-                                    "columns",
-                                    event.target.value,
-                                  )
-                                }
-                                type="number"
-                                value={layout.columns}
-                              />
-                              <FieldError
-                                errors={
-                                  fieldValidation.breakpointColumnsByIndex[
-                                    originalIndex
-                                  ] ?? []
-                                }
-                                id={`breakpoint-columns-error-${originalIndex}`}
-                              />
-                            </Field>
-                            <Field
-                              data-invalid={
-                                hasErrors(
-                                  fieldValidation.breakpointMinWidthByIndex[
-                                    originalIndex
-                                  ],
-                                ) || undefined
-                              }
-                            >
-                              <FieldLabel
-                                className="font-mono text-xs text-muted-foreground"
-                                htmlFor={`breakpoint-min-width-${originalIndex}`}
-                              >
-                                Min width
-                              </FieldLabel>
-                              <Input
-                                className="mt-1 font-mono"
-                                aria-describedby={
-                                  hasErrors(
-                                    fieldValidation.breakpointMinWidthByIndex[
-                                      originalIndex
-                                    ],
-                                  )
-                                    ? `breakpoint-min-width-error-${originalIndex}`
-                                    : undefined
-                                }
-                                aria-invalid={
-                                  hasErrors(
-                                    fieldValidation.breakpointMinWidthByIndex[
-                                      originalIndex
-                                    ],
-                                  ) || undefined
-                                }
-                                id={`breakpoint-min-width-${originalIndex}`}
-                                max={3840}
-                                min={1}
-                                onChange={(event) =>
-                                  updateColumnLayout(
-                                    originalIndex,
-                                    "minWidthPx",
-                                    event.target.value,
-                                  )
-                                }
-                                type="number"
-                                value={layout.minWidthPx ?? ""}
-                              />
-                              <FieldError
-                                errors={
-                                  fieldValidation.breakpointMinWidthByIndex[
-                                    originalIndex
-                                  ] ?? []
-                                }
-                                id={`breakpoint-min-width-error-${originalIndex}`}
-                              />
-                            </Field>
-                          </div>
-                        </ColumnLayoutRow>
-                      );
-                    })
-                  : null}
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
+              Column layouts
+            </p>
+            <FieldError
+              errors={fieldValidation.layout}
+              id="column-layouts-error"
+            />
+            <div className="mt-2 grid gap-[9px]">
+              <div className="flex flex-wrap items-center gap-3 rounded-[6px] border bg-surface-2 px-[13px] py-[11px]">
+                <span className="text-[13px] font-bold">Base</span>
+                <span className="rounded-[6px] bg-accent-soft px-2 py-[3px] font-mono text-[10.5px] uppercase text-accent-ink">
+                  All widths
+                </span>
+                <label className="flex items-center gap-2">
+                  <span className="font-mono text-[13px] text-ink-2">
+                    columns
+                  </span>
+                  <ColumnLayoutMiniInput
+                    describedBy="base-columns-error"
+                    errors={fieldValidation.baseColumns}
+                    max={20}
+                    min={2}
+                    onChange={updateBaseColumns}
+                    value={baseColumnLayout?.columns ?? ""}
+                  />
+                </label>
+                <ColumnLayoutRowError
+                  errors={fieldValidation.baseColumns}
+                  id="base-columns-error"
+                />
               </div>
 
-              {state.layoutMode === "responsive" ? (
+              {state.layoutMode === "responsive"
+                ? breakpointLayouts.map(({ layout, originalIndex }) => {
+                    const isRemovable = breakpointLayouts.length > 1;
+                    const breakpointLabel =
+                      layout.minWidthPx === ""
+                        ? "breakpoint"
+                        : `${layout.minWidthPx}px`;
+                    const columnsErrors =
+                      fieldValidation.breakpointColumnsByIndex[originalIndex] ??
+                      [];
+                    const minWidthErrors =
+                      fieldValidation.breakpointMinWidthByIndex[
+                        originalIndex
+                      ] ?? [];
+
+                    return (
+                      <div
+                        className="flex flex-wrap items-center gap-3 rounded-[6px] border px-[13px] py-[11px]"
+                        key={originalIndex}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="font-mono text-[13px] text-ink-2"
+                        >
+                          ≥
+                        </span>
+                        <ColumnLayoutMiniInput
+                          ariaLabel="Min width"
+                          describedBy={`breakpoint-min-width-error-${originalIndex}`}
+                          errors={minWidthErrors}
+                          max={3840}
+                          min={1}
+                          onChange={(minWidthPx) =>
+                            updateColumnLayout(
+                              originalIndex,
+                              "minWidthPx",
+                              minWidthPx,
+                            )
+                          }
+                          value={layout.minWidthPx}
+                          widthClassName="w-[84px]"
+                        />
+                        <span
+                          aria-hidden="true"
+                          className="font-mono text-[13px] text-ink-2"
+                        >
+                          px
+                        </span>
+                        <label className="flex items-center gap-2">
+                          <span className="font-mono text-[13px] text-ink-2">
+                            columns
+                          </span>
+                          <ColumnLayoutMiniInput
+                            describedBy={`breakpoint-columns-error-${originalIndex}`}
+                            errors={columnsErrors}
+                            max={20}
+                            min={2}
+                            onChange={(columns) =>
+                              updateColumnLayout(
+                                originalIndex,
+                                "columns",
+                                columns,
+                              )
+                            }
+                            value={layout.columns}
+                          />
+                        </label>
+                        <ColumnLayoutRowError
+                          errors={columnsErrors}
+                          id={`breakpoint-columns-error-${originalIndex}`}
+                        />
+                        <ColumnLayoutRowError
+                          errors={minWidthErrors}
+                          id={`breakpoint-min-width-error-${originalIndex}`}
+                        />
+                        {isRemovable ? (
+                          <button
+                            aria-label={`Remove ${breakpointLabel} breakpoint`}
+                            className="ml-auto flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-2 hover:bg-destructive hover:text-white"
+                            onClick={() =>
+                              removeBreakpointLayout(originalIndex)
+                            }
+                            type="button"
+                          >
+                            <Trash2Icon
+                              className="h-4 w-4"
+                              aria-hidden="true"
+                            />
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })
+                : null}
+            </div>
+
+            {state.layoutMode === "responsive" ? (
+              <Button
+                className="mt-3"
+                onClick={addBreakpointLayout}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                Add breakpoint
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </EditorSection>
+
+      <EditorSection
+        isDone
+        isOpen={openSections.spacing}
+        onToggle={() => toggleSection("spacing")}
+        sectionKey="spacing"
+        stepNumber={3}
+        summary={`${DEFAULT_ICON_SIZE}px · gap ${state.gap}px`}
+        title="Spacing & size"
+      >
+        <Field
+          className="max-w-xs"
+          data-invalid={hasErrors(fieldValidation.gap) || undefined}
+        >
+          <FieldLabel
+            className="font-mono text-xs text-muted-foreground"
+            htmlFor="gap"
+          >
+            Gap
+          </FieldLabel>
+          <Input
+            className="mt-1 font-mono"
+            aria-describedby={
+              hasErrors(fieldValidation.gap) ? "gap-error" : undefined
+            }
+            aria-invalid={hasErrors(fieldValidation.gap) || undefined}
+            id="gap"
+            max={24}
+            min={0}
+            onChange={(event) => updateField("gap", event.target.value)}
+            type="number"
+            value={state.gap}
+          />
+          <FieldError errors={fieldValidation.gap} id="gap-error" />
+        </Field>
+      </EditorSection>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-mono text-base">
+            Generated README image code
+          </CardTitle>
+          <CardDescription className="font-mono">
+            Generated from the current valid editor settings.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-stretch xl:flex-row xl:items-center">
+              <Label
+                className="flex items-center gap-2 font-mono text-xs text-muted-foreground"
+                htmlFor="generated-readme-html"
+              >
+                <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                README image code
+              </Label>
+              {generatedHtml === "" ? null : (
                 <Button
-                  className="mt-3 w-full sm:w-fit"
-                  onClick={addBreakpointLayout}
+                  className="w-full sm:w-auto lg:w-full xl:w-auto"
+                  onClick={copyGeneratedHtml}
+                  size="sm"
                   type="button"
                   variant="outline"
                 >
-                  <PlusIcon className="h-4 w-4" aria-hidden="true" />
-                  Add breakpoint
+                  <CopyIcon className="h-4 w-4" aria-hidden="true" />
+                  Copy README image code
                 </Button>
-              ) : null}
+              )}
             </div>
-          </div>
-        </EditorSection>
-
-        <EditorSection
-          isDone
-          isOpen={openSections.spacing}
-          onToggle={() => toggleSection("spacing")}
-          sectionKey="spacing"
-          stepNumber={3}
-          summary={`${DEFAULT_ICON_SIZE}px · gap ${state.gap}px`}
-          title="Spacing & size"
-        >
-          <Field
-            className="max-w-xs"
-            data-invalid={hasErrors(fieldValidation.gap) || undefined}
-          >
-            <FieldLabel
-              className="font-mono text-xs text-muted-foreground"
-              htmlFor="gap"
-            >
-              Gap
-            </FieldLabel>
-            <Input
-              className="mt-1 font-mono"
-              aria-describedby={
-                hasErrors(fieldValidation.gap) ? "gap-error" : undefined
-              }
-              aria-invalid={hasErrors(fieldValidation.gap) || undefined}
-              id="gap"
-              max={24}
-              min={0}
-              onChange={(event) => updateField("gap", event.target.value)}
-              type="number"
-              value={state.gap}
+            <Textarea
+              className="mt-2 min-h-48 resize-none bg-muted font-mono text-muted-foreground"
+              id="generated-readme-html"
+              placeholder="Fix validation errors to create README image code."
+              readOnly
+              value={generatedHtml}
             />
-            <FieldError errors={fieldValidation.gap} id="gap-error" />
-          </Field>
-        </EditorSection>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-mono text-base">
-              Generated README image code
-            </CardTitle>
-            <CardDescription className="font-mono">
-              Generated from the current valid editor settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between lg:flex-col lg:items-stretch xl:flex-row xl:items-center">
-                <Label
-                  className="flex items-center gap-2 font-mono text-xs text-muted-foreground"
-                  htmlFor="generated-readme-html"
-                >
-                  <LinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  README image code
-                </Label>
-                {generatedHtml === "" ? null : (
-                  <Button
-                    className="w-full sm:w-auto lg:w-full xl:w-auto"
-                    onClick={copyGeneratedHtml}
-                    size="sm"
-                    type="button"
-                    variant="outline"
-                  >
-                    <CopyIcon className="h-4 w-4" aria-hidden="true" />
-                    Copy README image code
-                  </Button>
-                )}
-              </div>
-              <Textarea
-                className="mt-2 min-h-48 resize-none bg-muted font-mono text-muted-foreground"
-                id="generated-readme-html"
-                placeholder="Fix validation errors to create README image code."
-                readOnly
-                value={generatedHtml}
-              />
-              {copyGeneratedHtmlStatus === "succeeded" ? (
-                <p
-                  aria-live="polite"
-                  className="mt-2 flex items-center gap-2 font-mono text-xs text-green-700"
-                >
-                  <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  README image code copied.
-                </p>
-              ) : null}
-              {copyGeneratedHtmlStatus === "failed" ? (
-                <p
-                  aria-live="polite"
-                  className="mt-2 flex items-center gap-2 font-mono text-xs text-destructive"
-                >
-                  <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  Could not copy README image code.
-                </p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        <ColumnLayoutPreviewDialog
-          generatedImageSources={generatedImageSources}
-          onOpenChange={(open) => {
-            if (!open) {
-              setPreviewTarget(null);
-            }
-          }}
-          previewTarget={previewTarget}
-          previewTheme={state.previewTheme}
-          updatePreviewTheme={(previewTheme) =>
-            updateField("previewTheme", previewTheme)
-          }
-        />
-      </div>
-    </TooltipProvider>
+            {copyGeneratedHtmlStatus === "succeeded" ? (
+              <p
+                aria-live="polite"
+                className="mt-2 flex items-center gap-2 font-mono text-xs text-green-700"
+              >
+                <CheckIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                README image code copied.
+              </p>
+            ) : null}
+            {copyGeneratedHtmlStatus === "failed" ? (
+              <p
+                aria-live="polite"
+                className="mt-2 flex items-center gap-2 font-mono text-xs text-destructive"
+              >
+                <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                Could not copy README image code.
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -660,6 +506,10 @@ function FieldError({ errors, id }: FieldErrorProps) {
   );
 }
 
+const COLUMNS_RANGE_ERROR = "2–20 columns";
+const MIN_WIDTH_RANGE_ERROR = "1–3840px";
+const DUPLICATE_MIN_WIDTH_ERROR = "duplicate min-width";
+
 function getStackIconsEditorFieldValidation({
   state,
   unknownSlugs,
@@ -687,9 +537,7 @@ function getStackIconsEditorFieldValidation({
   state.columnLayouts.forEach((layout, index) => {
     if (layout.minWidthPx === null) {
       if (!isIntegerInRange(layout.columns, 2, 20)) {
-        fieldValidation.baseColumns.push(
-          "Columns must be an integer from 2 to 20.",
-        );
+        fieldValidation.baseColumns.push(COLUMNS_RANGE_ERROR);
       }
       return;
     }
@@ -699,16 +547,18 @@ function getStackIconsEditorFieldValidation({
     const hasColumns = layout.columns !== "";
     const hasMinWidth = layout.minWidthPx !== "";
 
-    if (hasMinWidth && !hasColumns) {
-      columnsErrors.push("Columns are required when min width is set.");
-    } else if (hasColumns && !isIntegerInRange(layout.columns, 2, 20)) {
-      columnsErrors.push("Columns must be an integer from 2 to 20.");
+    if (
+      (hasColumns || hasMinWidth) &&
+      !isIntegerInRange(layout.columns, 2, 20)
+    ) {
+      columnsErrors.push(COLUMNS_RANGE_ERROR);
     }
 
-    if (hasColumns && !hasMinWidth) {
-      minWidthErrors.push("Min width is required when columns are set.");
-    } else if (hasMinWidth && !isIntegerInRange(layout.minWidthPx, 1, 3840)) {
-      minWidthErrors.push("Min width must be an integer from 1 to 3840.");
+    if (
+      (hasColumns || hasMinWidth) &&
+      !isIntegerInRange(layout.minWidthPx, 1, 3840)
+    ) {
+      minWidthErrors.push(MIN_WIDTH_RANGE_ERROR);
     }
 
     if (isIntegerInRange(layout.minWidthPx, 1, 3840)) {
@@ -730,7 +580,7 @@ function getStackIconsEditorFieldValidation({
     duplicatedIndexes.forEach((index) => {
       fieldValidation.breakpointMinWidthByIndex[index] = [
         ...(fieldValidation.breakpointMinWidthByIndex[index] ?? []),
-        "Min width values must be unique.",
+        DUPLICATE_MIN_WIDTH_ERROR,
       ];
     });
   }
@@ -776,355 +626,97 @@ function hasErrors(
   return errors !== undefined && errors.length > 0;
 }
 
-type ColumnLayoutRowProps = {
-  actionsLabel: string;
-  badgeLabel: string;
-  children: React.ReactNode;
-  copyImageUrl: (source: GeneratedImageSource) => void;
-  copyImageUrlStatusByKey: Record<string, "failed" | "idle" | "succeeded">;
-  generatedImageSources: GeneratedImageSource[];
-  hasGeneratedOutput: boolean;
-  minWidthPx: string | number | null;
-  onOpenPreview: () => void;
-  onRemove?: () => void;
-  title: string;
-};
-
-function ColumnLayoutRow({
-  actionsLabel,
-  badgeLabel,
-  children,
-  copyImageUrl,
-  copyImageUrlStatusByKey,
-  generatedImageSources,
-  hasGeneratedOutput,
-  minWidthPx,
-  onOpenPreview,
-  onRemove,
-  title,
-}: ColumnLayoutRowProps) {
-  const normalizedMinWidthPx = normalizeMinWidthPx(minWidthPx);
-  const layoutSources = generatedImageSources.filter(
-    (source) => source.minWidthPx === normalizedMinWidthPx,
-  );
-  const lightSource = layoutSources.find((source) => source.theme === "light");
-  const darkSource = layoutSources.find((source) => source.theme === "dark");
-  const hasPreviewSource =
-    lightSource !== undefined || darkSource !== undefined;
-
-  return (
-    <Card className="rounded-md shadow-none">
-      <CardContent className="grid gap-4 p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="font-mono text-sm font-medium text-card-foreground">
-                {title}
-              </p>
-              <span className="rounded border bg-background px-2 py-1 font-mono text-xs text-muted-foreground">
-                {badgeLabel}
-              </span>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <IconTooltipButton
-              ariaLabel={`Preview ${actionsLabel} column layout`}
-              disabled={!hasGeneratedOutput || !hasPreviewSource}
-              onClick={onOpenPreview}
-              tooltip="Preview column layout"
-            >
-              <EyeIcon className="h-4 w-4" aria-hidden="true" />
-            </IconTooltipButton>
-            <ImageUrlCopyDropdown
-              actionsLabel={actionsLabel}
-              copyImageUrl={copyImageUrl}
-              copyImageUrlStatusByKey={copyImageUrlStatusByKey}
-              darkSource={darkSource}
-              lightSource={lightSource}
-            />
-            {onRemove === undefined ? null : (
-              <IconTooltipButton
-                ariaLabel={`Remove ${actionsLabel} breakpoint`}
-                onClick={onRemove}
-                tooltip="Remove breakpoint"
-              >
-                <Trash2Icon className="h-4 w-4" aria-hidden="true" />
-              </IconTooltipButton>
-            )}
-          </div>
-        </div>
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-type ImageUrlCopyDropdownProps = {
-  actionsLabel: string;
-  copyImageUrl: (source: GeneratedImageSource) => void;
-  copyImageUrlStatusByKey: Record<string, "failed" | "idle" | "succeeded">;
-  darkSource: GeneratedImageSource | undefined;
-  lightSource: GeneratedImageSource | undefined;
-};
-
-function ImageUrlCopyDropdown({
-  actionsLabel,
-  copyImageUrl,
-  copyImageUrlStatusByKey,
-  darkSource,
-  lightSource,
-}: ImageUrlCopyDropdownProps) {
-  return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={`Copy ${actionsLabel} image URL`}
-              className="w-auto gap-1 px-2.5"
-              disabled={lightSource === undefined && darkSource === undefined}
-              size="icon"
-              type="button"
-              variant="outline"
-            >
-              <CopyIcon className="h-4 w-4" aria-hidden="true" />
-              <ChevronDownIcon className="h-3 w-3" aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Copy image URL</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent align="end">
-        <ImageUrlCopyMenuItem
-          actionsLabel={actionsLabel}
-          copyImageUrl={copyImageUrl}
-          source={lightSource}
-          status={
-            lightSource === undefined
-              ? "idle"
-              : copyImageUrlStatusByKey[getGeneratedImageSourceKey(lightSource)]
-          }
-          theme="light"
-        />
-        <ImageUrlCopyMenuItem
-          actionsLabel={actionsLabel}
-          copyImageUrl={copyImageUrl}
-          source={darkSource}
-          status={
-            darkSource === undefined
-              ? "idle"
-              : copyImageUrlStatusByKey[getGeneratedImageSourceKey(darkSource)]
-          }
-          theme="dark"
-        />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-type ImageUrlCopyMenuItemProps = {
-  actionsLabel: string;
-  copyImageUrl: (source: GeneratedImageSource) => void;
-  source: GeneratedImageSource | undefined;
-  status: "failed" | "idle" | "succeeded" | undefined;
-  theme: "dark" | "light";
-};
-
-function ImageUrlCopyMenuItem({
-  actionsLabel,
-  copyImageUrl,
-  source,
-  status,
-  theme,
-}: ImageUrlCopyMenuItemProps) {
-  const ThemeIcon = theme === "light" ? SunIcon : MoonIcon;
-
-  return (
-    <DropdownMenuItem
-      aria-label={`Copy ${actionsLabel} ${theme} image URL`}
-      className="font-mono text-xs"
-      disabled={source === undefined}
-      onSelect={(event) => {
-        event.preventDefault();
-        if (source !== undefined) {
-          copyImageUrl(source);
-        }
-      }}
-    >
-      {status === "succeeded" ? (
-        <CheckIcon className="h-4 w-4" aria-hidden="true" />
-      ) : status === "failed" ? (
-        <XIcon className="h-4 w-4 text-destructive" aria-hidden="true" />
-      ) : (
-        <ThemeIcon className="h-4 w-4" aria-hidden="true" />
-      )}
-      <span aria-live="polite">
-        {status === "succeeded"
-          ? "Copied"
-          : status === "failed"
-            ? "Copy failed"
-            : `Copy ${theme} image URL`}
-      </span>
-    </DropdownMenuItem>
-  );
-}
-
-type IconTooltipButtonProps = {
+type LayoutModeSegmentedButtonProps = {
   ariaLabel: string;
   children: React.ReactNode;
-  disabled?: boolean;
-  onClick: () => void;
-  tooltip: string;
+  isActive: boolean;
+  onSelect: () => void;
 };
 
-function IconTooltipButton({
+// Accent variant of the segmented control: the active segment fills with the
+// accent color (the theme toggle uses the neutral variant). Accent-driven
+// backgrounds never transition; only color and transform may.
+function LayoutModeSegmentedButton({
   ariaLabel,
   children,
-  disabled = false,
-  onClick,
-  tooltip,
-}: IconTooltipButtonProps) {
+  isActive,
+  onSelect,
+}: LayoutModeSegmentedButtonProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-label={ariaLabel}
-          disabled={disabled}
-          onClick={onClick}
-          size="icon"
-          type="button"
-          variant="outline"
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{tooltip}</TooltipContent>
-    </Tooltip>
+    <button
+      aria-label={ariaLabel}
+      aria-pressed={isActive}
+      className={cn(
+        "rounded-[7px] px-[13px] py-[7px] text-[13px] font-semibold transition-[color,transform]",
+        isActive ? "bg-accent text-white" : "text-ink-2 hover:text-ink",
+      )}
+      onClick={onSelect}
+      type="button"
+    >
+      {children}
+    </button>
   );
 }
 
-type ColumnLayoutPreviewDialogProps = {
-  generatedImageSources: GeneratedImageSource[];
-  onOpenChange: (open: boolean) => void;
-  previewTarget: PreviewTarget | null;
-  previewTheme: StackIconsEditorState["previewTheme"];
-  updatePreviewTheme: (
-    previewTheme: StackIconsEditorState["previewTheme"],
-  ) => void;
+type ColumnLayoutMiniInputProps = {
+  ariaLabel?: string;
+  describedBy: string;
+  errors: readonly string[];
+  max: number;
+  min: number;
+  onChange: (value: string) => void;
+  value: string;
+  widthClassName?: string;
 };
 
-function ColumnLayoutPreviewDialog({
-  generatedImageSources,
-  onOpenChange,
-  previewTarget,
-  previewTheme,
-  updatePreviewTheme,
-}: ColumnLayoutPreviewDialogProps) {
-  const normalizedMinWidthPx = normalizeMinWidthPx(
-    previewTarget?.minWidthPx ?? null,
-  );
-  const previewSource = generatedImageSources.find(
-    (source) =>
-      source.minWidthPx === normalizedMinWidthPx &&
-      source.theme === previewTheme,
-  );
+function ColumnLayoutMiniInput({
+  ariaLabel,
+  describedBy,
+  errors,
+  max,
+  min,
+  onChange,
+  value,
+  widthClassName = "w-[72px]",
+}: ColumnLayoutMiniInputProps) {
+  const isInvalid = hasErrors(errors);
 
   return (
-    <Dialog open={previewTarget !== null} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-mono">
-            <ImageIcon className="h-5 w-5" aria-hidden="true" />
-            {previewTarget?.label ?? "Column layout"} preview
-          </DialogTitle>
-          <DialogDescription className="font-mono">
-            Inspect one generated image source for this column layout.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-mono text-xs text-muted-foreground">
-            Preview theme
-          </p>
-          <ToggleGroup
-            aria-label="Preview theme"
-            onValueChange={(theme) => {
-              if (theme === "light" || theme === "dark") {
-                updatePreviewTheme(theme);
-              }
-            }}
-            type="single"
-            value={previewTheme}
-          >
-            <ToggleGroupItem
-              aria-label="Light"
-              className="gap-2 font-mono"
-              size="sm"
-              value="light"
-            >
-              <SunIcon className="h-4 w-4" aria-hidden="true" />
-              Light
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              aria-label="Dark"
-              className="gap-2 font-mono"
-              size="sm"
-              value="dark"
-            >
-              <MoonIcon className="h-4 w-4" aria-hidden="true" />
-              Dark
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-
-        <div
-          data-testid="column-layout-preview-box"
-          className={cn(
-            "overflow-auto rounded-md border p-4",
-            previewTheme === "dark"
-              ? "border-slate-700 bg-[#0d1117]"
-              : "bg-background",
-          )}
-        >
-          {previewSource === undefined ? (
-            <div
-              className={cn(
-                "rounded-md border px-3 py-10 text-center font-mono text-sm",
-                previewTheme === "dark"
-                  ? "border-slate-700 bg-slate-900 text-slate-300"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              Fix validation errors to create generated sources.
-            </div>
-          ) : (
-            <Image
-              alt={`${previewTarget?.label ?? "Column layout"} ${previewTheme} column layout preview`}
-              className="h-auto w-auto max-w-none"
-              height={160}
-              src={previewSource.url}
-              unoptimized
-              width={640}
-            />
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+    <input
+      aria-describedby={isInvalid ? describedBy : undefined}
+      aria-invalid={isInvalid || undefined}
+      aria-label={ariaLabel}
+      className={cn(
+        "rounded-[6px] border border-border-strong bg-background px-2.5 py-2 font-mono text-[13px] text-foreground",
+        widthClassName,
+        isInvalid && "border-destructive ring-[3px] ring-destructive-soft",
+      )}
+      max={max}
+      min={min}
+      onChange={(event) => onChange(event.target.value)}
+      type="number"
+      value={value}
+    />
   );
 }
 
-function normalizeMinWidthPx(
-  minWidthPx: string | number | null,
-): number | null {
-  if (minWidthPx === null) {
+type ColumnLayoutRowErrorProps = {
+  errors: readonly string[];
+  id: string;
+};
+
+function ColumnLayoutRowError({ errors, id }: ColumnLayoutRowErrorProps) {
+  if (!hasErrors(errors)) {
     return null;
   }
 
-  const parsedMinWidthPx = Number(minWidthPx);
-
-  return Number.isFinite(parsedMinWidthPx) ? parsedMinWidthPx : null;
-}
-
-function getGeneratedImageSourceKey(source: GeneratedImageSource): string {
-  return `${source.minWidthPx ?? "default"}:${source.theme}`;
+  return (
+    <span
+      aria-live="polite"
+      className="font-mono text-[12.5px] text-destructive"
+      id={id}
+    >
+      {errors.join(" ")}
+    </span>
+  );
 }

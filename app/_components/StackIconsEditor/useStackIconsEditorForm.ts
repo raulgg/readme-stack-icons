@@ -7,10 +7,7 @@ import {
   DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
   getEditableBaseColumnLayout,
 } from "@/lib/icons/column-layout";
-import {
-  generateReadmeImage,
-  type GeneratedImageSource,
-} from "@/lib/icons/readme-image";
+import { generateReadmeImage } from "@/lib/icons/readme-image";
 
 import {
   buildStackIconsEditorPageQuery,
@@ -27,14 +24,9 @@ import {
 export const DEFAULT_ICON_SIZE = "48";
 
 type CopyGeneratedHtmlStatus = "failed" | "idle" | "succeeded";
-type CopyImageUrlStatus = "failed" | "idle" | "succeeded";
 type CopyGeneratedHtmlState = {
   signature: string;
   status: CopyGeneratedHtmlStatus;
-};
-type CopyImageUrlState = {
-  signature: string;
-  statusByKey: Record<string, CopyImageUrlStatus>;
 };
 type LayoutMemoryState = {
   singleColumnLayout: ColumnLayout;
@@ -109,11 +101,6 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
       signature: "",
       status: "idle",
     });
-  const [copyImageUrlState, setCopyImageUrlState] =
-    React.useState<CopyImageUrlState>({
-      signature: "",
-      statusByKey: {},
-    });
   const [layoutMemory, setLayoutMemory] = React.useState<LayoutMemoryState>(
     () => buildInitialLayoutMemory(initialState),
   );
@@ -145,10 +132,6 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     copyGeneratedHtmlState.signature === generatedOutputSignature
       ? copyGeneratedHtmlState.status
       : "idle";
-  const copyImageUrlStatusByKey =
-    copyImageUrlState.signature === generatedOutputSignature
-      ? copyImageUrlState.statusByKey
-      : {};
 
   function commitEditorState(nextState: StackIconsEditorState) {
     setEditorState(nextState);
@@ -213,7 +196,12 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
       ...editorState,
       columnLayouts: [
         ...editorState.columnLayouts,
-        { columns: "", minWidthPx: "" },
+        {
+          columns: ADDED_BREAKPOINT_COLUMNS,
+          minWidthPx: getNextAvailableBreakpointMinWidthPx(
+            editorState.columnLayouts,
+          ),
+        },
       ],
     };
 
@@ -304,54 +292,10 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     }
   }
 
-  async function copyImageUrl(source: GeneratedImageSource) {
-    const sourceKey = getGeneratedImageSourceKey(source);
-    const copyGeneratedOutputSignature = generatedOutputSignature;
-    const clipboard = navigator.clipboard;
-
-    if (clipboard === undefined) {
-      setCopyImageUrlState((currentState) => ({
-        signature: copyGeneratedOutputSignature,
-        statusByKey: {
-          ...(currentState.signature === copyGeneratedOutputSignature
-            ? currentState.statusByKey
-            : {}),
-          [sourceKey]: "failed",
-        },
-      }));
-      return;
-    }
-
-    try {
-      await clipboard.writeText(source.url);
-      setCopyImageUrlState((currentState) => ({
-        signature: copyGeneratedOutputSignature,
-        statusByKey: {
-          ...(currentState.signature === copyGeneratedOutputSignature
-            ? currentState.statusByKey
-            : {}),
-          [sourceKey]: "succeeded",
-        },
-      }));
-    } catch {
-      setCopyImageUrlState((currentState) => ({
-        signature: copyGeneratedOutputSignature,
-        statusByKey: {
-          ...(currentState.signature === copyGeneratedOutputSignature
-            ? currentState.statusByKey
-            : {}),
-          [sourceKey]: "failed",
-        },
-      }));
-    }
-  }
-
   return {
     addBreakpointLayout,
     copyGeneratedHtml,
     copyGeneratedHtmlStatus,
-    copyImageUrl,
-    copyImageUrlStatusByKey,
     generatedHtml,
     generatedImageSources,
     hasGeneratedOutput,
@@ -366,6 +310,25 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   };
 }
 
-function getGeneratedImageSourceKey(source: GeneratedImageSource): string {
-  return `${source.minWidthPx ?? "default"}:${source.theme}`;
+// Added breakpoint layouts start at 768px and step up by 256px until they
+// find a min width no existing column layout uses (768 → 1024 → 1280 …).
+const ADDED_BREAKPOINT_COLUMNS = "6";
+const ADDED_BREAKPOINT_MIN_WIDTH_PX = 768;
+const ADDED_BREAKPOINT_MIN_WIDTH_STEP_PX = 256;
+
+function getNextAvailableBreakpointMinWidthPx(
+  columnLayouts: readonly ColumnLayout[],
+): string {
+  const takenMinWidths = new Set(
+    columnLayouts
+      .map((layout) => Number(layout.minWidthPx))
+      .filter((minWidthPx) => Number.isFinite(minWidthPx)),
+  );
+  let minWidthPx = ADDED_BREAKPOINT_MIN_WIDTH_PX;
+
+  while (takenMinWidths.has(minWidthPx)) {
+    minWidthPx += ADDED_BREAKPOINT_MIN_WIDTH_STEP_PX;
+  }
+
+  return String(minWidthPx);
 }
