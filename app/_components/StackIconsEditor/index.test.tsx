@@ -350,7 +350,6 @@ describe("StackIconsEditor", () => {
       expect(writeText).toHaveBeenCalledWith(getReadmeImageCodeText());
     });
     expect(writeText).toHaveBeenCalledTimes(1);
-    expect(showToast).toHaveBeenCalledWith("README code copied");
     expect(getReadmeImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?icons=react%2Cnextjs&amp;columns=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
@@ -375,7 +374,7 @@ describe("StackIconsEditor", () => {
     expect(writeText).toHaveBeenCalledWith(getReadmeImageCodeText());
   });
 
-  it("should show a success toast when copying succeeds", async () => {
+  it("should show Copied feedback on the copy button when copying succeeds", async () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
@@ -387,8 +386,11 @@ describe("StackIconsEditor", () => {
 
     // Then
     await waitFor(() => {
-      expect(showToast).toHaveBeenCalledWith("README code copied");
+      expect(
+        screen.getByRole("button", { name: "Copy README code" }),
+      ).toHaveTextContent("Copied");
     });
+    expect(showToast).not.toHaveBeenCalled();
   });
 
   it("should hide the code but still copy the README image code when the disclosure is collapsed", async () => {
@@ -412,7 +414,6 @@ describe("StackIconsEditor", () => {
     await waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(readmeImageCode);
     });
-    expect(showToast).toHaveBeenCalledWith("README code copied");
   });
 
   it("should show the add-icons placeholder and disable copying when no icons are selected", () => {
@@ -818,7 +819,6 @@ describe("StackIconsEditor", () => {
     expect(writeText.mock.calls[0]?.[0]).toContain(
       "icons=typescript%2Cnot-real%2Creact",
     );
-    expect(showToast).toHaveBeenCalledWith("README code copied");
   });
 
   it("should show validation errors when every edited icon slug is unknown", () => {

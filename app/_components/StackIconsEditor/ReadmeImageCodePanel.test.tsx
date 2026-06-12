@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
@@ -88,6 +88,61 @@ describe("ReadmeImageCodePanel", () => {
       screen.queryByLabelText("README image code"),
     ).not.toBeInTheDocument();
     expect(onCopy).toHaveBeenCalledTimes(1);
+  });
+
+  describe("copied feedback", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function getCopyButton() {
+      return screen.getByRole("button", { name: "Copy README code" });
+    }
+
+    it("should show Copied temporarily when copying succeeds", async () => {
+      // Given
+      vi.useFakeTimers();
+      render(
+        <ReadmeImageCodePanel
+          hasSelectedIcons
+          onCopy={vi.fn().mockResolvedValue(true)}
+          readmeImageCode={README_IMAGE_CODE}
+        />,
+      );
+
+      // When
+      await act(async () => {
+        fireEvent.click(getCopyButton());
+      });
+
+      // Then — feedback shows, then reverts after the timeout
+      expect(getCopyButton()).toHaveTextContent("Copied");
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(getCopyButton()).not.toHaveTextContent("Copied");
+      expect(getCopyButton()).toHaveTextContent("Copy");
+    });
+
+    it("should keep showing Copy when copying fails", async () => {
+      // Given
+      render(
+        <ReadmeImageCodePanel
+          hasSelectedIcons
+          onCopy={vi.fn().mockResolvedValue(false)}
+          readmeImageCode={README_IMAGE_CODE}
+        />,
+      );
+
+      // When
+      await act(async () => {
+        fireEvent.click(getCopyButton());
+      });
+
+      // Then
+      expect(getCopyButton()).toHaveTextContent("Copy");
+      expect(getCopyButton()).not.toHaveTextContent("Copied");
+    });
   });
 
   it("should show the add-icons placeholder and disable copying when no icons are selected", () => {

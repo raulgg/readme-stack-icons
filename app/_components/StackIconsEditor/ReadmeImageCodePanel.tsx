@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ChevronDownIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, CopyIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -93,9 +93,11 @@ const TOKEN_KIND_CLASS_NAMES: Record<ReadmeImageCodeTokenKind, string> = {
   text: "",
 };
 
+const COPIED_FEEDBACK_DURATION_MS = 2000;
+
 type ReadmeImageCodePanelProps = {
   hasSelectedIcons: boolean;
-  onCopy: () => void;
+  onCopy: () => Promise<boolean>;
   readmeImageCode: string;
 };
 
@@ -109,7 +111,35 @@ export function ReadmeImageCodePanel({
   readmeImageCode,
 }: ReadmeImageCodePanelProps) {
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
+  const [isCopied, setIsCopied] = React.useState(false);
+  const copiedResetTimeoutRef = React.useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   const hasReadmeImageCode = readmeImageCode !== "";
+
+  React.useEffect(() => {
+    return () => {
+      if (copiedResetTimeoutRef.current !== null) {
+        clearTimeout(copiedResetTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  async function copyWithCopiedFeedback() {
+    if (!(await onCopy())) {
+      return;
+    }
+
+    setIsCopied(true);
+
+    if (copiedResetTimeoutRef.current !== null) {
+      clearTimeout(copiedResetTimeoutRef.current);
+    }
+
+    copiedResetTimeoutRef.current = setTimeout(() => {
+      setIsCopied(false);
+    }, COPIED_FEEDBACK_DURATION_MS);
+  }
 
   return (
     <div className="mx-5 mb-5">
@@ -131,13 +161,18 @@ export function ReadmeImageCodePanel({
           {"README code · <picture>"}
         </button>
         <button
-          className="inline-flex items-center gap-1.5 rounded-[6px] bg-accent px-[13px] py-[7px] text-[13px] font-semibold text-white disabled:opacity-45"
+          aria-label="Copy README code"
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent-ink hover:underline disabled:pointer-events-none disabled:opacity-45"
           disabled={!hasReadmeImageCode}
-          onClick={onCopy}
+          onClick={copyWithCopiedFeedback}
           type="button"
         >
-          <CopyIcon aria-hidden="true" className="h-3.5 w-3.5" />
-          Copy README code
+          {isCopied ? (
+            <CheckIcon aria-hidden="true" className="h-3.5 w-3.5" />
+          ) : (
+            <CopyIcon aria-hidden="true" className="h-3.5 w-3.5" />
+          )}
+          {isCopied ? "Copied" : "Copy"}
         </button>
       </div>
       {isCodeVisible ? (

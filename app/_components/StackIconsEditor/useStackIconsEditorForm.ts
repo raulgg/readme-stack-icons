@@ -245,10 +245,11 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   }
 
   // Copies the exact generated README image code string — the same string the
-  // highlighted code panel renders — and reports the outcome via toast.
-  async function copyReadmeImageCode() {
+  // highlighted code panel renders. Success is reported by the caller's copy
+  // button via the returned flag; failures surface a toast here.
+  async function copyReadmeImageCode(): Promise<boolean> {
     if (generatedHtml === "") {
-      return;
+      return false;
     }
 
     const clipboard = navigator.clipboard;
@@ -259,9 +260,10 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
       }
 
       await clipboard.writeText(generatedHtml);
-      showToast("README code copied");
+      return true;
     } catch {
       showToast("Copy failed — select and copy manually");
+      return false;
     }
   }
 
