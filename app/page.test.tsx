@@ -15,9 +15,7 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", { name: "Show off your stack." }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Add icons" }),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Search icons")).toBeInTheDocument();
   });
 
   it("should show the brand and the UI theme toggle when the root page renders", async () => {

@@ -1819,7 +1819,7 @@ describe("StackIconsEditor", () => {
     renderEditor();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Add icons" }));
+    fireEvent.focus(screen.getByLabelText("Search icons"));
     fireEvent.change(screen.getByLabelText("Search icons"), {
       target: { value: "react" },
     });
@@ -1845,7 +1845,7 @@ describe("StackIconsEditor", () => {
   it("should toggle off an already-selected icon from the picker", async () => {
     // Given
     renderEditor();
-    fireEvent.click(screen.getByRole("button", { name: "Add icons" }));
+    fireEvent.focus(screen.getByLabelText("Search icons"));
     fireEvent.change(screen.getByLabelText("Search icons"), {
       target: { value: "typescript" },
     });
@@ -1878,7 +1878,7 @@ describe("StackIconsEditor", () => {
     renderEditor();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Add icons" }));
+    fireEvent.focus(screen.getByLabelText("Search icons"));
     fireEvent.change(screen.getByLabelText("Search icons"), {
       target: { value: "tailwind" },
     });
@@ -1964,7 +1964,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Add icons" }));
+    fireEvent.focus(screen.getByLabelText("Search icons"));
     fireEvent.change(screen.getByLabelText("Search icons"), {
       target: { value: "vite" },
     });
@@ -2023,9 +2023,7 @@ describe("StackIconsEditor", () => {
         "aria-expanded",
         "true",
       );
-      expect(
-        screen.queryByRole("button", { name: "Add icons" }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Search icons")).not.toBeInTheDocument();
       expect(screen.getByLabelText("Columns")).toBeInTheDocument();
       expect(screen.getByLabelText("Gap")).toBeInTheDocument();
 
@@ -2037,9 +2035,7 @@ describe("StackIconsEditor", () => {
         "aria-expanded",
         "true",
       );
-      expect(
-        screen.getByRole("button", { name: "Add icons" }),
-      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Search icons")).toBeInTheDocument();
     });
 
     it("should show live icon labels with overflow count in the Icons summary", () => {

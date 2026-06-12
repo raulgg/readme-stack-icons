@@ -1,0 +1,209 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import { listRegisteredIcons } from "@/lib/icons/registry";
+import { StackIconPicker } from "./IconPicker";
+
+function ControlledStackIconPicker({
+  initialSlugs = [],
+}: {
+  initialSlugs?: string[];
+}) {
+  const [selectedSlugs, setSelectedSlugs] = React.useState(initialSlugs);
+
+  return (
+    <StackIconPicker
+      onToggleSlug={(slug) =>
+        setSelectedSlugs((slugs) =>
+          slugs.includes(slug)
+            ? slugs.filter((selectedSlug) => selectedSlug !== slug)
+            : [...slugs, slug],
+        )
+      }
+      selectedSlugs={selectedSlugs}
+    />
+  );
+}
+
+function getSearchInput() {
+  return screen.getByLabelText("Search icons");
+}
+
+describe("StackIconPicker", () => {
+  it("should open the picker when the search input receives focus", () => {
+    // Given
+    render(<ControlledStackIconPicker />);
+
+    expect(getSearchInput()).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    // When
+    fireEvent.focus(getSearchInput());
+
+    // Then
+    expect(getSearchInput()).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("should close the picker on mousedown outside but keep it open on inside clicks", () => {
+    // Given
+    render(
+      <div>
+        <ControlledStackIconPicker />
+        <button type="button">Outside</button>
+      </div>,
+    );
+    fireEvent.focus(getSearchInput());
+
+    // When — mousedown inside the dropdown
+    fireEvent.mouseDown(screen.getByRole("listbox"));
+
+    // Then
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    // When — mousedown outside the picker
+    fireEvent.mouseDown(screen.getByRole("button", { name: "Outside" }));
+
+    // Then
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(getSearchInput()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("should toggle a row's selection without closing the dropdown when the row is clicked", () => {
+    // Given
+    render(<ControlledStackIconPicker />);
+    fireEvent.focus(getSearchInput());
+
+    const reactOption = screen.getByRole("option", { name: "React react" });
+
+    expect(reactOption).toHaveAttribute("aria-selected", "false");
+
+    // When — select then deselect
+    fireEvent.click(reactOption);
+
+    // Then
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "React react" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    // When
+    fireEvent.click(screen.getByRole("option", { name: "React react" }));
+
+    // Then
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "React react" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
+  });
+
+  it("should filter options to a single registry category when its chip is selected", () => {
+    // Given
+    render(<ControlledStackIconPicker />);
+    fireEvent.focus(getSearchInput());
+
+    const databaseIcons = listRegisteredIcons().filter(
+      (icon) => icon.category === "Databases",
+    );
+
+    // When
+    fireEvent.click(screen.getByRole("button", { name: "Databases" }));
+
+    // Then
+    expect(screen.getByRole("button", { name: "Databases" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getAllByRole("option")).toHaveLength(databaseIcons.length);
+
+    // When — back to All
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+
+    // Then
+    expect(screen.getAllByRole("option")).toHaveLength(
+      listRegisteredIcons().length,
+    );
+  });
+
+  it("should combine the search query with the active category filter", () => {
+    // Given
+    render(<ControlledStackIconPicker />);
+    fireEvent.focus(getSearchInput());
+    fireEvent.click(screen.getByRole("button", { name: "Frameworks" }));
+
+    // When
+    fireEvent.change(getSearchInput(), { target: { value: "react" } });
+
+    // Then — React is a framework, but react-matching non-frameworks are excluded
+    const options = screen.getAllByRole("option");
+
+    expect(
+      screen.getByRole("option", { name: "React react" }),
+    ).toBeInTheDocument();
+    options.forEach((option) => {
+      expect(option.textContent?.toLowerCase()).toContain("react");
+    });
+  });
+
+  it("should show the empty state with the query when nothing matches", () => {
+    // Given
+    render(<ControlledStackIconPicker />);
+    fireEvent.focus(getSearchInput());
+
+    // When
+    fireEvent.change(getSearchInput(), { target: { value: "zzz-nope" } });
+
+    // Then
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(screen.getByText('No icons match "zzz-nope".')).toBeInTheDocument();
+  });
+
+  it("should move the active row with arrows, toggle with Enter without closing, and close with Escape", () => {
+    // Given
+    const onToggleSlug = vi.fn();
+
+    render(<StackIconPicker onToggleSlug={onToggleSlug} selectedSlugs={[]} />);
+    fireEvent.focus(getSearchInput());
+
+    const [firstIcon, secondIcon] = listRegisteredIcons();
+
+    expect(getSearchInput()).toHaveAttribute(
+      "aria-activedescendant",
+      `icon-picker-option-${firstIcon.slug}`,
+    );
+
+    // When
+    fireEvent.keyDown(getSearchInput(), { key: "ArrowDown" });
+
+    // Then
+    expect(getSearchInput()).toHaveAttribute(
+      "aria-activedescendant",
+      `icon-picker-option-${secondIcon.slug}`,
+    );
+
+    // When
+    fireEvent.keyDown(getSearchInput(), { key: "Enter" });
+
+    // Then
+    expect(onToggleSlug).toHaveBeenCalledWith(secondIcon.slug);
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    // When
+    fireEvent.keyDown(getSearchInput(), { key: "ArrowUp" });
+    fireEvent.keyDown(getSearchInput(), { key: "Escape" });
+
+    // Then
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+});
