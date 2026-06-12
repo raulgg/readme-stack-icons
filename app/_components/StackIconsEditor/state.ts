@@ -8,7 +8,6 @@ import {
 
 const DEFAULT_ICONS = "typescript,nextjs,tailwindcss,vercel";
 const DEFAULT_GAP = "8";
-const DEFAULT_PREVIEW_THEME = "light";
 
 // Product default icon size emitted in every generated image source (ADR
 // 0001). It deliberately differs from the endpoint's back-compat default of
@@ -28,7 +27,6 @@ type EditorState = {
   columnLayouts: ColumnLayout[];
   iconSize: string;
   gap: string;
-  previewTheme: StackIconsPreviewTheme;
 };
 
 export type StackIconsEditorState = EditorState;
@@ -39,7 +37,6 @@ export const DEFAULT_STACK_ICONS_EDITOR_STATE: StackIconsEditorState = {
   columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
   iconSize: DEFAULT_ICON_SIZE,
   gap: DEFAULT_GAP,
-  previewTheme: DEFAULT_PREVIEW_THEME,
 };
 
 export { DEFAULT_RESPONSIVE_COLUMN_LAYOUTS };
@@ -60,7 +57,6 @@ export function getStackIconsEditorInitialState(
     columnLayouts: columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode),
     iconSize: getIconSize(searchParams),
     gap: getSearchParamValue(searchParams.gap) ?? DEFAULT_GAP,
-    previewTheme: getPreviewTheme(searchParams),
   };
 }
 
@@ -74,7 +70,6 @@ export function buildStackIconsEditorPageQuery(
   params.set("column-layouts", JSON.stringify(state.columnLayouts));
   params.set("size", state.iconSize);
   params.set("gap", state.gap);
-  params.set("preview-theme", state.previewTheme);
 
   return params.toString();
 }
@@ -152,14 +147,4 @@ function getIconSize(searchParams: Record<string, SearchParamValue>): string {
 
 function getSearchParamValue(value: SearchParamValue): string | undefined {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function getPreviewTheme(
-  searchParams: Record<string, SearchParamValue>,
-): StackIconsPreviewTheme {
-  const previewTheme =
-    getSearchParamValue(searchParams["preview-theme"]) ??
-    getSearchParamValue(searchParams.previewTheme);
-
-  return previewTheme === "dark" ? "dark" : DEFAULT_PREVIEW_THEME;
 }

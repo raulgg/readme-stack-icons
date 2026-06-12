@@ -9,6 +9,7 @@ import {
   RulerIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -32,6 +33,7 @@ import {
   MAX_ICON_SIZE,
   MIN_ICON_SIZE,
   type StackIconsEditorState,
+  type StackIconsPreviewTheme,
 } from "./state";
 import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
@@ -68,6 +70,22 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   } = useStackIconsEditorForm(initialState);
   const [isPlainTextSlugEditorOpen, setIsPlainTextSlugEditorOpen] =
     React.useState(false);
+  const { resolvedTheme } = useTheme();
+  const resolvedUiTheme: StackIconsPreviewTheme =
+    resolvedTheme === "dark" ? "dark" : "light";
+  const [previewTheme, setPreviewTheme] =
+    React.useState<StackIconsPreviewTheme>(resolvedUiTheme);
+  const [lastSeededUiTheme, setLastSeededUiTheme] =
+    React.useState(resolvedUiTheme);
+
+  // The preview theme is ephemeral: every UI theme change re-seeds it to the
+  // resolved UI theme, and the user can then switch it freely until the next
+  // UI theme change (ADR 0004). Adjusted during render instead of in an
+  // effect so the seeded value paints in the same pass.
+  if (lastSeededUiTheme !== resolvedUiTheme) {
+    setLastSeededUiTheme(resolvedUiTheme);
+    setPreviewTheme(resolvedUiTheme);
+  }
   const pickerSearchInputRef = React.useRef<HTMLInputElement | null>(null);
   const [openSections, setOpenSections] = React.useState<
     Record<EditorSectionKey, boolean>
@@ -422,10 +440,8 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         gap={state.gap}
         iconSize={state.iconSize}
         layoutMode={state.layoutMode}
-        onPreviewThemeChange={(previewTheme) =>
-          updateField("previewTheme", previewTheme)
-        }
-        previewTheme={state.previewTheme}
+        onPreviewThemeChange={setPreviewTheme}
+        previewTheme={previewTheme}
         slugs={selectedIconSlugs}
       />
     </div>

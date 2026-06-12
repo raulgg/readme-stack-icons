@@ -27,7 +27,7 @@ Generated README HTML emits breakpoint-specific sources from widest to narrowest
 Column layout identity belongs to the layout values themselves, not to generated IDs. UI-only keys may be used while editing, but generated IDs are not part of the column layout language.
 
 **Preview theme**:
-The color theme (light or dark) a column layout preview displays. It lives in the shareable editor URL and is independent of the UI theme, so a user can edit in a dark interface while previewing the light rendering.
+The color theme (light or dark) a column layout preview displays. It follows the UI theme: every UI theme change re-seeds it to match, after which the user can switch it freely without affecting the UI theme. The preview theme is ephemeral — never persisted and not part of shareable URLs.
 _Avoid_: Page theme, color scheme, dark mode
 
 **Single layout**:

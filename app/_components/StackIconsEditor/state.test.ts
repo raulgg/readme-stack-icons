@@ -17,7 +17,6 @@ describe("StackIconsEditor state", () => {
       gap: "10",
       icons: "react,nextjs",
       layoutMode: "responsive",
-      previewTheme: "dark",
     };
 
     const params = new URLSearchParams(buildStackIconsEditorPageQuery(state));
@@ -33,7 +32,7 @@ describe("StackIconsEditor state", () => {
     expect(params.get("size")).toBe("56");
     expect(params.get("gap")).toBe("10");
     expect(params.has("include-dark-theme")).toBe(false);
-    expect(params.get("preview-theme")).toBe("dark");
+    expect(params.has("preview-theme")).toBe(false);
   });
 
   it("should round-trip serialized editor state through initial state parsing", () => {
@@ -43,7 +42,6 @@ describe("StackIconsEditor state", () => {
       gap: "12",
       icons: "typescript,react",
       layoutMode: "single",
-      previewTheme: "light",
     };
     const searchParams = Object.fromEntries(
       new URLSearchParams(buildStackIconsEditorPageQuery(state)),

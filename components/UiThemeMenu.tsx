@@ -22,10 +22,10 @@ const uiThemeOptions = [
 
 /**
  * Dropdown menu for the UI theme preference (next-themes): light, dark, or
- * system. Deliberately separate from the editor's preview theme, which is URL
- * state. The trigger icon follows the resolved theme through the `dark:`
- * classes — next-themes sets the root class before paint, so server and
- * client markup match without a mounted gate.
+ * system. Each change also re-seeds the editor's preview theme (ADR 0004).
+ * The trigger icon follows the resolved theme through the `dark:` classes —
+ * next-themes sets the root class before paint, so server and client markup
+ * match without a mounted gate.
  */
 export function UiThemeMenu() {
   const { setTheme, theme } = useTheme();

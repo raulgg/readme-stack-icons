@@ -6,9 +6,11 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { StackIconsEditor, type StackIconsEditorState } from ".";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { UiThemeMenu } from "@/components/UiThemeMenu";
 import { showToast } from "@/components/ui/sonner";
 import { DEFAULT_SINGLE_COLUMN_LAYOUTS } from "@/lib/icons/column-layout";
 import {
@@ -166,7 +168,7 @@ describe("StackIconsEditor", () => {
       expect(params.get("size")).toBe("48");
       expect(params.get("gap")).toBe("12");
       expect(params.has("include-dark-theme")).toBe(false);
-      expect(params.get("preview-theme")).toBe("light");
+      expect(params.has("preview-theme")).toBe(false);
       expect(params.has("columns")).toBe(false);
       expect(params.has("responsive")).toBe(false);
       expect(params.has("mobile-columns")).toBe(false);
@@ -578,7 +580,6 @@ describe("StackIconsEditor", () => {
           ],
           icons: "react,nextjs",
           layoutMode: "responsive",
-          previewTheme: "dark",
         }}
       />,
     );
@@ -586,7 +587,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     const expectedUrl =
-      "http://localhost:3000/icons?icons=react%2Cnextjs&columns=4&gap=8&size=48&theme=dark";
+      "http://localhost:3000/icons?icons=react%2Cnextjs&columns=4&gap=8&size=48&theme=light";
 
     expectGeneratedImageSourceUrl(expectedUrl);
   });
@@ -1421,7 +1422,6 @@ describe("StackIconsEditor", () => {
       gap: "10",
       icons: "solid,typescript",
       layoutMode: "single",
-      previewTheme: "light",
     });
   });
 
@@ -1445,7 +1445,6 @@ describe("StackIconsEditor", () => {
       gap: "10",
       icons: "solid,typescript",
       layoutMode: "single",
-      previewTheme: "light",
     });
   });
 
@@ -1998,23 +1997,85 @@ describe("StackIconsEditor", () => {
       ).toBeInTheDocument();
     });
 
-    it("should persist the preview theme in the preview-theme URL param when toggled", async () => {
+    it("should not write the preview theme to the URL when toggled", () => {
       // Given
       renderEditor();
 
       // When
       fireEvent.click(getDarkPreviewThemeSegment());
 
-      // Then
-      await waitFor(() => {
-        const params = new URLSearchParams(window.location.search);
-
-        expect(params.get("preview-theme")).toBe("dark");
-      });
+      // Then — the preview theme is ephemeral state (ADR 0004)
       expect(getDarkPreviewThemeSegment()).toHaveAttribute(
         "aria-pressed",
         "true",
       );
+      const params = new URLSearchParams(window.location.search);
+
+      expect(params.has("preview-theme")).toBe(false);
+    });
+
+    describe("UI theme sync", () => {
+      afterEach(() => {
+        document.documentElement.classList.remove("dark", "light");
+        document.documentElement.removeAttribute("style");
+        window.localStorage.clear();
+      });
+
+      function renderEditorWithUiThemeMenu() {
+        render(
+          <ThemeProvider>
+            <UiThemeMenu />
+            <StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />
+          </ThemeProvider>,
+        );
+      }
+
+      function selectUiTheme(name: "Light" | "Dark" | "System") {
+        fireEvent.click(screen.getByRole("button", { name: "UI theme" }));
+        fireEvent.click(screen.getByRole("menuitemradio", { name }));
+      }
+
+      it("should match the preview theme to the UI theme when the UI theme changes", async () => {
+        // Given
+        renderEditorWithUiThemeMenu();
+
+        // When
+        selectUiTheme("Dark");
+
+        // Then
+        await waitFor(() => {
+          expect(getDarkPreviewThemeSegment()).toHaveAttribute(
+            "aria-pressed",
+            "true",
+          );
+        });
+      });
+
+      it("should keep the UI theme when the preview theme is switched after a UI theme change", async () => {
+        // Given — the UI theme change re-seeded the preview theme to dark
+        renderEditorWithUiThemeMenu();
+        selectUiTheme("Dark");
+        await waitFor(() => {
+          expect(getDarkPreviewThemeSegment()).toHaveAttribute(
+            "aria-pressed",
+            "true",
+          );
+        });
+
+        // When — the user switches the preview theme back on its own
+        fireEvent.click(
+          within(
+            screen.getByRole("group", { name: "Preview theme" }),
+          ).getByRole("button", { name: "Light" }),
+        );
+
+        // Then — the preview is light again while the UI stays dark
+        expect(getDarkPreviewThemeSegment()).toHaveAttribute(
+          "aria-pressed",
+          "false",
+        );
+        expect(document.documentElement).toHaveClass("dark");
+      });
     });
 
     it("should keep the preview theme independent of the UI chrome theme when toggled", () => {
