@@ -52,6 +52,8 @@ type StackIconsEditorFieldValidation = {
   breakpointMinWidthByIndex: Record<number, string[]>;
 };
 
+const emptySubscribe = () => () => {};
+
 export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const {
     addBreakpointLayout,
@@ -71,8 +73,20 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const [isPlainTextSlugEditorOpen, setIsPlainTextSlugEditorOpen] =
     React.useState(false);
   const { resolvedTheme } = useTheme();
+
+  // next-themes resolves the theme from localStorage/matchMedia during the
+  // first client render, while the server always renders without it — reading
+  // resolvedTheme during hydration causes a mismatch. The server snapshot
+  // (false) keeps the hydration render on light; right after, isHydrated
+  // flips and the seeding block below switches to the real theme.
+  const isHydrated = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+
   const resolvedUiTheme: StackIconsPreviewTheme =
-    resolvedTheme === "dark" ? "dark" : "light";
+    isHydrated && resolvedTheme === "dark" ? "dark" : "light";
   const [previewTheme, setPreviewTheme] =
     React.useState<StackIconsPreviewTheme>(resolvedUiTheme);
   const [lastSeededUiTheme, setLastSeededUiTheme] =
