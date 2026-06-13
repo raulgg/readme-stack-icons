@@ -150,8 +150,9 @@ describe("ColumnLayoutPreview", () => {
     });
   });
 
-  it("should notify the dark preview theme when the Dark segment is pressed", () => {
-    // Given
+  it("should notify the dark preview theme when the Dark toggle item is pressed", () => {
+    // Given — the preview-theme ToggleGroup renders items as Radix single-mode
+    // radios (role="radio", aria-checked, data-state="on"/"off").
     const onPreviewThemeChange = vi.fn();
 
     renderColumnLayoutPreview({ onPreviewThemeChange, previewTheme: "light" });
@@ -159,21 +160,23 @@ describe("ColumnLayoutPreview", () => {
     const previewThemeGroup = screen.getByRole("group", {
       name: "Preview theme",
     });
+    const lightItem = within(previewThemeGroup).getByRole("radio", {
+      name: "Light",
+    });
 
-    expect(
-      within(previewThemeGroup).getByRole("button", { name: "Light" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(lightItem).toHaveAttribute("aria-checked", "true");
+    expect(lightItem).toHaveAttribute("data-state", "on");
 
     // When
     fireEvent.click(
-      within(previewThemeGroup).getByRole("button", { name: "Dark" }),
+      within(previewThemeGroup).getByRole("radio", { name: "Dark" }),
     );
 
     // Then
     expect(onPreviewThemeChange).toHaveBeenCalledWith("dark");
   });
 
-  it("should notify the light preview theme when the Light segment is pressed while dark", () => {
+  it("should notify the light preview theme when the Light toggle item is pressed while dark", () => {
     // Given
     const onPreviewThemeChange = vi.fn();
 
@@ -182,18 +185,39 @@ describe("ColumnLayoutPreview", () => {
     const previewThemeGroup = screen.getByRole("group", {
       name: "Preview theme",
     });
+    const darkItem = within(previewThemeGroup).getByRole("radio", {
+      name: "Dark",
+    });
 
-    expect(
-      within(previewThemeGroup).getByRole("button", { name: "Dark" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(darkItem).toHaveAttribute("aria-checked", "true");
+    expect(darkItem).toHaveAttribute("data-state", "on");
 
     // When
     fireEvent.click(
-      within(previewThemeGroup).getByRole("button", { name: "Light" }),
+      within(previewThemeGroup).getByRole("radio", { name: "Light" }),
     );
 
     // Then
     expect(onPreviewThemeChange).toHaveBeenCalledWith("light");
+  });
+
+  it("should ignore the empty deselect when the active preview theme item is pressed again", () => {
+    // Given — a theme is always selected; pressing the active item must not
+    // clear the selection (Radix emits an empty-string deselect we guard).
+    const onPreviewThemeChange = vi.fn();
+
+    renderColumnLayoutPreview({ onPreviewThemeChange, previewTheme: "light" });
+
+    // When — the already-active Light item is pressed again
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Preview theme" })).getByRole(
+        "radio",
+        { name: "Light" },
+      ),
+    );
+
+    // Then — the empty deselect is swallowed, no spurious theme change fires
+    expect(onPreviewThemeChange).not.toHaveBeenCalled();
   });
 
   it("should fall back to a monogram cell when a known icon thumbnail fails to load", () => {
@@ -221,9 +245,7 @@ describe("ColumnLayoutPreview", () => {
       "repeat(4, 48px)",
     );
     expect(
-      screen.getByText(
-        "4 columns · 48px icons · gap 8px · base layout — exactly what the README shows",
-      ),
+      screen.getByText("any width · 48px icons · gap 8px"),
     ).toBeInTheDocument();
   });
 
@@ -239,13 +261,11 @@ describe("ColumnLayoutPreview", () => {
 
     // Then
     expect(
-      screen.getByText(
-        "5 columns · 32px icons · gap 12px · base layout — exactly what the README shows",
-      ),
+      screen.getByText("any width · 32px icons · gap 12px"),
     ).toBeInTheDocument();
   });
 
-  it("should show one breakpoint band picker card per column layout when the layout mode is responsive", () => {
+  it("should show one column-layout tab per band labeled by column count when the layout mode is responsive", () => {
     // Given — a responsive layout with a base layout and two breakpoints
     renderColumnLayoutPreview({
       columnLayouts: RESPONSIVE_COLUMN_LAYOUTS,
@@ -254,25 +274,23 @@ describe("ColumnLayoutPreview", () => {
 
     // When — the preview renders (render is the action)
 
-    // Then — three cards sorted narrow to wide, base selected by default
-    expect(
-      screen.getByText("Responsive preview — choose a viewport range"),
-    ).toBeInTheDocument();
-
-    const baseBandCard = screen.getByRole("button", {
-      name: "4 columns under 768px",
+    // Then — a Base tab plus one tab per breakpoint band, base selected first
+    const layoutTabs = screen.getByRole("tablist", {
+      name: "Preview column layout",
     });
 
-    expect(baseBandCard).toHaveAttribute("aria-pressed", "true");
+    const baseTab = within(layoutTabs).getByRole("tab", { name: "Base · 4" });
+
+    expect(baseTab).toHaveAttribute("aria-selected", "true");
     expect(
-      screen.getByRole("button", { name: "8 columns 768–1199px" }),
-    ).toHaveAttribute("aria-pressed", "false");
+      within(layoutTabs).getByRole("tab", { name: "8 cols" }),
+    ).toHaveAttribute("aria-selected", "false");
     expect(
-      screen.getByRole("button", { name: "12 columns 1200px and up" }),
-    ).toHaveAttribute("aria-pressed", "false");
+      within(layoutTabs).getByRole("tab", { name: "12 cols" }),
+    ).toHaveAttribute("aria-selected", "false");
   });
 
-  it("should hide the breakpoint band picker when the layout mode is single", () => {
+  it("should show a lone Base tab when the layout mode is single", () => {
     // Given
     renderColumnLayoutPreview({
       columnLayouts: singleColumnLayouts("4"),
@@ -281,13 +299,18 @@ describe("ColumnLayoutPreview", () => {
 
     // When — the preview renders (render is the action)
 
-    // Then
+    // Then — exactly one Base tab, no breakpoint tabs
+    const layoutTabs = screen.getByRole("tablist", {
+      name: "Preview column layout",
+    });
+
+    expect(within(layoutTabs).getAllByRole("tab")).toHaveLength(1);
     expect(
-      screen.queryByText("Responsive preview — choose a viewport range"),
-    ).not.toBeInTheDocument();
+      within(layoutTabs).getByRole("tab", { name: "Base · 4" }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
-  it("should hide the breakpoint band picker when unparseable column layouts leave fewer than two usable bands", () => {
+  it("should show a lone Base tab when unparseable column layouts leave fewer than two usable bands", () => {
     // Given — only the base layout has a usable column count
     renderColumnLayoutPreview({
       columnLayouts: [
@@ -301,34 +324,39 @@ describe("ColumnLayoutPreview", () => {
     // When — the preview renders (render is the action)
 
     // Then
+    const layoutTabs = screen.getByRole("tablist", {
+      name: "Preview column layout",
+    });
+
+    expect(within(layoutTabs).getAllByRole("tab")).toHaveLength(1);
     expect(
-      screen.queryByText("Responsive preview — choose a viewport range"),
-    ).not.toBeInTheDocument();
+      within(layoutTabs).getByRole("tab", { name: "Base · 4" }),
+    ).toHaveAttribute("aria-selected", "true");
   });
 
-  it("should switch the stage and caption to that column layout when a breakpoint band is clicked", () => {
+  it("should switch the stage and caption to that column layout when a breakpoint tab is selected", () => {
     // Given
     renderColumnLayoutPreview({
       columnLayouts: RESPONSIVE_COLUMN_LAYOUTS,
       layoutMode: "responsive",
     });
 
-    // When
-    fireEvent.click(
-      screen.getByRole("button", { name: "8 columns 768–1199px" }),
-    );
+    // When — Radix tab triggers activate on pointer-down + focus, not a click
+    const breakpointTab = screen.getByRole("tab", { name: "8 cols" });
+
+    fireEvent.mouseDown(breakpointTab);
+    fireEvent.focus(breakpointTab);
 
     // Then — the stage uses the 768px band's columns and the caption follows
-    expect(
-      screen.getByRole("button", { name: "8 columns 768–1199px" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("tab", { name: "8 cols" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(getStageIconList().style.gridTemplateColumns).toBe(
       `repeat(${KNOWN_SLUGS.length}, 48px)`,
     );
     expect(
-      screen.getByText(
-        "8 columns · 48px icons · gap 8px · ≥ 768px viewport — exactly what the README shows",
-      ),
+      screen.getByText("768–1199px · 48px icons · gap 8px"),
     ).toBeInTheDocument();
   });
 
@@ -339,9 +367,10 @@ describe("ColumnLayoutPreview", () => {
       layoutMode: "responsive",
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "12 columns 1200px and up" }),
-    );
+    const widestTab = screen.getByRole("tab", { name: "12 cols" });
+
+    fireEvent.mouseDown(widestTab);
+    fireEvent.focus(widestTab);
 
     // When — the 1200px breakpoint layout is removed
     rerender(
@@ -357,13 +386,12 @@ describe("ColumnLayoutPreview", () => {
     );
 
     // Then — selection clamps back to the base band
+    expect(screen.getByRole("tab", { name: "Base · 4" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(
-      screen.getByRole("button", { name: "4 columns under 768px" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    expect(
-      screen.getByText(
-        "4 columns · 48px icons · gap 8px · base layout — exactly what the README shows",
-      ),
+      screen.getByText("under 768px · 48px icons · gap 8px"),
     ).toBeInTheDocument();
   });
 });

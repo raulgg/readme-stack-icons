@@ -1974,9 +1974,11 @@ describe("StackIconsEditor", () => {
 
   describe("column layout preview", () => {
     function getDarkPreviewThemeSegment() {
+      // The preview-theme switch is a ToggleGroup (single mode), so its items
+      // are Radix radios with aria-checked/data-state rather than aria-pressed.
       return within(
         screen.getByRole("group", { name: "Preview theme" }),
-      ).getByRole("button", { name: "Dark" });
+      ).getByRole("radio", { name: "Dark" });
     }
 
     function getSectionToggle(sectionKey: "icons" | "layout" | "spacing") {
@@ -2007,7 +2009,7 @@ describe("StackIconsEditor", () => {
 
       // Then — the preview theme is ephemeral state (ADR 0004)
       expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-        "aria-pressed",
+        "aria-checked",
         "true",
       );
       const params = new URLSearchParams(window.location.search);
@@ -2046,7 +2048,7 @@ describe("StackIconsEditor", () => {
         // Then
         await waitFor(() => {
           expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-            "aria-pressed",
+            "aria-checked",
             "true",
           );
         });
@@ -2058,7 +2060,7 @@ describe("StackIconsEditor", () => {
         selectUiTheme("Dark");
         await waitFor(() => {
           expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-            "aria-pressed",
+            "aria-checked",
             "true",
           );
         });
@@ -2067,12 +2069,12 @@ describe("StackIconsEditor", () => {
         fireEvent.click(
           within(
             screen.getByRole("group", { name: "Preview theme" }),
-          ).getByRole("button", { name: "Light" }),
+          ).getByRole("radio", { name: "Light" }),
         );
 
         // Then — the preview is light again while the UI stays dark
         expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-          "aria-pressed",
+          "aria-checked",
           "false",
         );
         expect(document.documentElement).toHaveClass("dark");
@@ -2112,9 +2114,7 @@ describe("StackIconsEditor", () => {
           .gridTemplateColumns,
       ).toBe("repeat(2, 56px)");
       expect(
-        screen.getByText(
-          "2 columns · 56px icons · gap 12px · base layout — exactly what the README shows",
-        ),
+        screen.getByText("any width · 56px icons · gap 12px"),
       ).toBeInTheDocument();
     });
   });

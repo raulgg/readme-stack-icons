@@ -3,6 +3,8 @@
 import React from "react";
 import { BookOpenIcon, MoonIcon, SunIcon } from "lucide-react";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   getEditableBaseColumnLayout,
   type EditableColumnLayout,
@@ -195,11 +197,12 @@ type ColumnLayoutPreviewProps = {
 };
 
 // Always-visible column layout preview: a live client-side recreation of one
-// column layout's generated image source for the selected preview theme.
-// In responsive layout mode with at least two usable bands, breakpoint band
-// picker cards let the user choose which column layout the stage recreates;
-// otherwise the stage shows the base column layout. Unknown slugs are skipped
-// entirely, matching how generated image sources render (ADR 0002).
+// column layout's generated image source for the selected preview theme,
+// wrapped in a code-block-style box. The box's header strip carries the
+// column-layout tabs on the left (a Base tab plus one tab per breakpoint band
+// in responsive mode) and the Light/Dark image-theme switch on the right; the
+// box body is the themed stage. Unknown slugs are skipped entirely, matching
+// how generated image sources render (ADR 0002).
 export function ColumnLayoutPreview({
   codePanel,
   columnLayouts,
@@ -216,18 +219,20 @@ export function ColumnLayoutPreview({
   // selected band, the stage derives back to the base band atomically.
   const [selectedBandIndex, setSelectedBandIndex] = React.useState(0);
   const renderableSlugs = slugs.filter(isIconSlug);
-  const bands = getColumnLayoutPreviewBands(columnLayouts);
-  const isBandPickerVisible = layoutMode === "responsive" && bands.length >= 2;
+  const allBands = getColumnLayoutPreviewBands(columnLayouts);
+  // The stage always has a band to recreate: in single mode (or responsive
+  // with no usable breakpoints) it is a lone Base band derived from the base
+  // column layout; otherwise it is the full sorted band list (Base first).
+  const isResponsivePreview =
+    layoutMode === "responsive" && allBands.length >= 2;
+  const baseColumns = resolveColumnLayoutPreviewBaseColumns(
+    getEditableBaseColumnLayout(columnLayouts).columns,
+  );
+  const bands: ColumnLayoutPreviewBand[] = isResponsivePreview
+    ? allBands
+    : [{ columns: baseColumns, minWidthPx: null }];
   const activeBandIndex =
-    isBandPickerVisible && selectedBandIndex < bands.length
-      ? selectedBandIndex
-      : 0;
-  const activeBand = isBandPickerVisible ? bands[activeBandIndex] : undefined;
-  const columns =
-    activeBand?.columns ??
-    resolveColumnLayoutPreviewBaseColumns(
-      getEditableBaseColumnLayout(columnLayouts).columns,
-    );
+    selectedBandIndex < bands.length ? selectedBandIndex : 0;
   const gapPx =
     Number.isFinite(Number(gap)) && gap.trim() !== ""
       ? Number(gap)
@@ -236,12 +241,6 @@ export function ColumnLayoutPreview({
     Number.isFinite(Number(iconSize)) && iconSize.trim() !== ""
       ? Number(iconSize)
       : FALLBACK_ICON_SIZE;
-  const stageColumnCount = getColumnLayoutPreviewColumnCount({
-    columns,
-    gap: gapPx,
-    iconCount: renderableSlugs.length,
-    iconSize: iconSizePx,
-  });
 
   return (
     <section
@@ -261,190 +260,130 @@ export function ColumnLayoutPreview({
         </span>
         {downloadAction}
       </div>
-      <div className="relative mx-5 mt-[18px]">
-        <div
-          className="flex max-w-full items-center justify-center overflow-x-auto rounded-[6px] border px-4 py-[22px] sm:px-[26px] sm:py-[30px]"
-          data-preview-theme={previewTheme}
-          style={STAGE_COLORS[previewTheme]}
+      <div className="mx-5 mb-[2px] mt-[18px]">
+        {/* The preview box: a code-block-style bordered surface whose muted
+            header strip holds the column-layout tabs and the image-theme
+            switch, and whose body is the themed stage. */}
+        <Tabs
+          className="overflow-hidden rounded-[6px] border"
+          onValueChange={(value) => setSelectedBandIndex(Number(value))}
+          value={String(activeBandIndex)}
         >
-          {renderableSlugs.length === 0 ? (
-            <p className="text-center text-[14px] text-ink-3">
-              Add icons above to see your stack rendered here.
-            </p>
-          ) : (
-            <ul
-              aria-label="Column layout preview icons"
-              className="grid"
-              style={{
-                gap: `${gapPx + 4}px`,
-                gridTemplateColumns: `repeat(${stageColumnCount}, ${iconSizePx}px)`,
-              }}
-            >
-              {renderableSlugs.map((slug, index) => (
-                <ColumnLayoutPreviewIconCell
-                  iconSize={iconSizePx}
-                  key={`${slug}-${index}-${previewTheme}-${iconSizePx}`}
-                  previewTheme={previewTheme}
-                  slug={slug}
-                />
+          <div className="flex items-center justify-between gap-x-3 border-b bg-surface-2 px-3 py-[7px]">
+            <TabsList aria-label="Preview column layout">
+              {bands.map((band, bandIndex) => (
+                <TabsTrigger
+                  key={`${band.minWidthPx ?? "base"}-${bandIndex}`}
+                  value={String(bandIndex)}
+                >
+                  {bandIndex === 0
+                    ? `Base · ${band.columns}`
+                    : `${band.columns} cols`}
+                </TabsTrigger>
               ))}
-            </ul>
-          )}
-        </div>
-        {/* Pinned to the non-scrolling wrapper, not the scrollable stage, so
-            it stays in the corner when the stage scrolls horizontally. */}
-        <div
-          aria-label="Preview theme"
-          className="absolute right-2 top-2 inline-flex items-center gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]"
-          role="group"
-        >
-          <PreviewThemeSegmentedButton
-            isActive={previewTheme === "light"}
-            label="Light"
-            onActivate={() => onPreviewThemeChange("light")}
-          >
-            <SunIcon aria-hidden="true" size={15} />
-          </PreviewThemeSegmentedButton>
-          <PreviewThemeSegmentedButton
-            isActive={previewTheme === "dark"}
-            label="Dark"
-            onActivate={() => onPreviewThemeChange("dark")}
-          >
-            <MoonIcon aria-hidden="true" size={15} />
-          </PreviewThemeSegmentedButton>
-        </div>
-      </div>
-      <p
-        className={cn(
-          "px-5 pt-[10px] text-center font-mono text-[11.5px] text-ink-3",
-          isBandPickerVisible ? "pb-[10px]" : "pb-[18px]",
-        )}
-      >
-        {`${columns} columns · ${iconSizePx}px icons · gap ${gapPx}px · ${
-          activeBand?.minWidthPx == null
-            ? "base layout"
-            : `≥ ${activeBand.minWidthPx}px viewport`
-        } — exactly what the README shows`}
-      </p>
-      {isBandPickerVisible ? (
-        <div className="px-5 pb-[18px]">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pb-2">
-            <span className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
-              Responsive preview — choose a viewport range
-            </span>
-            <span
-              aria-hidden="true"
-              className="font-mono text-[10px] text-ink-3"
+            </TabsList>
+            <ToggleGroup
+              aria-label="Preview theme"
+              onValueChange={(value) => {
+                // A theme is always selected: ignore the empty-string deselect
+                // Radix emits when the active item is pressed again.
+                if (value === "light" || value === "dark") {
+                  onPreviewThemeChange(value);
+                }
+              }}
+              size="iconSm"
+              type="single"
+              value={previewTheme}
             >
-              narrow → wide
-            </span>
+              <ToggleGroupItem aria-label="Light" value="light">
+                <SunIcon aria-hidden="true" size={15} />
+              </ToggleGroupItem>
+              <ToggleGroupItem aria-label="Dark" value="dark">
+                <MoonIcon aria-hidden="true" size={15} />
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
-          <div className="flex flex-wrap gap-[9px]">
-            {bands.map((band, bandIndex) => (
-              <BreakpointBandPickerCard
-                band={band}
-                isSelected={bandIndex === activeBandIndex}
-                key={`${band.minWidthPx ?? "base"}-${bandIndex}`}
-                onSelect={() => setSelectedBandIndex(bandIndex)}
-                rangeText={getColumnLayoutPreviewBandRangeText(
-                  bandIndex,
-                  bands,
-                )}
+          {bands.map((band, bandIndex) => (
+            <TabsContent
+              key={`${band.minWidthPx ?? "base"}-${bandIndex}`}
+              value={String(bandIndex)}
+            >
+              <PreviewStage
+                columns={band.columns}
+                gapPx={gapPx}
+                iconSizePx={iconSizePx}
+                previewTheme={previewTheme}
+                slugs={renderableSlugs}
               />
-            ))}
-          </div>
-        </div>
-      ) : null}
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+      <p className="px-5 pb-[18px] pt-[10px] text-center font-mono text-[11.5px] text-ink-3">
+        {`${getColumnLayoutPreviewBandRangeText(activeBandIndex, bands)} · ${iconSizePx}px icons · gap ${gapPx}px`}
+      </p>
       {codePanel}
     </section>
   );
 }
 
-type BreakpointBandPickerCardProps = {
-  band: ColumnLayoutPreviewBand;
-  isSelected: boolean;
-  onSelect: () => void;
-  rangeText: string;
+type PreviewStageProps = {
+  columns: number;
+  gapPx: number;
+  iconSizePx: number;
+  previewTheme: StackIconsPreviewTheme;
+  slugs: readonly string[];
 };
 
-// One breakpoint band choice-card. Accent-driven border, background, and
-// shadow states deliberately carry NO CSS transitions: they must apply
-// atomically on selection (stale-color bugs otherwise); only text color may
-// transition.
-function BreakpointBandPickerCard({
-  band,
-  isSelected,
-  onSelect,
-  rangeText,
-}: BreakpointBandPickerCardProps) {
+// The themed stage body for one band: the icon grid (or empty state) rendered
+// at the band's column count. The rendered column count still comes from the
+// shared server grid math via getColumnLayoutPreviewColumnCount, preserving
+// the icon-count/gap/size derivation. The fixed image-theme background lives
+// here so each tabpanel recreates its band's generated image source.
+function PreviewStage({
+  columns,
+  gapPx,
+  iconSizePx,
+  previewTheme,
+  slugs,
+}: PreviewStageProps) {
+  const stageColumnCount = getColumnLayoutPreviewColumnCount({
+    columns,
+    gap: gapPx,
+    iconCount: slugs.length,
+    iconSize: iconSizePx,
+  });
+
   return (
-    <button
-      aria-pressed={isSelected}
-      className={cn(
-        "group relative flex min-w-[128px] flex-1 flex-col items-start gap-[3px] rounded-[6px] border bg-background py-[11px] pl-[13px] pr-[38px] text-left",
-        isSelected
-          ? "border-accent bg-accent-soft shadow-[inset_0_0_0_1px_hsl(var(--accent))]"
-          : "border-border-strong hover:border-border-ink hover:shadow-button",
-      )}
-      onClick={onSelect}
-      type="button"
+    <div
+      className="flex max-w-full items-center justify-center overflow-x-auto px-4 py-[22px] sm:px-[26px] sm:py-[30px]"
+      data-preview-theme={previewTheme}
+      style={STAGE_COLORS[previewTheme]}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute right-[11px] top-[11px] h-4 w-4 rounded-full bg-background",
-          isSelected
-            ? "border-[5px] border-accent"
-            : "border-[1.5px] border-border-ink group-hover:border-ink-3",
-        )}
-      />
-      <span className="text-[19px] font-bold leading-none tracking-[-0.01em]">
-        {band.columns}{" "}
-        <span
-          className={cn(
-            "text-[12px] font-semibold tracking-normal transition-[color]",
-            isSelected ? "text-accent-ink" : "text-ink-2",
-          )}
+      {slugs.length === 0 ? (
+        <p className="text-center text-[14px] text-ink-3">
+          Add icons above to see your stack rendered here.
+        </p>
+      ) : (
+        <ul
+          aria-label="Column layout preview icons"
+          className="grid"
+          style={{
+            gap: `${gapPx + 4}px`,
+            gridTemplateColumns: `repeat(${stageColumnCount}, ${iconSizePx}px)`,
+          }}
         >
-          columns
-        </span>
-      </span>
-      <span className="font-mono text-[11px] text-ink-2">{rangeText}</span>
-    </button>
-  );
-}
-
-type PreviewThemeSegmentedButtonProps = {
-  children: React.ReactNode;
-  isActive: boolean;
-  label: string;
-  onActivate: () => void;
-};
-
-// Icon-only accent variant of the segmented control (same treatment as the
-// Layout mode switch): the active segment fills with the accent color so the
-// selected preview theme stands out over the stage. Accent-driven
-// backgrounds never transition; only color may. This switches the IMAGE
-// theme, not the UI chrome theme.
-function PreviewThemeSegmentedButton({
-  children,
-  isActive,
-  label,
-  onActivate,
-}: PreviewThemeSegmentedButtonProps) {
-  return (
-    <button
-      aria-label={label}
-      aria-pressed={isActive}
-      className={cn(
-        "flex h-7 w-7 items-center justify-center rounded-[7px] transition-[color]",
-        isActive ? "bg-accent text-white" : "text-ink-2 hover:text-ink",
+          {slugs.map((slug, index) => (
+            <ColumnLayoutPreviewIconCell
+              iconSize={iconSizePx}
+              key={`${slug}-${index}-${previewTheme}-${iconSizePx}`}
+              previewTheme={previewTheme}
+              slug={slug}
+            />
+          ))}
+        </ul>
       )}
-      onClick={onActivate}
-      type="button"
-    >
-      {children}
-    </button>
+    </div>
   );
 }
 
