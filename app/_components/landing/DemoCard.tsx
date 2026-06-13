@@ -1,11 +1,28 @@
 "use client";
 
 import React from "react";
+import {
+  BookOpenIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CopyIcon,
+  MoonIcon,
+  SunIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
-import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { tokenizeReadmeImageCode } from "@/app/_components/StackIconsEditor/ReadmeImageCodePanel";
+
+type PreviewTheme = "light" | "dark";
+
+const STAGE_COLORS: Record<
+  PreviewTheme,
+  { backgroundColor: string; borderColor?: string }
+> = {
+  light: { backgroundColor: "#ffffff" },
+  dark: { backgroundColor: "#0d1117", borderColor: "#30363d" },
+};
 
 const TOKEN_CLASSES = {
   attribute: "text-syntax-attribute",
@@ -35,16 +52,21 @@ const FULL_SNIPPET = `<picture>
 
 export function DemoCard() {
   const { resolvedTheme } = useTheme();
-  const theme = resolvedTheme === "dark" ? "dark" : "light";
-
+  const [previewTheme, setPreviewTheme] = React.useState<PreviewTheme>("light");
+  const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Re-seed preview theme when UI theme changes — same contract as the editor.
+  React.useEffect(() => {
+    if (resolvedTheme === "dark" || resolvedTheme === "light") {
+      setPreviewTheme(resolvedTheme);
+    }
+  }, [resolvedTheme]);
+
   React.useEffect(
     () => () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     },
     [],
   );
@@ -54,83 +76,148 @@ export function DemoCard() {
       await navigator.clipboard.writeText(FULL_SNIPPET);
     } catch {}
     setIsCopied(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setIsCopied(false), 2000);
   }
 
-  const stageStyle: React.CSSProperties =
-    theme === "dark"
-      ? { backgroundColor: "#16181B", border: "1px solid #2A2D31" }
-      : {
-          backgroundColor: "#FCFBF8",
-          border: "1px solid",
-          borderColor: "hsl(var(--border))",
-        };
-
   return (
-    <div className="rounded-[6px] border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <span className="font-mono text-[11px] font-medium uppercase tracking-[0.07em] text-ink-2">
-          Live Preview
-        </span>
-        <span className="rounded-full border border-border bg-surface-3 px-[9px] py-[3px] font-mono text-[10.5px] text-ink-2">
-          4 columns · 48px · {theme}
+    <section className="rounded-[6px] border bg-card text-card-foreground">
+      {/* GitHub README-style card header */}
+      <div className="flex items-center border-b pl-5 pr-3">
+        <span className="relative flex items-center gap-2 py-[13px] text-sm font-semibold">
+          <BookOpenIcon aria-hidden="true" className="h-4 w-4 text-ink-2" />
+          README
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-accent"
+          />
         </span>
       </div>
 
-      <div className="flex flex-col gap-[14px] p-4">
+      {/* Stage */}
+      <div className="relative mx-5 mt-[18px]">
         <div
-          className="flex justify-center rounded-[6px] p-[26px]"
-          style={stageStyle}
+          className="flex max-w-full items-center justify-center overflow-x-auto rounded-[6px] border px-4 py-[22px] sm:px-[26px] sm:py-[30px]"
+          style={STAGE_COLORS[previewTheme]}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`/icons?icons=typescript,react,nextdotjs,tailwindcss,nodedotjs,postgresql,prisma,docker&columns=4&size=48&theme=${theme}`}
             alt="Stack preview"
             className="block"
+            src={`/icons?icons=typescript,react,nextdotjs,tailwindcss,nodedotjs,postgresql,prisma,docker&columns=4&size=48&theme=${previewTheme}`}
           />
         </div>
-
-        <div className="flex items-center justify-between px-[2px]">
-          <span className="font-mono text-[11px] font-medium uppercase tracking-[0.07em] text-ink-2">
-            Readme Code
-          </span>
-        </div>
-
-        <div className="relative">
-          <pre className="max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[11.5px] leading-[1.8]">
-            <code>
-              {tokenizeReadmeImageCode(ABBREVIATED_SNIPPET).map((token, i) => (
-                <span
-                  key={i}
-                  className={TOKEN_CLASSES[token.kind] || undefined}
-                >
-                  {token.text}
-                </span>
-              ))}
-            </code>
-          </pre>
-          <button
-            aria-label={isCopied ? "Copied" : "Copy README code"}
-            aria-live="polite"
-            className={cn(
-              "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color]",
-              isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
-            )}
-            onClick={handleCopy}
-            type="button"
+        {/* Preview theme toggle — same treatment as the editor's stage overlay */}
+        <div
+          aria-label="Preview theme"
+          className="absolute right-2 top-2 inline-flex items-center gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]"
+          role="group"
+        >
+          <PreviewThemeButton
+            isActive={previewTheme === "light"}
+            label="Light"
+            onActivate={() => setPreviewTheme("light")}
           >
-            {isCopied ? (
-              <CheckIcon aria-hidden size={15} />
-            ) : (
-              <CopyIcon aria-hidden size={15} />
-            )}
-          </button>
+            <SunIcon aria-hidden="true" size={15} />
+          </PreviewThemeButton>
+          <PreviewThemeButton
+            isActive={previewTheme === "dark"}
+            label="Dark"
+            onActivate={() => setPreviewTheme("dark")}
+          >
+            <MoonIcon aria-hidden="true" size={15} />
+          </PreviewThemeButton>
         </div>
       </div>
-    </div>
+
+      <p className="px-5 pb-[18px] pt-[10px] text-center font-mono text-[11.5px] text-ink-3">
+        4 columns · 48px icons — exactly what your README shows
+      </p>
+
+      {/* Code panel — mirrors ReadmeImageCodePanel structure */}
+      <div className="mx-5 mb-5">
+        <button
+          className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2"
+          onClick={() => setIsCodeVisible((v) => !v)}
+          type="button"
+        >
+          <ChevronDownIcon
+            aria-hidden="true"
+            className={cn(
+              "h-[13px] w-[13px] transition-transform duration-[180ms]",
+              !isCodeVisible && "-rotate-90",
+            )}
+          />
+          {"README code · <picture>"}
+        </button>
+        {isCodeVisible ? (
+          <div className="relative mt-3">
+            <pre
+              aria-label="README image code"
+              className="max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[12.5px] leading-[1.75]"
+            >
+              <code>
+                {tokenizeReadmeImageCode(ABBREVIATED_SNIPPET).map(
+                  (token, i) => (
+                    <span
+                      className={TOKEN_CLASSES[token.kind] || undefined}
+                      key={i}
+                    >
+                      {token.text}
+                    </span>
+                  ),
+                )}
+              </code>
+            </pre>
+            <button
+              aria-label={isCopied ? "Copied" : "Copy README code"}
+              aria-live="polite"
+              className={cn(
+                "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color]",
+                isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
+              )}
+              onClick={handleCopy}
+              type="button"
+            >
+              {isCopied ? (
+                <CheckIcon aria-hidden="true" size={15} />
+              ) : (
+                <CopyIcon aria-hidden="true" size={15} />
+              )}
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+type PreviewThemeButtonProps = {
+  children: React.ReactNode;
+  isActive: boolean;
+  label: string;
+  onActivate: () => void;
+};
+
+function PreviewThemeButton({
+  children,
+  isActive,
+  label,
+  onActivate,
+}: PreviewThemeButtonProps) {
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={isActive}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded-[7px] transition-[color]",
+        isActive ? "bg-accent text-white" : "text-ink-2 hover:text-ink",
+      )}
+      onClick={onActivate}
+      type="button"
+    >
+      {children}
+    </button>
   );
 }
 
