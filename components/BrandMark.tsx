@@ -2,6 +2,7 @@ import React from "react";
 
 type BrandMarkProps = {
   className?: string;
+  size?: number;
 };
 
 /**
@@ -9,15 +10,15 @@ type BrandMarkProps = {
  * Fills use the Primer token custom properties so the mark adapts to the
  * active UI theme.
  */
-export function BrandMark({ className }: BrandMarkProps) {
+export function BrandMark({ className, size = 52 }: BrandMarkProps) {
   return (
     <svg
       aria-hidden="true"
       className={className}
       fill="none"
-      height={52}
+      height={size}
       viewBox="0 0 36 36"
-      width={52}
+      width={size}
     >
       <rect
         fill="hsl(var(--accent-soft))"
