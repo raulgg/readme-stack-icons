@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 
 const Tabs = TabsPrimitive.Root;
 
-// Pill tabs styled like the package-manager switcher: the list has no
-// background of its own and the active trigger is a raised light pill.
-// Inactive triggers carry a transparent border so activating one does not
-// shift the row. The active pill is neutral (not accent), so a
-// transition-colors is fine here.
+// Tabs styled as shadcn's outline toggle variant: each trigger is an
+// individually outlined button (border-input, transparent bg) that fills with
+// a muted neutral surface on hover/active, keeping the same foreground text —
+// no brand-accent fill, no per-state text-color change. shadcn fills the
+// selected item with its `accent` token, which in a neutral theme is a light
+// gray; this app's `accent` is brand blue, so we map it to `muted` instead.
+// The muted fill is neutral (not accent), so transition-colors is fine here.
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
@@ -31,9 +33,9 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "rounded-[6px] border border-transparent px-3 py-1 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-      "text-ink-2 hover:text-ink",
-      "data-[state=active]:border-border-strong data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+      "inline-flex items-center rounded-[6px] border border-input bg-transparent px-3 py-1 text-[13px] font-medium text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      "hover:bg-muted",
+      "data-[state=active]:bg-muted",
       className,
     )}
     {...props}
