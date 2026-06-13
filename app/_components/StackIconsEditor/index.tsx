@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -703,12 +704,11 @@ function ColumnLayoutMiniInput({
   const isInvalid = hasErrors(errors);
 
   return (
-    <input
+    <Input
       aria-describedby={isInvalid ? describedBy : undefined}
       aria-invalid={isInvalid || undefined}
       aria-label={ariaLabel}
       className={cn(
-        "rounded-[6px] border border-border-strong bg-background px-2.5 py-2 font-mono text-[13px] text-foreground",
         widthClassName,
         isInvalid && "border-destructive ring-[3px] ring-destructive-soft",
       )}
