@@ -78,8 +78,16 @@ function getIconSlugsTextarea() {
   return screen.getByLabelText("Icon slugs");
 }
 
-function getLayoutModeButton(name: "Responsive layout" | "Single layout") {
-  return screen.getByRole("button", { name });
+function getLayoutModeTab(name: "Responsive" | "Single") {
+  return screen.getByRole("tab", { name });
+}
+
+function selectLayoutMode(name: "Responsive" | "Single") {
+  // Radix tab triggers activate on pointer-down + focus, not a bare click.
+  const tab = getLayoutModeTab(name);
+
+  fireEvent.mouseDown(tab);
+  fireEvent.focus(tab);
 }
 
 function getColumnInputs() {
@@ -253,12 +261,9 @@ describe("StackIconsEditor", () => {
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
     expect(getBaseColumnsInput()).toBeEnabled();
-    expect(getLayoutModeButton("Single layout")).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(getLayoutModeButton("Responsive layout")).toHaveAttribute(
-      "aria-pressed",
+    expect(getLayoutModeTab("Single")).toHaveAttribute("aria-selected", "true");
+    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
+      "aria-selected",
       "false",
     );
     expect(
@@ -698,7 +703,7 @@ describe("StackIconsEditor", () => {
     );
     expect(getReadmeImageCodeText()).toContain("<picture>");
 
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Responsive");
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "1" },
     });
@@ -908,7 +913,7 @@ describe("StackIconsEditor", () => {
   it("should switch to the default responsive column layouts", async () => {
     renderSingleLayoutEditor();
 
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Responsive");
 
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
@@ -918,8 +923,8 @@ describe("StackIconsEditor", () => {
         JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
       );
     });
-    expect(getLayoutModeButton("Responsive layout")).toHaveAttribute(
-      "aria-pressed",
+    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
+      "aria-selected",
       "true",
     );
     expect(getBaseColumnsInput()).toHaveValue(4);
@@ -935,7 +940,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "6" },
     });
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Responsive");
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "10" },
     });
@@ -945,7 +950,7 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "1024" },
     });
-    fireEvent.click(screen.getByLabelText("Single layout"));
+    selectLayoutMode("Single");
 
     expect(getBaseColumnsInput()).toHaveValue(6);
     await waitFor(() => {
@@ -957,7 +962,7 @@ describe("StackIconsEditor", () => {
       );
     });
 
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Responsive");
 
     expect(getBaseColumnsInput()).toHaveValue(10);
     expect(getBreakpointColumnsInput(0)).toHaveValue(16);
@@ -1163,8 +1168,8 @@ describe("StackIconsEditor", () => {
       screen.getByRole("button", { name: "Remove 768px breakpoint" }),
     );
 
-    expect(getLayoutModeButton("Responsive layout")).toHaveAttribute(
-      "aria-pressed",
+    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
+      "aria-selected",
       "true",
     );
     expect(getBaseColumnsInput()).toHaveValue(12);
@@ -1204,11 +1209,11 @@ describe("StackIconsEditor", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Remove 768px breakpoint" }),
     );
-    fireEvent.click(screen.getByLabelText("Single layout"));
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Single");
+    selectLayoutMode("Responsive");
 
-    expect(getLayoutModeButton("Responsive layout")).toHaveAttribute(
-      "aria-pressed",
+    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
+      "aria-selected",
       "true",
     );
     expect(getBaseColumnsInput()).toHaveValue(12);
@@ -1289,8 +1294,8 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1100" },
     });
-    fireEvent.click(screen.getByLabelText("Single layout"));
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Single");
+    selectLayoutMode("Responsive");
 
     expect(getBaseColumnsInput()).toHaveValue(10);
     expect(getBreakpointColumnsInput(0)).toHaveValue(14);
@@ -1357,7 +1362,7 @@ describe("StackIconsEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("Responsive layout"));
+    selectLayoutMode("Responsive");
 
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
@@ -1386,7 +1391,7 @@ describe("StackIconsEditor", () => {
     expect(getBaseColumnsInput()).toHaveValue(8);
     expect(getBreakpointColumnsInput(0)).toHaveValue(14);
 
-    fireEvent.click(screen.getByLabelText("Single layout"));
+    selectLayoutMode("Single");
 
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);

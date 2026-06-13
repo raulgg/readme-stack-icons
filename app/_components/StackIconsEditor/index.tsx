@@ -14,10 +14,12 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getEditableBaseColumnLayout,
   getEditableBreakpointColumnLayouts,
+  type LayoutMode,
 } from "@/lib/icons/column-layout";
 import { formatUnknownSlugsMessage } from "@/lib/icons/parse-request";
 import { getIconLabel } from "@/lib/icons/registry";
@@ -235,159 +237,125 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
         summary={getLayoutSummary(state)}
         title="Layout"
       >
-        <div className="grid gap-5">
-          <fieldset>
-            <legend className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
-              Layout mode
-            </legend>
-            <div className="mt-2 inline-flex gap-[3px] rounded-[6px] border bg-surface-3 p-[3px]">
-              <LayoutModeSegmentedButton
-                ariaLabel="Single layout"
-                isActive={state.layoutMode === "single"}
-                onSelect={() => switchLayoutMode("single")}
-              >
-                Single
-              </LayoutModeSegmentedButton>
-              <LayoutModeSegmentedButton
-                ariaLabel="Responsive layout"
-                isActive={state.layoutMode === "responsive"}
-                onSelect={() => switchLayoutMode("responsive")}
-              >
-                Responsive
-              </LayoutModeSegmentedButton>
-            </div>
-          </fieldset>
+        <Tabs
+          onValueChange={(value) => switchLayoutMode(value as LayoutMode)}
+          value={state.layoutMode}
+        >
+          <TabsList aria-label="Layout mode">
+            <TabsTrigger value="single">Single</TabsTrigger>
+            <TabsTrigger value="responsive">Responsive</TabsTrigger>
+          </TabsList>
 
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2">
-              Column layouts
-            </p>
+          <div className="mt-4">
             <FieldError
               errors={fieldValidation.layout}
               id="column-layouts-error"
             />
-            <div className="mt-2 grid gap-[9px]">
-              <div className="flex flex-wrap items-center gap-3 rounded-[6px] border bg-surface-2 px-[13px] py-[11px]">
-                <span className="text-[13px] font-bold">Base</span>
-                <span className="rounded-[6px] bg-accent-soft px-2 py-[3px] font-mono text-[10.5px] uppercase text-accent-ink">
-                  All widths
-                </span>
-                <label className="flex items-center gap-2">
-                  <span className="font-mono text-[13px] text-ink-2">
-                    columns
-                  </span>
-                  <ColumnLayoutMiniInput
-                    describedBy="base-columns-error"
-                    errors={fieldValidation.baseColumns}
-                    max={20}
-                    min={2}
-                    onChange={updateBaseColumns}
-                    value={baseColumnLayout?.columns ?? ""}
-                  />
-                </label>
-                <ColumnLayoutRowError
+            <TabsContent value="single">
+              <BaseColumnLayoutRow
+                columns={baseColumnLayout?.columns ?? ""}
+                errors={fieldValidation.baseColumns}
+                onChange={updateBaseColumns}
+              />
+            </TabsContent>
+            <TabsContent value="responsive">
+              <div className="grid gap-[9px]">
+                <BaseColumnLayoutRow
+                  columns={baseColumnLayout?.columns ?? ""}
                   errors={fieldValidation.baseColumns}
-                  id="base-columns-error"
+                  onChange={updateBaseColumns}
                 />
-              </div>
 
-              {state.layoutMode === "responsive"
-                ? breakpointLayouts.map(({ layout, originalIndex }) => {
-                    const isRemovable = breakpointLayouts.length > 1;
-                    const breakpointLabel =
-                      layout.minWidthPx === ""
-                        ? "breakpoint"
-                        : `${layout.minWidthPx}px`;
-                    const columnsErrors =
-                      fieldValidation.breakpointColumnsByIndex[originalIndex] ??
-                      [];
-                    const minWidthErrors =
-                      fieldValidation.breakpointMinWidthByIndex[
-                        originalIndex
-                      ] ?? [];
+                {breakpointLayouts.map(({ layout, originalIndex }) => {
+                  const isRemovable = breakpointLayouts.length > 1;
+                  const breakpointLabel =
+                    layout.minWidthPx === ""
+                      ? "breakpoint"
+                      : `${layout.minWidthPx}px`;
+                  const columnsErrors =
+                    fieldValidation.breakpointColumnsByIndex[originalIndex] ??
+                    [];
+                  const minWidthErrors =
+                    fieldValidation.breakpointMinWidthByIndex[originalIndex] ??
+                    [];
 
-                    return (
-                      <div
-                        className="flex flex-wrap items-center gap-3 rounded-[6px] border px-[13px] py-[11px]"
-                        key={originalIndex}
+                  return (
+                    <div
+                      className="flex flex-wrap items-center gap-3 rounded-[6px] border px-[13px] py-[11px]"
+                      key={originalIndex}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="font-mono text-[13px] text-ink-2"
                       >
-                        <span
-                          aria-hidden="true"
-                          className="font-mono text-[13px] text-ink-2"
-                        >
-                          ≥
+                        ≥
+                      </span>
+                      <ColumnLayoutMiniInput
+                        ariaLabel="Min width"
+                        describedBy={`breakpoint-min-width-error-${originalIndex}`}
+                        errors={minWidthErrors}
+                        max={3840}
+                        min={1}
+                        onChange={(minWidthPx) =>
+                          updateColumnLayout(
+                            originalIndex,
+                            "minWidthPx",
+                            minWidthPx,
+                          )
+                        }
+                        value={layout.minWidthPx}
+                        widthClassName="w-[84px]"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="font-mono text-[13px] text-ink-2"
+                      >
+                        px
+                      </span>
+                      <label className="flex items-center gap-2">
+                        <span className="font-mono text-[13px] text-ink-2">
+                          columns
                         </span>
                         <ColumnLayoutMiniInput
-                          ariaLabel="Min width"
-                          describedBy={`breakpoint-min-width-error-${originalIndex}`}
-                          errors={minWidthErrors}
-                          max={3840}
-                          min={1}
-                          onChange={(minWidthPx) =>
+                          describedBy={`breakpoint-columns-error-${originalIndex}`}
+                          errors={columnsErrors}
+                          max={20}
+                          min={2}
+                          onChange={(columns) =>
                             updateColumnLayout(
                               originalIndex,
-                              "minWidthPx",
-                              minWidthPx,
+                              "columns",
+                              columns,
                             )
                           }
-                          value={layout.minWidthPx}
-                          widthClassName="w-[84px]"
+                          value={layout.columns}
                         />
-                        <span
-                          aria-hidden="true"
-                          className="font-mono text-[13px] text-ink-2"
+                      </label>
+                      <ColumnLayoutRowError
+                        errors={columnsErrors}
+                        id={`breakpoint-columns-error-${originalIndex}`}
+                      />
+                      <ColumnLayoutRowError
+                        errors={minWidthErrors}
+                        id={`breakpoint-min-width-error-${originalIndex}`}
+                      />
+                      {isRemovable ? (
+                        <Button
+                          aria-label={`Remove ${breakpointLabel} breakpoint`}
+                          className="ml-auto rounded-[6px]"
+                          onClick={() => removeBreakpointLayout(originalIndex)}
+                          size="iconSm"
+                          type="button"
+                          variant="destructiveGhost"
                         >
-                          px
-                        </span>
-                        <label className="flex items-center gap-2">
-                          <span className="font-mono text-[13px] text-ink-2">
-                            columns
-                          </span>
-                          <ColumnLayoutMiniInput
-                            describedBy={`breakpoint-columns-error-${originalIndex}`}
-                            errors={columnsErrors}
-                            max={20}
-                            min={2}
-                            onChange={(columns) =>
-                              updateColumnLayout(
-                                originalIndex,
-                                "columns",
-                                columns,
-                              )
-                            }
-                            value={layout.columns}
-                          />
-                        </label>
-                        <ColumnLayoutRowError
-                          errors={columnsErrors}
-                          id={`breakpoint-columns-error-${originalIndex}`}
-                        />
-                        <ColumnLayoutRowError
-                          errors={minWidthErrors}
-                          id={`breakpoint-min-width-error-${originalIndex}`}
-                        />
-                        {isRemovable ? (
-                          <button
-                            aria-label={`Remove ${breakpointLabel} breakpoint`}
-                            className="ml-auto flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-2 hover:bg-destructive hover:text-white"
-                            onClick={() =>
-                              removeBreakpointLayout(originalIndex)
-                            }
-                            type="button"
-                          >
-                            <Trash2Icon
-                              className="h-4 w-4"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        ) : null}
-                      </div>
-                    );
-                  })
-                : null}
-            </div>
+                          <Trash2Icon className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
 
-            {state.layoutMode === "responsive" ? (
               <Button
                 className="mt-3"
                 onClick={addBreakpointLayout}
@@ -398,9 +366,9 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
                 <PlusIcon className="h-4 w-4" aria-hidden="true" />
                 Add breakpoint
               </Button>
-            ) : null}
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </EditorSection>
 
       <EditorSection
@@ -675,35 +643,39 @@ function SpacingSliderRow({
   );
 }
 
-type LayoutModeSegmentedButtonProps = {
-  ariaLabel: string;
-  children: React.ReactNode;
-  isActive: boolean;
-  onSelect: () => void;
+type BaseColumnLayoutRowProps = {
+  columns: string;
+  errors: readonly string[];
+  onChange: (columns: string) => void;
 };
 
-// Accent variant of the segmented control: the active segment fills with the
-// accent color (the theme toggle uses the neutral variant). Accent-driven
-// backgrounds never transition; only color and transform may.
-function LayoutModeSegmentedButton({
-  ariaLabel,
-  children,
-  isActive,
-  onSelect,
-}: LayoutModeSegmentedButtonProps) {
+// The base column layout row shared by both Layout panel tabs: it applies at
+// all widths in Single mode and is the breakpoint-less base in Responsive
+// mode.
+function BaseColumnLayoutRow({
+  columns,
+  errors,
+  onChange,
+}: BaseColumnLayoutRowProps) {
   return (
-    <button
-      aria-label={ariaLabel}
-      aria-pressed={isActive}
-      className={cn(
-        "rounded-[7px] px-[13px] py-[7px] text-[13px] font-semibold transition-[color,transform]",
-        isActive ? "bg-accent text-white" : "text-ink-2 hover:text-ink",
-      )}
-      onClick={onSelect}
-      type="button"
-    >
-      {children}
-    </button>
+    <div className="flex flex-wrap items-center gap-3 rounded-[6px] border bg-surface-2 px-[13px] py-[11px]">
+      <span className="text-[13px] font-bold">Base</span>
+      <span className="rounded-[6px] bg-accent-soft px-2 py-[3px] font-mono text-[10.5px] uppercase text-accent-ink">
+        All widths
+      </span>
+      <label className="flex items-center gap-2">
+        <span className="font-mono text-[13px] text-ink-2">columns</span>
+        <ColumnLayoutMiniInput
+          describedBy="base-columns-error"
+          errors={errors}
+          max={20}
+          min={2}
+          onChange={onChange}
+          value={columns}
+        />
+      </label>
+      <ColumnLayoutRowError errors={errors} id="base-columns-error" />
+    </div>
   );
 }
 
