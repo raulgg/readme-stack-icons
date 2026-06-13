@@ -52,17 +52,23 @@ const FULL_SNIPPET = `<picture>
 
 export function DemoCard() {
   const { resolvedTheme } = useTheme();
-  const [previewTheme, setPreviewTheme] = React.useState<PreviewTheme>("light");
+  const resolvedPreviewTheme: PreviewTheme =
+    resolvedTheme === "dark" ? "dark" : "light";
+  const [previewTheme, setPreviewTheme] =
+    React.useState<PreviewTheme>(resolvedPreviewTheme);
+  const [lastSeededTheme, setLastSeededTheme] =
+    React.useState(resolvedPreviewTheme);
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Re-seed preview theme when UI theme changes — same contract as the editor.
-  React.useEffect(() => {
-    if (resolvedTheme === "dark" || resolvedTheme === "light") {
-      setPreviewTheme(resolvedTheme);
-    }
-  }, [resolvedTheme]);
+  // Adjusted during render instead of in an effect so the seeded value paints
+  // in the same pass (mirrors StackIconsEditor).
+  if (lastSeededTheme !== resolvedPreviewTheme) {
+    setLastSeededTheme(resolvedPreviewTheme);
+    setPreviewTheme(resolvedPreviewTheme);
+  }
 
   React.useEffect(
     () => () => {

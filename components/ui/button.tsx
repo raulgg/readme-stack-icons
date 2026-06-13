@@ -12,17 +12,20 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        // Primer secondary/icon buttons hover to a subtle gray, not accent.
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background hover:bg-[hsl(var(--button-bg-hover))]",
+        ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        destructiveGhost: "text-ink-2 hover:bg-destructive hover:text-white",
       },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 px-3",
         lg: "h-11 px-8",
         icon: "h-10 w-10 px-0",
+        iconSm: "h-8 w-8 px-0",
       },
     },
     defaultVariants: {

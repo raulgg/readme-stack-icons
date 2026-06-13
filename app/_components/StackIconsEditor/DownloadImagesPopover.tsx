@@ -3,6 +3,7 @@
 import React from "react";
 import { CheckIcon, DownloadIcon } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { showToast } from "@/components/ui/sonner";
 import { buildGeneratedImageSourceZip } from "@/lib/icons/generated-image-zip";
 import type { GeneratedImageSource } from "@/lib/icons/readme-image";
@@ -169,17 +170,19 @@ export function DownloadImagesPopover({
 
   return (
     <div className="relative" ref={containerRef}>
-      <button
+      <Button
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label="Download"
-        className="flex h-8 w-8 items-center justify-center rounded-[6px] text-ink-2 hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-45"
+        className="rounded-[6px] disabled:opacity-45"
         disabled={isDisabled}
         onClick={togglePopover}
+        size="iconSm"
         type="button"
+        variant="ghost"
       >
         <DownloadIcon aria-hidden="true" size={16} />
-      </button>
+      </Button>
       {isOpen ? (
         <div
           aria-label="Download images"
@@ -256,15 +259,16 @@ export function DownloadImagesPopover({
             <span className="font-mono text-[12px] text-ink-2">
               {`${selectedSources.length} of ${generatedImageSources.length} selected`}
             </span>
-            <button
-              className="inline-flex items-center gap-1.5 rounded-[6px] bg-accent px-[13px] py-[7px] text-[13px] font-semibold text-white disabled:opacity-45"
+            <Button
+              className="h-auto gap-1.5 rounded-[6px] px-[13px] py-[7px] text-[13px] font-semibold disabled:opacity-45"
               disabled={isDownloading}
               onClick={downloadSelectedImageSources}
+              size="sm"
               type="button"
             >
               <DownloadIcon aria-hidden="true" size={16} />
               Download .zip
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
