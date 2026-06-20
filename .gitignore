@@ -1,3 +1,7 @@
+.claude/
+.cursor/
+.codex/
+.grok/
 .next
 .vercel
 node_modules
