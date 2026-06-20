@@ -1973,12 +1973,17 @@ describe("StackIconsEditor", () => {
   });
 
   describe("column layout preview", () => {
-    function getDarkPreviewThemeSegment() {
-      // The preview-theme switch is a ToggleGroup (single mode), so its items
-      // are Radix radios with aria-checked/data-state rather than aria-pressed.
-      return within(
-        screen.getByRole("group", { name: "Preview theme" }),
-      ).getByRole("radio", { name: "Dark" });
+    function getPreviewThemeSelect() {
+      return screen.getByRole("combobox", { name: "Preview theme" });
+    }
+
+    function selectPreviewTheme(name: "Light" | "Dark") {
+      fireEvent.click(getPreviewThemeSelect());
+      fireEvent.click(screen.getByRole("option", { name }));
+    }
+
+    function expectPreviewTheme(name: "Light" | "Dark") {
+      expect(getPreviewThemeSelect()).toHaveTextContent(name);
     }
 
     function getSectionToggle(sectionKey: "icons" | "layout" | "spacing") {
@@ -2005,13 +2010,10 @@ describe("StackIconsEditor", () => {
       renderEditor();
 
       // When
-      fireEvent.click(getDarkPreviewThemeSegment());
+      selectPreviewTheme("Dark");
 
       // Then — the preview theme is ephemeral state (ADR 0004)
-      expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
+      expectPreviewTheme("Dark");
       const params = new URLSearchParams(window.location.search);
 
       expect(params.has("preview-theme")).toBe(false);
@@ -2034,8 +2036,8 @@ describe("StackIconsEditor", () => {
       }
 
       function selectUiTheme(name: "Light" | "Dark" | "System") {
-        fireEvent.click(screen.getByRole("button", { name: "UI theme" }));
-        fireEvent.click(screen.getByRole("menuitemradio", { name }));
+        fireEvent.click(screen.getByRole("combobox", { name: "UI theme" }));
+        fireEvent.click(screen.getByRole("option", { name }));
       }
 
       it("should match the preview theme to the UI theme when the UI theme changes", async () => {
@@ -2047,10 +2049,7 @@ describe("StackIconsEditor", () => {
 
         // Then
         await waitFor(() => {
-          expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-            "aria-checked",
-            "true",
-          );
+          expectPreviewTheme("Dark");
         });
       });
 
@@ -2059,24 +2058,14 @@ describe("StackIconsEditor", () => {
         renderEditorWithUiThemeMenu();
         selectUiTheme("Dark");
         await waitFor(() => {
-          expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-            "aria-checked",
-            "true",
-          );
+          expectPreviewTheme("Dark");
         });
 
         // When — the user switches the preview theme back on its own
-        fireEvent.click(
-          within(
-            screen.getByRole("group", { name: "Preview theme" }),
-          ).getByRole("radio", { name: "Light" }),
-        );
+        selectPreviewTheme("Light");
 
         // Then — the preview is light again while the UI stays dark
-        expect(getDarkPreviewThemeSegment()).toHaveAttribute(
-          "aria-checked",
-          "false",
-        );
+        expectPreviewTheme("Light");
         expect(document.documentElement).toHaveClass("dark");
       });
     });
@@ -2088,7 +2077,7 @@ describe("StackIconsEditor", () => {
       const documentClassName = document.documentElement.className;
 
       // When — the IMAGE preview theme switches to dark
-      fireEvent.click(getDarkPreviewThemeSegment());
+      selectPreviewTheme("Dark");
 
       // Then — stage icons use the dark image theme, UI chrome is untouched
       const stageIcon = screen.getByRole("img", {

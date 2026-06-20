@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { BookOpenIcon, MoonIcon, SunIcon } from "lucide-react";
+import { BookOpenIcon } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ThemeSelect } from "@/components/ThemeSelect";
 import {
   getColumnLayoutPreviewBands,
   getEditableBaseColumnLayout,
@@ -197,26 +197,16 @@ export function ColumnLayoutPreview({
                 </TabsTrigger>
               ))}
             </TabsList>
-            <ToggleGroup
-              aria-label="Preview theme"
+            <ThemeSelect
+              ariaLabel="Preview theme"
               onValueChange={(value) => {
-                // A theme is always selected: ignore the empty-string deselect
-                // Radix emits when the active item is pressed again.
-                if (value === "light" || value === "dark") {
+                if (value !== "system") {
                   onPreviewThemeChange(value);
                 }
               }}
-              size="iconSm"
-              type="single"
+              triggerVariant="card"
               value={previewTheme}
-            >
-              <ToggleGroupItem aria-label="Light" value="light">
-                <SunIcon aria-hidden="true" size={15} />
-              </ToggleGroupItem>
-              <ToggleGroupItem aria-label="Dark" value="dark">
-                <MoonIcon aria-hidden="true" size={15} />
-              </ToggleGroupItem>
-            </ToggleGroup>
+            />
           </div>
           {bands.map((band, bandIndex) => (
             <TabsContent

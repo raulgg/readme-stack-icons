@@ -12,12 +12,17 @@ function renderUiThemeMenu() {
   );
 }
 
-function openMenu() {
-  fireEvent.click(screen.getByRole("button", { name: "UI theme" }));
+function getUiThemeSelect() {
+  return screen.getByRole("combobox", { name: "UI theme" });
 }
 
-function getMenuItem(name: "Light" | "Dark" | "System") {
-  return screen.getByRole("menuitemradio", { name });
+function openUiThemeSelect() {
+  fireEvent.click(getUiThemeSelect());
+}
+
+function selectUiThemeOption(name: "Light" | "Dark" | "System") {
+  openUiThemeSelect();
+  fireEvent.click(screen.getByRole("option", { name }));
 }
 
 describe("UiThemeMenu", () => {
@@ -32,36 +37,30 @@ describe("UiThemeMenu", () => {
     renderUiThemeMenu();
 
     // When
-    openMenu();
+    openUiThemeSelect();
 
     // Then
-    expect(getMenuItem("Light")).toBeInTheDocument();
-    expect(getMenuItem("Dark")).toBeInTheDocument();
-    expect(getMenuItem("System")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Light" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Dark" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "System" })).toBeInTheDocument();
   });
 
-  it("should check the System option when no theme preference is stored", async () => {
+  it("should show System when no theme preference is stored", async () => {
     // Given — fresh visitor, nothing in localStorage
     renderUiThemeMenu();
 
-    // When
-    openMenu();
-
     // Then
     await waitFor(() => {
-      expect(getMenuItem("System")).toHaveAttribute("aria-checked", "true");
+      expect(getUiThemeSelect()).toHaveTextContent("System");
     });
-    expect(getMenuItem("Light")).toHaveAttribute("aria-checked", "false");
-    expect(getMenuItem("Dark")).toHaveAttribute("aria-checked", "false");
   });
 
   it("should apply the dark theme to the page when the Dark option is selected", async () => {
     // Given
     renderUiThemeMenu();
-    openMenu();
 
     // When
-    fireEvent.click(getMenuItem("Dark"));
+    selectUiThemeOption("Dark");
 
     // Then
     await waitFor(() => {
@@ -72,10 +71,9 @@ describe("UiThemeMenu", () => {
   it("should persist the preference when the Dark option is selected", async () => {
     // Given
     renderUiThemeMenu();
-    openMenu();
 
     // When
-    fireEvent.click(getMenuItem("Dark"));
+    selectUiThemeOption("Dark");
 
     // Then
     await waitFor(() => {
@@ -86,15 +84,13 @@ describe("UiThemeMenu", () => {
   it("should persist the system preference when System is selected after a static theme", async () => {
     // Given — user previously pinned dark
     renderUiThemeMenu();
-    openMenu();
-    fireEvent.click(getMenuItem("Dark"));
+    selectUiThemeOption("Dark");
     await waitFor(() => {
       expect(document.documentElement).toHaveClass("dark");
     });
 
     // When
-    openMenu();
-    fireEvent.click(getMenuItem("System"));
+    selectUiThemeOption("System");
 
     // Then — OS reports light (matchMedia shim matches: false)
     await waitFor(() => {
@@ -108,28 +104,32 @@ describe("UiThemeMenu", () => {
   it("should close the menu when an option is selected", async () => {
     // Given
     renderUiThemeMenu();
-    openMenu();
+    openUiThemeSelect();
 
     // When
-    fireEvent.click(getMenuItem("Light"));
+    fireEvent.click(screen.getByRole("option", { name: "Light" }));
 
     // Then
     await waitFor(() => {
-      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Light" }),
+      ).not.toBeInTheDocument();
     });
   });
 
   it("should close the menu when Escape is pressed", async () => {
     // Given
     renderUiThemeMenu();
-    openMenu();
+    openUiThemeSelect();
 
     // When
-    fireEvent.keyDown(getMenuItem("Light"), { key: "Escape" });
+    fireEvent.keyDown(document, { key: "Escape" });
 
     // Then
     await waitFor(() => {
-      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Light" }),
+      ).not.toBeInTheDocument();
     });
   });
 });

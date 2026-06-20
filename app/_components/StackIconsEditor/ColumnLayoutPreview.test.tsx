@@ -51,6 +51,15 @@ function getStageIconList() {
   return screen.getByRole("list", { name: "Column layout preview icons" });
 }
 
+function getPreviewThemeSelect() {
+  return screen.getByRole("combobox", { name: "Preview theme" });
+}
+
+function selectPreviewTheme(name: "Light" | "Dark") {
+  fireEvent.click(getPreviewThemeSelect());
+  fireEvent.click(screen.getByRole("option", { name }));
+}
+
 describe("ColumnLayoutPreview", () => {
   it("should use the same column count as getIconGridLayout when rendering the stage grid", () => {
     // Given — six renderable icons in a 4-column base layout
@@ -150,74 +159,34 @@ describe("ColumnLayoutPreview", () => {
     });
   });
 
-  it("should notify the dark preview theme when the Dark toggle item is pressed", () => {
-    // Given — the preview-theme ToggleGroup renders items as Radix single-mode
-    // radios (role="radio", aria-checked, data-state="on"/"off").
+  it("should notify the dark preview theme when Dark is selected from the dropdown", () => {
+    // Given
     const onPreviewThemeChange = vi.fn();
 
     renderColumnLayoutPreview({ onPreviewThemeChange, previewTheme: "light" });
 
-    const previewThemeGroup = screen.getByRole("group", {
-      name: "Preview theme",
-    });
-    const lightItem = within(previewThemeGroup).getByRole("radio", {
-      name: "Light",
-    });
-
-    expect(lightItem).toHaveAttribute("aria-checked", "true");
-    expect(lightItem).toHaveAttribute("data-state", "on");
+    expect(getPreviewThemeSelect()).toHaveTextContent("Light");
 
     // When
-    fireEvent.click(
-      within(previewThemeGroup).getByRole("radio", { name: "Dark" }),
-    );
+    selectPreviewTheme("Dark");
 
     // Then
     expect(onPreviewThemeChange).toHaveBeenCalledWith("dark");
   });
 
-  it("should notify the light preview theme when the Light toggle item is pressed while dark", () => {
+  it("should notify the light preview theme when Light is selected while dark", () => {
     // Given
     const onPreviewThemeChange = vi.fn();
 
     renderColumnLayoutPreview({ onPreviewThemeChange, previewTheme: "dark" });
 
-    const previewThemeGroup = screen.getByRole("group", {
-      name: "Preview theme",
-    });
-    const darkItem = within(previewThemeGroup).getByRole("radio", {
-      name: "Dark",
-    });
-
-    expect(darkItem).toHaveAttribute("aria-checked", "true");
-    expect(darkItem).toHaveAttribute("data-state", "on");
+    expect(getPreviewThemeSelect()).toHaveTextContent("Dark");
 
     // When
-    fireEvent.click(
-      within(previewThemeGroup).getByRole("radio", { name: "Light" }),
-    );
+    selectPreviewTheme("Light");
 
     // Then
     expect(onPreviewThemeChange).toHaveBeenCalledWith("light");
-  });
-
-  it("should ignore the empty deselect when the active preview theme item is pressed again", () => {
-    // Given — a theme is always selected; pressing the active item must not
-    // clear the selection (Radix emits an empty-string deselect we guard).
-    const onPreviewThemeChange = vi.fn();
-
-    renderColumnLayoutPreview({ onPreviewThemeChange, previewTheme: "light" });
-
-    // When — the already-active Light item is pressed again
-    fireEvent.click(
-      within(screen.getByRole("group", { name: "Preview theme" })).getByRole(
-        "radio",
-        { name: "Light" },
-      ),
-    );
-
-    // Then — the empty deselect is swallowed, no spurious theme change fires
-    expect(onPreviewThemeChange).not.toHaveBeenCalled();
   });
 
   it("should fall back to a monogram cell when a known icon thumbnail fails to load", () => {
