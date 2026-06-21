@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { BrandMark } from "@/components/BrandMark";
+import { StackIconsLogo } from "@/components/StackIconsLogo";
 import { UiThemeMenu } from "@/components/UiThemeMenu";
 
 export function SiteHeader() {
@@ -11,7 +11,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-none items-center justify-between px-10 py-[15px]">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
-            <BrandMark />
+            <StackIconsLogo />
             <div>
               <p className="mb-2 text-[27px] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground">
                 Stack<span className="text-accent-ink">Icons</span>

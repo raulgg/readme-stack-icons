@@ -1,11 +1,11 @@
 import Link from "next/link";
 
-import { BrandMark } from "@/components/BrandMark";
+import { StackIconsLogo } from "@/components/StackIconsLogo";
 
 export function LandingFooter() {
   return (
     <footer className="flex items-center gap-3 border-t border-border px-10 py-[18px] max-[760px]:px-5 max-[760px]:py-4">
-      <BrandMark size={22} />
+      <StackIconsLogo size={22} />
       <span className="text-[13px] font-semibold text-foreground">
         StackIcons
       </span>
