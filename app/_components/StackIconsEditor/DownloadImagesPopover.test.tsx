@@ -165,7 +165,7 @@ describe("DownloadImagesPopover", () => {
     let downloadedFileName = "";
     const anchorClick = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(function () {
+      .mockImplementation(function (this: HTMLAnchorElement) {
         downloadedFileName = this.download;
       });
     renderPopover();
