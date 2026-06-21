@@ -15,7 +15,7 @@ export function getDownloadZipFileName(date = new Date()): string {
     .replace(/[-:]/g, "")
     .replace(/\.\d{3}Z$/, "Z");
 
-  return `stackicons-${timestamp}.zip`;
+  return `stack-icons-${timestamp}.zip`;
 }
 
 export type DownloadMatrixRow = {

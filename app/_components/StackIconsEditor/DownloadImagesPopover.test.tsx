@@ -62,7 +62,7 @@ afterEach(() => {
 describe("DownloadImagesPopover", () => {
   it("should build a filename with a compact UTC timestamp", () => {
     expect(getDownloadZipFileName(new Date("2026-06-21T14:30:52.123Z"))).toBe(
-      "stackicons-20260621T143052Z.zip",
+      "stack-icons-20260621T143052Z.zip",
     );
   });
 
@@ -184,7 +184,7 @@ describe("DownloadImagesPopover", () => {
     );
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(anchorClick).toHaveBeenCalledTimes(1);
-    expect(downloadedFileName).toMatch(/^stackicons-\d{8}T\d{6}Z\.zip$/);
+    expect(downloadedFileName).toMatch(/^stack-icons-\d{8}T\d{6}Z\.zip$/);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     anchorClick.mockRestore();
