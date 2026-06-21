@@ -35,16 +35,29 @@ version/cache-busting query params are not exposed as editor form fields.
 | `bun run lint`  | ESLint              |
 | `bun run test`  | Vitest (watch mode) |
 
+### Tests
+
+Unit tests run on **Vitest** with Testing Library and jsdom. Use `bun run test` — not `bun test`, which is Bun's separate test runner and is blocked by a `bunfig.toml` preload guard.
+
+Tests are **colocated** next to the file they cover, using the same base name with a `.test` suffix (e.g. `Button.tsx` → `Button.test.tsx`). That applies to components, hooks, utilities, API route handlers, and any other unit under test.
+
+| Path                | Role                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| `vitest.config.ts`  | jsdom environment, `@/` alias, setup file                                                         |
+| `vitest.setup.ts`   | Shared matchers (`jest-dom`) and jsdom polyfills (`matchMedia`, `PointerEvent`, `ResizeObserver`) |
+| `bun-test-guard.ts` | Exits with an error if `bun test` is invoked directly                                             |
+
+Coverage spans the editor UI (`app/_components/StackIconsEditor/`), shared components, the `/icons` API route, and pure logic in `lib/icons/`. Component tests query the DOM by role, label, or accessible name; lib tests call functions directly.
+
+Tests follow **Given – When – Then** structure with names like `should [outcome] when [action]`. See [Writing unit tests](docs/guidelines/writing-unit-tests.md) for conventions and examples.
+
 ## Layout
 
-| Path          | Role                                  |
-| ------------- | ------------------------------------- |
-| `app/`        | Routes, layouts, API route handlers   |
-| `components/` | Shared UI                             |
-| `lib/`        | Utilities                             |
-| `docs/`       | Project documentation and guidelines  |
-| `test/`       | Vitest global setup only (`setup.ts`) |
-
-Unit tests are colocated with source files (e.g. `Button.tsx` → `Button.test.tsx`). See [Writing unit tests](docs/guidelines/writing-unit-tests.md).
+| Path          | Role                                 |
+| ------------- | ------------------------------------ |
+| `app/`        | Routes, layouts, API route handlers  |
+| `components/` | Shared UI                            |
+| `lib/`        | Utilities                            |
+| `docs/`       | Project documentation and guidelines |
 
 Path alias `@/` resolves to the repo root (see `vitest.config.ts` and Next config).
