@@ -9,7 +9,14 @@ import { buildGeneratedImageSourceZip } from "@/lib/icons/generated-image-zip";
 import type { GeneratedImageSource } from "@/lib/icons/readme-image";
 import { cn } from "@/lib/utils";
 
-const DOWNLOAD_ZIP_FILE_NAME = "stack-icons.zip";
+export function getDownloadZipFileName(date = new Date()): string {
+  const timestamp = date
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}Z$/, "Z");
+
+  return `stackicons-${timestamp}.zip`;
+}
 
 export type DownloadMatrixRow = {
   columns: number;
@@ -50,7 +57,7 @@ function triggerZipDownload(zipBytes: Uint8Array) {
   const anchor = document.createElement("a");
 
   anchor.href = zipObjectUrl;
-  anchor.download = DOWNLOAD_ZIP_FILE_NAME;
+  anchor.download = getDownloadZipFileName();
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();

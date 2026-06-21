@@ -3,7 +3,10 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GeneratedImageSource } from "@/lib/icons/readme-image";
-import { DownloadImagesPopover } from "./DownloadImagesPopover";
+import {
+  DownloadImagesPopover,
+  getDownloadZipFileName,
+} from "./DownloadImagesPopover";
 
 const { showToastMock } = vi.hoisted(() => ({ showToastMock: vi.fn() }));
 
@@ -46,7 +49,7 @@ function mockSuccessfulSvgFetch() {
 beforeEach(() => {
   vi.stubGlobal("URL", {
     ...URL,
-    createObjectURL: vi.fn(() => "blob:stack-icons"),
+    createObjectURL: vi.fn(() => "blob:stackicons"),
     revokeObjectURL: vi.fn(),
   });
 });
@@ -57,6 +60,12 @@ afterEach(() => {
 });
 
 describe("DownloadImagesPopover", () => {
+  it("should build a filename with a compact UTC timestamp", () => {
+    expect(getDownloadZipFileName(new Date("2026-06-21T14:30:52.123Z"))).toBe(
+      "stackicons-20260621T143052Z.zip",
+    );
+  });
+
   it("should disable the Download button when downloading is not possible", () => {
     // Given / When
     renderPopover(RESPONSIVE_IMAGE_SOURCES, true);
@@ -153,9 +162,12 @@ describe("DownloadImagesPopover", () => {
   it("should download one zip of the selected sources and close when every fetch succeeds", async () => {
     // Given
     mockSuccessfulSvgFetch();
+    let downloadedFileName = "";
     const anchorClick = vi
       .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => {});
+      .mockImplementation(function () {
+        downloadedFileName = this.download;
+      });
     renderPopover();
     openPopover();
 
@@ -172,6 +184,7 @@ describe("DownloadImagesPopover", () => {
     );
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(anchorClick).toHaveBeenCalledTimes(1);
+    expect(downloadedFileName).toMatch(/^stackicons-\d{8}T\d{6}Z\.zip$/);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     anchorClick.mockRestore();
