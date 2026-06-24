@@ -9,8 +9,9 @@ import {
   RulerIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useTheme } from "next-themes";
-
+import { ReadmeImageCodePanel } from "@/app/_components/readme/ReadmeImageCodePanel";
+import type { StackIconsPreviewTheme } from "@/app/_components/readme/preview-theme";
+import { useResolvedPreviewTheme } from "@/app/_components/readme/useResolvedPreviewTheme";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -30,14 +31,12 @@ import { ColumnLayoutPreview } from "./ColumnLayoutPreview";
 import { DownloadImagesPopover } from "./DownloadImagesPopover";
 import { EditorSection, type EditorSectionKey } from "./EditorSection";
 import { parseIconSlugs, StackIconPicker } from "./IconPicker";
-import { ReadmeImageCodePanel } from "./ReadmeImageCodePanel";
 import { SelectedIconTiles } from "./SelectedIconTiles";
 import {
   ICON_SIZE_STEP,
   MAX_ICON_SIZE,
   MIN_ICON_SIZE,
   type StackIconsEditorState,
-  type StackIconsPreviewTheme,
 } from "./state";
 import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
@@ -55,8 +54,6 @@ type StackIconsEditorFieldValidation = {
   breakpointColumnsByIndex: Record<number, string[]>;
   breakpointMinWidthByIndex: Record<number, string[]>;
 };
-
-const emptySubscribe = () => () => {};
 
 export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const {
@@ -77,21 +74,7 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   } = useStackIconsEditorForm(initialState);
   const [isPlainTextSlugEditorOpen, setIsPlainTextSlugEditorOpen] =
     React.useState(false);
-  const { resolvedTheme } = useTheme();
-
-  // next-themes resolves the theme from localStorage/matchMedia during the
-  // first client render, while the server always renders without it — reading
-  // resolvedTheme during hydration causes a mismatch. The server snapshot
-  // (false) keeps the hydration render on light; right after, isHydrated
-  // flips and the seeding block below switches to the real theme.
-  const isHydrated = React.useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const resolvedUiTheme: StackIconsPreviewTheme =
-    isHydrated && resolvedTheme === "dark" ? "dark" : "light";
+  const resolvedUiTheme = useResolvedPreviewTheme();
   const [previewTheme, setPreviewTheme] =
     React.useState<StackIconsPreviewTheme>(resolvedUiTheme);
   const [lastSeededUiTheme, setLastSeededUiTheme] =

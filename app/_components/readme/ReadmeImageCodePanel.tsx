@@ -96,19 +96,17 @@ const TOKEN_KIND_CLASS_NAMES: Record<ReadmeImageCodeTokenKind, string> = {
 const COPIED_FEEDBACK_DURATION_MS = 2000;
 
 type ReadmeImageCodePanelProps = {
-  hasSelectedIcons: boolean;
-  onCopy: () => Promise<boolean>;
+  hasSelectedIcons?: boolean;
+  onCopy?: () => Promise<boolean>;
   readmeImageCode: string;
+  showCopyButton?: boolean;
 };
 
-// Bottom panel of the column layout preview card: a collapsible, syntax
-// highlighted view of the generated README image code with a copy button
-// overlaid on the code block, GitHub-style. Disclosure state is ephemeral UI
-// state; collapsing hides the copy button along with the code.
 export function ReadmeImageCodePanel({
-  hasSelectedIcons,
+  hasSelectedIcons = true,
   onCopy,
   readmeImageCode,
+  showCopyButton = true,
 }: ReadmeImageCodePanelProps) {
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
@@ -126,7 +124,7 @@ export function ReadmeImageCodePanel({
   }, []);
 
   async function copyWithCopiedFeedback() {
-    if (!(await onCopy())) {
+    if (!(await onCopy?.())) {
       return;
     }
 
@@ -189,26 +187,25 @@ export function ReadmeImageCodePanel({
               </code>
             )}
           </pre>
-          {/* Pinned to the non-scrolling wrapper, not the scrollable code
-              block, so it stays in the corner when the code scrolls
-              horizontally — same treatment as the preview theme switch. */}
-          <button
-            aria-label={isCopied ? "Copied" : "Copy README code"}
-            aria-live="polite"
-            className={cn(
-              "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color] disabled:pointer-events-none disabled:opacity-45",
-              isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
-            )}
-            disabled={!hasReadmeImageCode}
-            onClick={copyWithCopiedFeedback}
-            type="button"
-          >
-            {isCopied ? (
-              <CheckIcon aria-hidden="true" size={15} />
-            ) : (
-              <CopyIcon aria-hidden="true" size={15} />
-            )}
-          </button>
+          {showCopyButton ? (
+            <button
+              aria-label={isCopied ? "Copied" : "Copy README code"}
+              aria-live="polite"
+              className={cn(
+                "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color] disabled:pointer-events-none disabled:opacity-45",
+                isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
+              )}
+              disabled={!hasReadmeImageCode}
+              onClick={copyWithCopiedFeedback}
+              type="button"
+            >
+              {isCopied ? (
+                <CheckIcon aria-hidden="true" size={15} />
+              ) : (
+                <CopyIcon aria-hidden="true" size={15} />
+              )}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { BookOpenIcon } from "lucide-react";
 
+import { ReadmeCardHeader } from "@/app/_components/readme/ReadmeCardHeader";
+import { ReadmePreviewStage } from "@/app/_components/readme/ReadmePreviewStage";
+import type { StackIconsPreviewTheme } from "@/app/_components/readme/preview-theme";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeSelect } from "@/components/ThemeSelect";
 import {
@@ -15,20 +17,6 @@ import {
 } from "@/lib/icons/column-layout";
 import { getIconGridLayout } from "@/lib/icons/layout";
 import { isIconSlug } from "@/lib/icons/registry";
-import type { StackIconsPreviewTheme } from "./state";
-
-// Fixed image-theme stage colors. These deliberately ignore the UI chrome
-// theme: the stage recreates what the generated image source looks like on a
-// light or dark GitHub README background (Primer canvas-default plus the
-// dark border-default).
-const STAGE_COLORS: Record<
-  StackIconsPreviewTheme,
-  { backgroundColor: string; borderColor?: string }
-> = {
-  light: { backgroundColor: "#ffffff" },
-  dark: { backgroundColor: "#0d1117", borderColor: "#30363d" },
-};
-
 const FALLBACK_GAP = 8;
 const FALLBACK_ICON_SIZE = 48;
 
@@ -162,19 +150,7 @@ export function ColumnLayoutPreview({
       aria-label="Column layout preview"
       className="rounded-[6px] border bg-card text-card-foreground"
     >
-      {/* GitHub README-style card header: the label renders as the selected
-          tab of an underline nav. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 border-b pl-5 pr-3">
-        <span className="relative flex items-center gap-2 py-[13px] text-sm font-semibold">
-          <BookOpenIcon aria-hidden="true" className="h-4 w-4 text-ink-2" />
-          README
-          <span
-            aria-hidden="true"
-            className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-accent"
-          />
-        </span>
-        {downloadAction}
-      </div>
+      <ReadmeCardHeader actions={downloadAction} />
       <div className="mx-5 mb-[2px] mt-[18px]">
         {/* The preview box: a code-block-style bordered surface whose muted
             header strip holds the column-layout tabs and the image-theme
@@ -260,11 +236,7 @@ function PreviewStage({
   });
 
   return (
-    <div
-      className="flex max-w-full items-center justify-center overflow-x-auto px-4 py-[22px] sm:px-[26px] sm:py-[30px]"
-      data-preview-theme={previewTheme}
-      style={STAGE_COLORS[previewTheme]}
-    >
+    <ReadmePreviewStage previewTheme={previewTheme}>
       {slugs.length === 0 ? (
         <p className="text-center text-[14px] text-ink-3">
           Add icons above to see your stack rendered here.
@@ -288,7 +260,7 @@ function PreviewStage({
           ))}
         </ul>
       )}
-    </div>
+    </ReadmePreviewStage>
   );
 }
 

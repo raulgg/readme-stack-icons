@@ -89,6 +89,22 @@ describe("ReadmeImageCodePanel", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("should render code without a copy button when showCopyButton is false", () => {
+    // Given
+    render(
+      <ReadmeImageCodePanel
+        readmeImageCode={README_IMAGE_CODE}
+        showCopyButton={false}
+      />,
+    );
+
+    // Then
+    expect(screen.getByLabelText("README image code")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Copy README code" }),
+    ).not.toBeInTheDocument();
+  });
+
   describe("copied feedback", () => {
     afterEach(() => {
       vi.useRealTimers();
