@@ -60,7 +60,9 @@ describe("normalizeTrustedSvgAsset", () => {
 
     // Then
     expect(normalizedSvg.attributes).toContain('id="icon-pnpm-3-root"');
-    expect(normalizedSvg.attributes).toContain('aria-labelledby="icon-pnpm-3-root"');
+    expect(normalizedSvg.attributes).toContain(
+      'aria-labelledby="icon-pnpm-3-root"',
+    );
     expect(normalizedSvg.body).toContain('id="icon-pnpm-3-shape"');
     expect(normalizedSvg.body).toContain('id="icon-pnpm-3-clip"');
     expect(normalizedSvg.body).toContain('id="icon-pnpm-3-paint"');
@@ -189,7 +191,9 @@ describe("normalizeTrustedSvgAsset", () => {
       });
 
     // Then
-    expect(normalize).toThrow("Icon asset must not include external references.");
+    expect(normalize).toThrow(
+      "Icon asset must not include external references.",
+    );
   });
 
   it("should reject SVGs when CSS imports or external URLs are present", () => {
@@ -208,6 +212,8 @@ describe("normalizeTrustedSvgAsset", () => {
       });
 
     // Then
-    expect(normalize).toThrow("Icon asset must not include external references.");
+    expect(normalize).toThrow(
+      "Icon asset must not include external references.",
+    );
   });
 });

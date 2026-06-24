@@ -6,33 +6,47 @@ Use component location and file names to show whether UI is shared across the ap
 
 Name standalone React component files with **PascalCase**. Match the main exported component name.
 
-| Component export   | File                         |
-| ------------------ | ---------------------------- |
-| `Button`           | `Button.tsx`                 |
-| `StackIconsEditor` | `StackIconsEditor.tsx`       |
-| `IconGridPreview`  | `IconGridPreview.tsx`        |
-| `useIconQuery`     | `useIconQuery.ts`            |
+| Component export   | File                   |
+| ------------------ | ---------------------- |
+| `Button`           | `Button.tsx`           |
+| `StackIconsEditor` | `StackIconsEditor.tsx` |
+| `IconGridPreview`  | `IconGridPreview.tsx`  |
+| `useIconQuery`     | `useIconQuery.ts`      |
 
 Avoid kebab-case for component files, even inside route-private folders.
 
 For components with colocated helpers or hooks, use a **PascalCase folder** with the component exported from `index.tsx`.
 
-| Component export   | Folder files                                      |
-| ------------------ | ------------------------------------------------- |
-| `StackIconsEditor` | `StackIconsEditor/index.tsx`                      |
-| `StackIconsEditor` | `StackIconsEditor/useStackIconsEditorForm.ts`     |
-| `StackIconsEditor` | `StackIconsEditor/index.test.tsx`                 |
+| Component export   | Folder files                                  |
+| ------------------ | --------------------------------------------- |
+| `StackIconsEditor` | `StackIconsEditor/index.tsx`                  |
+| `StackIconsEditor` | `StackIconsEditor/useStackIconsEditorForm.ts` |
+| `StackIconsEditor` | `StackIconsEditor/index.test.tsx`             |
+
+## Hook files
+
+A `use*.ts` file exports the hook and, when needed, related types. Constants
+are avoided — import them from the module that owns them (for example
+`state.ts`).
+
+Pure helpers belong in the hook file only when the hook is their sole
+consumer. Keep them module-private (do not export). If a component or another
+module needs the same logic, move it to a sibling file or domain module and
+export it from there.
+
+Test hook-derived values with `renderHook` rather than exporting helpers from
+the hook file for unit tests.
 
 ## Placement
 
 Keep route-specific UI inside the nearest App Router `_components` folder. Use root `components/` only for shared UI that is intentionally reused across unrelated routes or app areas.
 
-| Location                    | Use for                                      |
-| --------------------------- | -------------------------------------------- |
-| `app/_components/`          | UI private to the root app segment           |
-| `app/icons/_components/`    | UI private to the `/icons` segment           |
-| `components/`               | Shared app components                        |
-| `components/ui/`            | Reusable design-system primitives            |
+| Location                 | Use for                            |
+| ------------------------ | ---------------------------------- |
+| `app/_components/`       | UI private to the root app segment |
+| `app/icons/_components/` | UI private to the `/icons` segment |
+| `components/`            | Shared app components              |
+| `components/ui/`         | Reusable design-system primitives  |
 
 `_components` is a convention, not a Next.js routing feature requirement. The underscore opts the folder out of routing and signals that the files are implementation details for that route segment.
 
@@ -42,13 +56,13 @@ Start components close to the route that owns them. Move a component to root `co
 
 When moving a component, move its colocated test with it and keep the same PascalCase base name:
 
-| Source                    | Test                         |
-| ------------------------- | ---------------------------- |
-| `StackIconsEditor.tsx`    | `StackIconsEditor.test.tsx`  |
-| `IconGridPreview.tsx`     | `IconGridPreview.test.tsx`   |
+| Source                 | Test                        |
+| ---------------------- | --------------------------- |
+| `StackIconsEditor.tsx` | `StackIconsEditor.test.tsx` |
+| `IconGridPreview.tsx`  | `IconGridPreview.test.tsx`  |
 
 For component folders, keep the test next to the component entrypoint:
 
-| Source                              | Test                                      |
-| ----------------------------------- | ----------------------------------------- |
-| `StackIconsEditor/index.tsx`        | `StackIconsEditor/index.test.tsx`         |
+| Source                       | Test                              |
+| ---------------------------- | --------------------------------- |
+| `StackIconsEditor/index.tsx` | `StackIconsEditor/index.test.tsx` |

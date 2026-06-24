@@ -18,7 +18,8 @@ export function normalizeTrustedSvgAsset({
   rejectExternalReferences(strippedSvg);
 
   const { rootAttributes, body } = extractRootSvg(strippedSvg);
-  const viewBox = readAttribute(rootAttributes, "viewBox") ?? deriveViewBox(rootAttributes);
+  const viewBox =
+    readAttribute(rootAttributes, "viewBox") ?? deriveViewBox(rootAttributes);
   const preserveAspectRatio =
     readAttribute(rootAttributes, "preserveAspectRatio") ?? "xMidYMid meet";
   const idPrefix = `icon-${slug}-${occurrence}`;
@@ -141,7 +142,10 @@ function serializeRootAttributes(
   const retainedAttributes = Array.from(
     attributes.matchAll(/\s*([:\w-]+)=(["'])(.*?)\2/g),
   )
-    .filter(([, name]) => !/^(?:height|preserveAspectRatio|viewBox|width|x|y)$/i.test(name))
+    .filter(
+      ([, name]) =>
+        !/^(?:height|preserveAspectRatio|viewBox|width|x|y)$/i.test(name),
+    )
     .map(([, name, quote, value]) => `${name}=${quote}${value}${quote}`);
 
   return [
@@ -156,7 +160,9 @@ function deriveViewBox(rootAttributes: string): string {
   const height = readNumericAttribute(rootAttributes, "height");
 
   if (width === undefined || height === undefined) {
-    throw new Error("Icon asset must include a viewBox or numeric width and height.");
+    throw new Error(
+      "Icon asset must include a viewBox or numeric width and height.",
+    );
   }
 
   return `0 0 ${width} ${height}`;
@@ -196,7 +202,10 @@ function rejectExternalReferences(svg: string): void {
 }
 
 function collectPrefixedIds(svg: string, prefix: string): Map<string, string> {
-  const ids = Array.from(svg.matchAll(/\bid=(["'])([^"']+)\1/g), (match) => match[2]);
+  const ids = Array.from(
+    svg.matchAll(/\bid=(["'])([^"']+)\1/g),
+    (match) => match[2],
+  );
 
   return new Map(ids.map((id) => [id, `${prefix}-${id}`]));
 }
@@ -230,8 +239,9 @@ function rewriteInternalIdReferences(
             : `${name}=${quote}${rewrittenValue}${quote}`;
         },
       )
-      .replace(new RegExp(`\\b(?:href|xlink:href)=(["'])#${escapedId}\\1`, "g"), (match) =>
-        match.replace(`#${id}`, `#${prefixedId}`),
+      .replace(
+        new RegExp(`\\b(?:href|xlink:href)=(["'])#${escapedId}\\1`, "g"),
+        (match) => match.replace(`#${id}`, `#${prefixedId}`),
       );
   }, svg);
 }

@@ -18,16 +18,14 @@ import {
 } from "@/lib/icons/column-layout";
 import { generateIconsImage } from "@/lib/icons/icons-image";
 
+import { parseIconSlugs } from "./IconPicker";
 import {
   buildStackIconsEditorPageQuery,
-  DEFAULT_ICON_SIZE,
   DEFAULT_STACK_ICONS_EDITOR_STATE,
   type LayoutMode,
   type StackIconsEditorState,
 } from "./state";
 import type { EditableColumnLayout } from "@/lib/icons/column-layout";
-
-export { DEFAULT_ICON_SIZE };
 
 type LayoutMemoryState = {
   singleColumnLayout: EditableColumnLayout;
@@ -82,7 +80,7 @@ function getServerOriginSnapshot() {
   return "";
 }
 
-export function getIconsImageCodeEmptyPlaceholder({
+function getIconsImageCodeEmptyPlaceholder({
   hasIcons,
   validationErrorCount,
 }: {
@@ -153,6 +151,10 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   const validationErrors = generatedIconsImageResult.success
     ? []
     : generatedIconsImageResult.errors;
+  const iconsImageCodeEmptyPlaceholder = getIconsImageCodeEmptyPlaceholder({
+    hasIcons: parseIconSlugs(editorState.icons).length > 0,
+    validationErrorCount: validationErrors.length,
+  });
   function commitEditorState(nextState: StackIconsEditorState) {
     setEditorState(nextState);
     setLayoutMemory((currentLayoutMemory) =>
@@ -284,6 +286,7 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     generatedHtml,
     generatedImageSources,
     hasGeneratedOutput,
+    iconsImageCodeEmptyPlaceholder,
     removeBreakpointLayout: handleRemoveBreakpointLayout,
     state: editorState,
     switchLayoutMode,

@@ -1,37 +1,56 @@
-import { describe, expect, it } from "vitest";
+import React from "react";
+import { renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
   FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
 } from "@/app/_components/readme";
 
-import { getIconsImageCodeEmptyPlaceholder } from "./useStackIconsEditorForm";
+import { DEFAULT_STACK_ICONS_EDITOR_STATE } from "./state";
+import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
-describe("getIconsImageCodeEmptyPlaceholder", () => {
+describe("useStackIconsEditorForm", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("should return the add-icons placeholder when no icons are selected", () => {
-    expect(
-      getIconsImageCodeEmptyPlaceholder({
-        hasIcons: false,
-        validationErrorCount: 0,
+    const { result } = renderHook(() =>
+      useStackIconsEditorForm({
+        ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+        icons: "",
       }),
-    ).toBe(ADD_ICONS_IMAGE_CODE_PLACEHOLDER);
+    );
+
+    expect(result.current.iconsImageCodeEmptyPlaceholder).toBe(
+      ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
+    );
   });
 
   it("should return the fix-errors placeholder when icons are present and validation failed", () => {
-    expect(
-      getIconsImageCodeEmptyPlaceholder({
-        hasIcons: true,
-        validationErrorCount: 1,
+    const { result } = renderHook(() =>
+      useStackIconsEditorForm({
+        ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+        layoutMode: "single",
+        columnLayouts: [{ columns: "1", minWidthPx: null }],
       }),
-    ).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+    );
+
+    expect(result.current.iconsImageCodeEmptyPlaceholder).toBe(
+      FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
+    );
   });
 
   it("should omit a placeholder when icons are present but generation is not blocked by validation", () => {
-    expect(
-      getIconsImageCodeEmptyPlaceholder({
-        hasIcons: true,
-        validationErrorCount: 0,
-      }),
-    ).toBeUndefined();
+    vi.spyOn(React, "useSyncExternalStore").mockImplementation(
+      (_subscribe, _client, getServerSnapshot) => getServerSnapshot!(),
+    );
+
+    const { result } = renderHook(() =>
+      useStackIconsEditorForm(DEFAULT_STACK_ICONS_EDITOR_STATE),
+    );
+
+    expect(result.current.iconsImageCodeEmptyPlaceholder).toBeUndefined();
   });
 });

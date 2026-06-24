@@ -50,7 +50,7 @@ function getMatrixCellKey(
 }
 
 function triggerZipDownload(zipBytes: Uint8Array) {
-  const zipBlob = new Blob([zipBytes], {
+  const zipBlob = new Blob([zipBytes.slice()], {
     type: "application/zip",
   });
   const zipObjectUrl = URL.createObjectURL(zipBlob);

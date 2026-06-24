@@ -40,10 +40,7 @@ import {
   MIN_ICON_SIZE,
   type StackIconsEditorState,
 } from "./state";
-import {
-  getIconsImageCodeEmptyPlaceholder,
-  useStackIconsEditorForm,
-} from "./useStackIconsEditorForm";
+import { useStackIconsEditorForm } from "./useStackIconsEditorForm";
 
 export type { StackIconsEditorState } from "./state";
 
@@ -68,6 +65,7 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
     generatedHtml,
     generatedImageSources,
     hasGeneratedOutput,
+    iconsImageCodeEmptyPlaceholder,
     removeBreakpointLayout,
     state,
     switchLayoutMode,
@@ -398,10 +396,7 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
       <ColumnLayoutPreview
         codePanel={
           <IconsImageCodePanel
-            emptyPlaceholder={getIconsImageCodeEmptyPlaceholder({
-              hasIcons: selectedIconSlugs.length > 0,
-              validationErrorCount: validationErrors.length,
-            })}
+            emptyPlaceholder={iconsImageCodeEmptyPlaceholder}
             onCopy={copyIconsImageCode}
             iconsImageCode={generatedHtml}
           />

@@ -1,5 +1,8 @@
 import { parseIconRequest } from "@/lib/icons/parse-request";
-import { renderIconRequestErrorSvg, renderIconSvg } from "@/lib/icons/render-svg";
+import {
+  renderIconRequestErrorSvg,
+  renderIconSvg,
+} from "@/lib/icons/render-svg";
 
 export const runtime = "nodejs";
 
