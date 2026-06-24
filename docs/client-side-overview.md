@@ -8,15 +8,46 @@ architecture shipped by the UI overhaul.
 ## Page shell
 
 - `app/layout.tsx` wraps the app in `ThemeProvider` (next-themes, class
-  strategy) and mounts the sonner `Toaster`.
-- `app/page.tsx` renders the app bar — `BrandMark`, the StackIcons lockup with
-  the "Tech Stack Icons Composer" tagline, and `ThemeToggle` — plus a short
-  hero, then the `StackIconsEditor`.
-- The page is a server component: it resolves `searchParams` through
+  strategy), mounts the sticky `SiteHeader` and `SiteFooter`, and renders the
+  sonner `Toaster`.
+- `/` (`app/page.tsx`) is the **landing page**: hero copy, a CTA to `/editor`,
+  and `DemoCard` — a read-only README card that mirrors the UI theme. Below
+  the hero, `CatalogStrip` lists registered icon categories.
+- `/editor` (`app/editor/page.tsx`) is the **README image editor**: a server
+  component that resolves `searchParams` through
   `getStackIconsEditorInitialState` so shared URLs reopen the editor in the
-  same state.
+  same state, then renders `StackIconsEditor`.
+- **UI theme** (light / dark / system) is toggled from `UiThemeMenu` in
+  `SiteHeader`; it affects only editor chrome and landing surfaces, not
+  generated README image code.
 - Styling uses GitHub Primer design tokens (`app/globals.css`,
   `tailwind.config.ts`) with full light and dark variants.
+
+## Shared README module (`app/_components/readme/`)
+
+Landing `DemoCard` and the editor's output card share one module for README
+card chrome and preview behavior:
+
+- `ReadmeCardHeader` — "README" tab strip with optional right-side actions
+  (editor download trigger).
+- `ReadmePreviewStage` — themed stage surface (`STAGE_COLORS` from
+  `preview-theme.ts`) wrapping the preview image or icon grid.
+- `ReadmeImageCodePanel` — collapsible `<picture>` code block with syntax
+  highlighting (`tokenizeReadmeImageCode`) and an optional inline copy button.
+- `useResolvedPreviewTheme` — maps the resolved UI theme to `"light"` or
+  `"dark"` for preview rendering (used by `DemoCard` and to seed editor preview
+  theme).
+- `preview-theme.ts` — `StackIconsPreviewTheme` type and stage color tokens.
+
+## Landing DemoCard (`app/_components/landing/DemoCard.tsx`)
+
+The landing card is a static showcase, not the editor:
+
+- Preview theme **mirrors the UI theme** via `useResolvedPreviewTheme`; there
+  is no preview-theme control on the landing page.
+- `ReadmeImageCodePanel` renders an abbreviated sample snippet with
+  `showCopyButton={false}` (no `onCopy` prop).
+- No download action; `ReadmeCardHeader` has no right-side actions.
 
 ## Editor structure (`app/_components/StackIconsEditor/`)
 
@@ -61,18 +92,17 @@ independently.
 - `ColumnLayoutPreview` is the column layout preview: a client-side
   recreation of one generated image source for a specific column layout and
   color theme. The card has a GitHub README-style header — a "README" tab
-  with an accent underline, plus a ghost download icon button. A segmented
-  light/dark preview theme control floats in the top-right corner of the
-  stage itself. A band picker (`getColumnLayoutPreviewBands`) offers one
-  band per column layout with a usable column count, sorted by min-width;
-  column layouts with unparseable columns or min-width are skipped. The
-  theme toggle flips the preview between light and dark independently of
-  the UI theme. Unknown slugs do not appear in the preview, matching how
-  generated image sources render.
-- `ReadmeImageCodePanel` shows the generated README image code with custom
-  highlighting: `tokenizeReadmeImageCode` splits the HTML into
-  tag/attribute/string/punctuation tokens styled by the Primer syntax
-  tokens. Copying uses the clipboard API and reports the outcome via toast.
+  with an accent underline, plus a ghost download icon button
+  (`DownloadImagesPopover`). Inside the preview box, a **header strip**
+  (muted `bg-surface-2` bar) carries column-layout tabs on the left and
+  `ThemeSelect` for light/dark preview theme on the right; the box body is
+  `ReadmePreviewStage`. Band selection is ephemeral UI state. Unknown slugs
+  do not appear in the preview, matching how generated image sources render
+  (ADR 0002).
+- `ReadmeImageCodePanel` (from the shared readme module) shows the generated
+  README image code with custom highlighting. Copy is **inline in the panel**
+  (copy button with brief "Copied" feedback); clipboard failures surface a
+  toast from `copyReadmeImageCode` in `useStackIconsEditorForm`.
 - `DownloadImagesPopover` opens a theme × breakpoint matrix of generated
   image sources; selected cells are fetched and zipped client-side with
   fflate (`lib/icons/generated-image-zip.ts`). Failed fetches are skipped
@@ -93,14 +123,17 @@ State shape (`state.ts`):
   columnLayouts: EditableColumnLayout[]; // { columns, minWidthPx } as strings
   iconSize: string;         // default "48"
   gap: string;              // default "8"
-  previewTheme: "dark" | "light";
 }
 ```
 
 Every state change is mirrored into the URL with `history.replaceState`
 using these search params: `icons`, `layout`, `column-layouts` (JSON),
-`size`, `gap`, `preview-theme`. Unrecognized values fall back to defaults
-(responsive layout with 4 base columns, 8 from 768px, 12 from 1200px).
+`size`, `gap`. Unrecognized values fall back to defaults (responsive layout
+with 4 base columns, 8 from 768px, 12 from 1200px).
+
+**Preview theme** is **not** in this state shape or in URL params. It is
+ephemeral local state in `StackIconsEditor`, re-seeded from the resolved UI
+theme on every UI theme change; see ADR 0004.
 
 ## Validation and unknown slugs
 
@@ -116,9 +149,11 @@ using these search params: `icons`, `layout`, `column-layouts` (JSON),
 
 ## Two themes, deliberately separate
 
-- **UI theme**: the next-themes class on `<html>`, toggled by `ThemeToggle`;
-  it affects only the editor chrome.
-- **Preview theme** (`preview-theme` URL param): which color theme of the
-  generated image source the column layout preview recreates. README image
+- **UI theme**: the next-themes class on `<html>`, toggled by `UiThemeMenu`
+  in `SiteHeader`; it affects only the editor and landing chrome.
+- **Preview theme**: which color theme of the generated image source the
+  column layout preview (and landing `DemoCard`) recreates. It follows the
+  UI theme on change, can be overridden in the editor until the next UI
+  theme change, and is never persisted or shareable (ADR 0004). README image
   code always emits both light and dark sources via `<picture>` media
   queries, regardless of either theme setting.

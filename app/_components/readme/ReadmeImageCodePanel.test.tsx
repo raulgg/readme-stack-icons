@@ -65,6 +65,46 @@ describe("ReadmeImageCodePanel", () => {
     );
   });
 
+  it("should omit aria-controls on the disclosure button when the code is collapsed", () => {
+    // Given
+    render(
+      <ReadmeImageCodePanel
+        hasSelectedIcons
+        onCopy={vi.fn()}
+        readmeImageCode={README_IMAGE_CODE}
+      />,
+    );
+    const disclosureButton = screen.getByRole("button", {
+      name: "README code · <picture>",
+    });
+
+    // When
+    fireEvent.click(disclosureButton);
+
+    // Then
+    expect(disclosureButton).not.toHaveAttribute("aria-controls");
+  });
+
+  it("should point aria-controls at the code block id when the code is expanded", () => {
+    // Given
+    render(
+      <ReadmeImageCodePanel
+        hasSelectedIcons
+        onCopy={vi.fn()}
+        readmeImageCode={README_IMAGE_CODE}
+      />,
+    );
+    const disclosureButton = screen.getByRole("button", {
+      name: "README code · <picture>",
+    });
+    const codeBlock = screen.getByLabelText("README image code");
+
+    // When — panel renders open by default (render is the action)
+
+    // Then
+    expect(disclosureButton).toHaveAttribute("aria-controls", codeBlock.id);
+  });
+
   it("should hide the code and its copy button when the disclosure collapses", () => {
     // Given
     render(

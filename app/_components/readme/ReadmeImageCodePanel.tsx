@@ -97,22 +97,24 @@ const COPIED_FEEDBACK_DURATION_MS = 2000;
 
 type ReadmeImageCodePanelProps = {
   hasSelectedIcons?: boolean;
-  onCopy?: () => Promise<boolean>;
   readmeImageCode: string;
-  showCopyButton?: boolean;
-};
+} & (
+  | { showCopyButton?: true; onCopy: () => Promise<boolean> }
+  | { showCopyButton: false; onCopy?: never }
+);
 
 export function ReadmeImageCodePanel({
   hasSelectedIcons = true,
-  onCopy,
   readmeImageCode,
   showCopyButton = true,
+  ...copyProps
 }: ReadmeImageCodePanelProps) {
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
   const copiedResetTimeoutRef = React.useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
+  const codeBlockId = React.useId();
   const hasReadmeImageCode = readmeImageCode !== "";
 
   React.useEffect(() => {
@@ -124,7 +126,11 @@ export function ReadmeImageCodePanel({
   }, []);
 
   async function copyWithCopiedFeedback() {
-    if (!(await onCopy?.())) {
+    if (!showCopyButton) {
+      return;
+    }
+
+    if (!(await copyProps.onCopy())) {
       return;
     }
 
@@ -142,7 +148,7 @@ export function ReadmeImageCodePanel({
   return (
     <div className="mx-5 mb-5">
       <button
-        aria-controls="readme-image-code-block"
+        aria-controls={isCodeVisible ? codeBlockId : undefined}
         aria-expanded={isCodeVisible}
         className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.07em] text-ink-2"
         onClick={() => setIsCodeVisible((isVisible) => !isVisible)}
@@ -162,7 +168,7 @@ export function ReadmeImageCodePanel({
           <pre
             aria-label="README image code"
             className="max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[12.5px] leading-[1.75]"
-            id="readme-image-code-block"
+            id={codeBlockId}
           >
             {hasReadmeImageCode ? (
               <code>

@@ -17,7 +17,6 @@ export const MIN_ICON_SIZE = 24;
 export const MAX_ICON_SIZE = 64;
 export const ICON_SIZE_STEP = 2;
 
-export type { StackIconsPreviewTheme } from "@/app/_components/readme/preview-theme";
 export type { LayoutMode };
 
 type EditorState = {
