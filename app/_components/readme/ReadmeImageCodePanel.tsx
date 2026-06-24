@@ -105,9 +105,9 @@ type ReadmeImageCodePanelProps = {
 
 export function ReadmeImageCodePanel({
   emptyPlaceholder,
+  onCopy,
   readmeImageCode,
   showCopyButton = true,
-  ...copyProps
 }: ReadmeImageCodePanelProps) {
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
@@ -126,11 +126,11 @@ export function ReadmeImageCodePanel({
   }, []);
 
   async function copyWithCopiedFeedback() {
-    if (!showCopyButton) {
+    if (!showCopyButton || onCopy === undefined) {
       return;
     }
 
-    if (!(await copyProps.onCopy())) {
+    if (!(await onCopy())) {
       return;
     }
 
