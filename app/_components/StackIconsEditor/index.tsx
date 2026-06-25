@@ -563,9 +563,6 @@ function BaseColumnLayoutRow({
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-[6px] border bg-surface-2 px-[13px] py-[11px]">
       <span className="text-[13px] font-bold">Base</span>
-      <span className="rounded-[6px] bg-accent-soft px-2 py-[3px] font-mono text-[10.5px] uppercase text-accent-ink">
-        All widths
-      </span>
       <label className="flex items-center gap-2">
         <span className="font-mono text-[13px] text-ink-2">columns</span>
         <ColumnLayoutMiniInput
