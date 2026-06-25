@@ -8,7 +8,6 @@ const baseInput = {
   gap: "8",
   icons: "react,nextjs",
   includeDarkTheme: true,
-  layoutMode: "single" as const,
   size: "48",
 };
 
@@ -69,7 +68,6 @@ describe("icons image", () => {
         { columns: "8", minWidthPx: "640" },
       ],
       includeDarkTheme: false,
-      layoutMode: "responsive",
     });
 
     expect(result).toMatchObject({
@@ -107,7 +105,6 @@ describe("icons image", () => {
         { columns: "12", minWidthPx: "1024" },
       ],
       gap: "10",
-      layoutMode: "responsive",
     });
 
     expect(result).toMatchObject({
@@ -172,7 +169,7 @@ describe("icons image", () => {
         { columns: "4", minWidthPx: null },
         { columns: "8", minWidthPx: "640" },
       ],
-      layoutMode: "responsive" as const,
+
       size: "56",
     };
 

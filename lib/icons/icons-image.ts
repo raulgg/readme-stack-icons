@@ -2,7 +2,6 @@ import {
   validateColumnLayouts,
   type ColumnLayout,
   type EditableColumnLayout,
-  type LayoutMode,
 } from "./column-layout";
 import { parseIconRequest } from "./parse-request";
 import { escapeXml } from "../utils";
@@ -32,7 +31,6 @@ type GenerateIconsImageInput = {
   gap: string;
   icons: string;
   includeDarkTheme: boolean;
-  layoutMode: LayoutMode;
   size: string;
 };
 
@@ -42,13 +40,9 @@ export function generateIconsImage({
   gap,
   icons,
   includeDarkTheme,
-  layoutMode,
   size,
 }: GenerateIconsImageInput): IconsImageGenerationResult {
-  const columnLayoutResult = validateColumnLayouts({
-    columnLayouts,
-    layoutMode,
-  });
+  const columnLayoutResult = validateColumnLayouts({ columnLayouts });
   const parsedRequest = parseIconRequest(
     buildIconRequestParams({
       gap,

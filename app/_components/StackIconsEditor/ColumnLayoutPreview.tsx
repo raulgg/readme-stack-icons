@@ -15,7 +15,6 @@ import {
   resolveColumnLayoutPreviewBaseColumns,
   type ColumnLayoutPreviewBand,
   type EditableColumnLayout,
-  type LayoutMode,
 } from "@/lib/icons/column-layout";
 import { getIconGridLayout } from "@/lib/icons/layout";
 import { isIconSlug } from "@/lib/icons/registry";
@@ -95,7 +94,6 @@ type ColumnLayoutPreviewProps = {
   columnLayouts: readonly EditableColumnLayout[];
   gap: string;
   iconSize: string;
-  layoutMode: LayoutMode;
   onPreviewThemeChange: (previewTheme: StackIconsPreviewTheme) => void;
   previewTheme: StackIconsPreviewTheme;
   slugs: readonly string[];
@@ -104,17 +102,16 @@ type ColumnLayoutPreviewProps = {
 // Always-visible column layout preview: a live client-side recreation of one
 // column layout's generated image source for the selected preview theme,
 // wrapped in a code-block-style box. The box's header strip carries the
-// column-layout tabs on the left (a Base tab plus one tab per breakpoint band
-// in responsive mode) and the Light/Dark image-theme switch on the right; the
-// box body is the themed stage. Unknown slugs are skipped entirely, matching
-// how generated image sources render (ADR 0002).
+// column-layout tabs on the left (Base plus one per breakpoint band) and the
+// Light/Dark image-theme switch on the right; the box body is the themed stage.
+// Unknown slugs are skipped entirely, matching how generated image sources
+// render (ADR 0002).
 export function ColumnLayoutPreview({
   codePanel,
   columnLayouts,
   downloadAction,
   gap,
   iconSize,
-  layoutMode,
   onPreviewThemeChange,
   previewTheme,
   slugs,
@@ -125,17 +122,13 @@ export function ColumnLayoutPreview({
   const [selectedBandIndex, setSelectedBandIndex] = React.useState(0);
   const renderableSlugs = slugs.filter(isIconSlug);
   const allBands = getColumnLayoutPreviewBands(columnLayouts);
-  // The stage always has a band to recreate: in single mode (or responsive
-  // with no usable breakpoints) it is a lone Base band derived from the base
-  // column layout; otherwise it is the full sorted band list (Base first).
-  const isResponsivePreview =
-    layoutMode === "responsive" && allBands.length >= 2;
   const baseColumns = resolveColumnLayoutPreviewBaseColumns(
     getEditableBaseColumnLayout(columnLayouts).columns,
   );
-  const bands: ColumnLayoutPreviewBand[] = isResponsivePreview
-    ? allBands
-    : [{ columns: baseColumns, minWidthPx: null }];
+  const bands: ColumnLayoutPreviewBand[] =
+    allBands.length > 0
+      ? allBands
+      : [{ columns: baseColumns, minWidthPx: null }];
   const activeBandIndex =
     selectedBandIndex < bands.length ? selectedBandIndex : 0;
   const gapPx =

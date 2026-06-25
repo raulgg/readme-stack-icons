@@ -72,14 +72,12 @@ independently.
 
 ### Layout
 
-- A segmented mode control switches between **single layout** and
-  **responsive layout**. Switching modes remembers each mode's column
-  layouts, so toggling back restores them.
-- The base column layout (null `minWidthPx`) is always shown; in responsive
-  mode each breakpoint-specific column layout gets a row with columns and
-  min-width inputs plus a remove button (the last breakpoint cannot be
-  removed), and an add-breakpoint button. Added breakpoints start at 768px
-  and step by 256px to the next unused min-width.
+- The Layout section always shows the base column row plus an "Add breakpoint"
+  button (the "responsive composer"). By default there are no breakpoints.
+- Each breakpoint row (when present) has min-width and columns inputs and a
+  remove button. Breakpoints may be removed all the way to zero. Added
+  breakpoints start at 768 px and step by 256 px to the next free value.
+- There is no longer a Single / Responsive mode switch or per-mode memory.
 
 ### Spacing & size
 
@@ -119,7 +117,6 @@ State shape (`state.ts`):
 ```ts
 {
   icons: string;            // comma-separated slugs
-  layoutMode: "single" | "responsive";
   columnLayouts: EditableColumnLayout[]; // { columns, minWidthPx } as strings
   iconSize: string;         // default "48"
   gap: string;              // default "8"
@@ -127,9 +124,8 @@ State shape (`state.ts`):
 ```
 
 Every state change is mirrored into the URL with `history.replaceState`
-using these search params: `s`, `layout`, `column-layouts` (JSON),
-`size`, `gap`. Unrecognized values fall back to defaults (responsive layout
-with 4 base columns, 8 from 768px, 12 from 1200px).
+using these search params: `s`, `column-layouts` (JSON), `size`, `gap`.
+Unrecognized values fall back to the base-only default (4 columns, no breakpoints).
 
 **Preview theme** is **not** in this state shape or in URL params. It is
 ephemeral local state in `StackIconsEditor`, re-seeded from the resolved UI
@@ -138,10 +134,9 @@ theme on every UI theme change; see ADR 0004.
 ## Validation and unknown slugs
 
 - `validateColumnLayouts` (`lib/icons/column-layout.ts`) requires exactly one
-  base column layout, 2–20 columns per column layout, unique breakpoint px
-  values, no breakpoints in single layout mode, and at least one breakpoint
-  in responsive layout mode. Errors surface inline and block output
-  generation.
+  base column layout, 2–20 columns per layout, and unique breakpoint px values.
+  Zero breakpoints (base only) is valid and produces single-layout output.
+  Errors surface inline and block output generation.
 - Unknown slugs (ADR 0002) are recoverable, not blocking: they keep their
   place in the user's icon order, are carried in generated image source
   URLs, and are flagged in the editor, while the `/icons` endpoint and the

@@ -32,7 +32,6 @@ describe("useStackIconsEditorForm", () => {
     const { result } = renderHook(() =>
       useStackIconsEditorForm({
         ...DEFAULT_STACK_ICONS_EDITOR_STATE,
-        layoutMode: "single",
         columnLayouts: [{ columns: "1", minWidthPx: null }],
       }),
     );

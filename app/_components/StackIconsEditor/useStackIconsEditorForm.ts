@@ -10,8 +10,6 @@ import { showToast } from "@/components/ui/sonner";
 import {
   addBreakpointLayout,
   copyEditableColumnLayouts,
-  DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
-  getColumnLayoutsForMode,
   getColumnLayoutRichResult,
   getEditableBaseColumnLayout,
   removeBreakpointLayout,
@@ -22,50 +20,12 @@ import { parseIconSlugs } from "./IconPicker";
 import {
   buildStackIconsEditorPageQuery,
   DEFAULT_STACK_ICONS_EDITOR_STATE,
-  type LayoutMode,
   type StackIconsEditorState,
 } from "./state";
 import type { EditableColumnLayout } from "@/lib/icons/column-layout";
 
-type LayoutMemoryState = {
-  singleColumnLayout: EditableColumnLayout;
-  responsiveColumnLayouts: EditableColumnLayout[];
-};
-
 function getBaseColumnLayout(state: StackIconsEditorState) {
   return getEditableBaseColumnLayout(state.columnLayouts);
-}
-
-function buildInitialLayoutMemory(
-  initialState: StackIconsEditorState,
-): LayoutMemoryState {
-  return {
-    singleColumnLayout:
-      initialState.layoutMode === "single"
-        ? { ...getBaseColumnLayout(initialState) }
-        : { ...getBaseColumnLayout(DEFAULT_STACK_ICONS_EDITOR_STATE) },
-    responsiveColumnLayouts:
-      initialState.layoutMode === "responsive"
-        ? copyEditableColumnLayouts(initialState.columnLayouts)
-        : copyEditableColumnLayouts(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
-  };
-}
-
-function updateLayoutMemory(
-  layoutMemory: LayoutMemoryState,
-  state: StackIconsEditorState,
-): LayoutMemoryState {
-  if (state.layoutMode === "single") {
-    return {
-      ...layoutMemory,
-      singleColumnLayout: { ...getBaseColumnLayout(state) },
-    };
-  }
-
-  return {
-    ...layoutMemory,
-    responsiveColumnLayouts: copyEditableColumnLayouts(state.columnLayouts),
-  };
 }
 
 function subscribeToCurrentOrigin() {
@@ -113,16 +73,12 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   );
   const [editorState, setEditorState] =
     React.useState<StackIconsEditorState>(initialState);
-  const [layoutMemory, setLayoutMemory] = React.useState<LayoutMemoryState>(
-    () => buildInitialLayoutMemory(initialState),
-  );
   const generatedIconsImageResult = generateIconsImage({
     columnLayouts: editorState.columnLayouts,
     currentOrigin,
     gap: editorState.gap,
     icons: editorState.icons,
     includeDarkTheme: true,
-    layoutMode: editorState.layoutMode,
     size: editorState.iconSize,
   });
   const generatedIconsImage = generatedIconsImageResult.success
@@ -131,11 +87,10 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
 
   const columnLayoutResult = getColumnLayoutRichResult({
     columnLayouts: editorState.columnLayouts,
-    layoutMode: editorState.layoutMode,
   });
 
   // Unified column layouts updater: all column-related mutations go through here
-  // so commit + memory + URL replace side effects are in one place.
+  // so commit + URL replace side effects are in one place.
   function applyColumnLayouts(nextColumnLayouts: EditableColumnLayout[]) {
     const nextState: StackIconsEditorState = {
       ...editorState,
@@ -157,10 +112,6 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   });
   function commitEditorState(nextState: StackIconsEditorState) {
     setEditorState(nextState);
-    setLayoutMemory((currentLayoutMemory) =>
-      updateLayoutMemory(currentLayoutMemory, nextState),
-    );
-
     replaceEditorUrl(nextState);
   }
 
@@ -203,60 +154,16 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   }
 
   function handleAddBreakpointLayout() {
-    if (editorState.layoutMode !== "responsive") {
-      return;
-    }
-
-    const nextLayouts = addBreakpointLayout(
-      editorState.columnLayouts,
-      editorState.layoutMode,
-    );
-
+    const nextLayouts = addBreakpointLayout(editorState.columnLayouts);
     applyColumnLayouts(nextLayouts);
   }
 
   function handleRemoveBreakpointLayout(layoutIndex: number) {
-    if (editorState.layoutMode !== "responsive") {
-      return;
-    }
-
     const nextLayouts = removeBreakpointLayout(
       editorState.columnLayouts,
       layoutIndex,
     );
-
     applyColumnLayouts(nextLayouts);
-  }
-
-  function switchLayoutMode(layoutMode: LayoutMode) {
-    if (layoutMode === editorState.layoutMode) {
-      return;
-    }
-
-    const nextMemory: LayoutMemoryState = {
-      singleColumnLayout:
-        editorState.layoutMode === "single"
-          ? { ...getBaseColumnLayout(editorState) }
-          : layoutMemory.singleColumnLayout,
-      responsiveColumnLayouts:
-        editorState.layoutMode === "responsive"
-          ? copyEditableColumnLayouts(editorState.columnLayouts)
-          : layoutMemory.responsiveColumnLayouts,
-    };
-    const nextColumnLayouts = getColumnLayoutsForMode(
-      nextMemory.singleColumnLayout,
-      nextMemory.responsiveColumnLayouts,
-      layoutMode,
-    );
-    const nextState: StackIconsEditorState = {
-      ...editorState,
-      layoutMode,
-      columnLayouts: nextColumnLayouts,
-    };
-
-    setLayoutMemory(nextMemory);
-    setEditorState(nextState);
-    replaceEditorUrl(nextState);
   }
 
   async function copyIconsImageCode(): Promise<boolean> {
@@ -289,7 +196,6 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     iconsImageCodeEmptyPlaceholder,
     removeBreakpointLayout: handleRemoveBreakpointLayout,
     state: editorState,
-    switchLayoutMode,
     unknownSlugs,
     updateBaseColumns,
     updateColumnLayout,

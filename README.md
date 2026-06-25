@@ -5,13 +5,12 @@ Compose an ordered stack of technology slugs into one cached SVG image for Markd
 ## Editor
 
 The public editor builds a GitHub README-safe HTML snippet from icon slugs,
-layout mode, column layouts, and gap. Single layout uses one base column count.
-Responsive layout uses a base mobile column count plus one or more breakpoint
-rows, each with `Columns` and `Breakpoint px` values.
+column layouts (base + optional breakpoints), and gap. A base column count
+applies at all widths; zero or more breakpoint rows (min-width px + columns)
+may be added for responsive behavior.
 
-The editor stores active form state in the page URL. Active layout state uses
-`layout` plus JSON-serialized `column-layouts`; inactive single/responsive
-layout memory is local to the current editor session.
+The editor stores state in the page URL using `column-layouts` (JSON) along
+with the other fields. There is no mode switch or per-mode memory.
 
 Generated README HTML still targets the unchanged short `/icons` route. Each
 image URL uses the current site origin with `/icons` and the same public API

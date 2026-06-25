@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_COLUMN_LAYOUTS,
   DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
   DEFAULT_SINGLE_COLUMN_LAYOUTS,
   addBreakpointLayout,
@@ -24,34 +25,23 @@ describe("column layouts", () => {
       { columns: "8", minWidthPx: "768" },
       { columns: "12", minWidthPx: "1200" },
     ]);
-    expect(getDefaultColumnLayouts("single")).toEqual(
-      DEFAULT_SINGLE_COLUMN_LAYOUTS,
-    );
-    expect(getDefaultColumnLayouts("responsive")).toEqual(
-      DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
-    );
+    expect(getDefaultColumnLayouts()).toEqual(DEFAULT_COLUMN_LAYOUTS);
   });
 
-  it("should parse a single layout from an editable value", () => {
+  it("should parse a base-only layout", () => {
     expect(
-      parseEditableColumnLayouts(
-        [{ columns: "6", minWidthPx: null }],
-        "single",
-      ),
+      parseEditableColumnLayouts([{ columns: "6", minWidthPx: null }]),
     ).toEqual([{ columns: "6", minWidthPx: null }]);
   });
 
-  it("should parse responsive layouts while preserving user order", () => {
+  it("should parse layouts with breakpoints while preserving user order", () => {
     expect(
-      parseEditableColumnLayouts(
-        [
-          { columns: "12", minWidthPx: null },
-          { columns: "20", minWidthPx: "1280" },
-          { columns: "16", minWidthPx: "768" },
-          { columns: "", minWidthPx: "" },
-        ],
-        "responsive",
-      ),
+      parseEditableColumnLayouts([
+        { columns: "12", minWidthPx: null },
+        { columns: "20", minWidthPx: "1280" },
+        { columns: "16", minWidthPx: "768" },
+        { columns: "", minWidthPx: "" },
+      ]),
     ).toEqual([
       { columns: "12", minWidthPx: null },
       { columns: "20", minWidthPx: "1280" },
@@ -61,19 +51,16 @@ describe("column layouts", () => {
   });
 
   it("should reject malformed editable column layout values", () => {
-    expect(parseEditableColumnLayouts({ columns: "6" }, "single")).toBeNull();
+    expect(parseEditableColumnLayouts({ columns: "6" })).toBeNull();
     expect(
-      parseEditableColumnLayouts([{ columns: 6, minWidthPx: null }], "single"),
+      parseEditableColumnLayouts([{ columns: 6, minWidthPx: null }]),
     ).toBeNull();
     expect(
-      parseEditableColumnLayouts(
-        [{ columns: "6", minWidthPx: null }],
-        "responsive",
-      ),
-    ).toBeNull();
+      parseEditableColumnLayouts([{ columns: "6", minWidthPx: null }]),
+    ).not.toBeNull();
   });
 
-  it("should validate a responsive layout into numeric column layouts", () => {
+  it("should validate a layout with breakpoints into numeric column layouts", () => {
     expect(
       validateColumnLayouts({
         columnLayouts: [
@@ -81,7 +68,6 @@ describe("column layouts", () => {
           { columns: "20", minWidthPx: "1280" },
           { columns: "16", minWidthPx: "768" },
         ],
-        layoutMode: "responsive",
       }),
     ).toEqual({
       success: true,
@@ -101,7 +87,6 @@ describe("column layouts", () => {
           { columns: "18", minWidthPx: "768" },
           { columns: "", minWidthPx: "" },
         ],
-        layoutMode: "responsive",
       }),
     ).toEqual({
       success: true,
@@ -119,14 +104,10 @@ describe("column layouts", () => {
           { columns: "12", minWidthPx: null },
           { columns: "18", minWidthPx: "" },
         ],
-        layoutMode: "responsive",
       }),
     ).toEqual({
       success: false,
-      errors: [
-        "Breakpoint rows must include columns and breakpoint px.",
-        "Responsive layout mode must have a base layout and at least one breakpoint layout.",
-      ],
+      errors: ["Breakpoint rows must include columns and breakpoint px."],
     });
   });
 
@@ -138,7 +119,6 @@ describe("column layouts", () => {
           { columns: "18", minWidthPx: "768" },
           { columns: "20", minWidthPx: "768" },
         ],
-        layoutMode: "responsive",
       }),
     ).toEqual({
       success: false,
@@ -177,7 +157,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
         { columns: "8", minWidthPx: "768" },
         { columns: "16", minWidthPx: "1200" },
       ],
-      layoutMode: "responsive",
     });
 
     expect(result.success).toBe(true);
@@ -200,7 +179,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
   it("should project base column errors into baseColumns", () => {
     const result = getColumnLayoutRichResult({
       columnLayouts: [{ columns: "1", minWidthPx: null }],
-      layoutMode: "single",
     });
 
     expect(result.success).toBe(false);
@@ -217,7 +195,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
         { columns: "99", minWidthPx: "500" },
         { columns: "5", minWidthPx: "abc" },
       ],
-      layoutMode: "responsive",
     });
 
     expect(result.success).toBe(false);
@@ -233,7 +210,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
         { columns: "8", minWidthPx: "768" },
         { columns: "6", minWidthPx: "768" },
       ],
-      layoutMode: "responsive",
     });
 
     expect(result.success).toBe(false);
@@ -252,7 +228,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
         { columns: "8", minWidthPx: "768" },
         { columns: "", minWidthPx: "" },
       ],
-      layoutMode: "responsive",
     });
 
     expect(result.success).toBe(true);
@@ -274,7 +249,6 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
         { columns: "abc", minWidthPx: "800" },
         { columns: "8", minWidthPx: "1200" },
       ],
-      layoutMode: "responsive",
     });
 
     expect(result.previewBands).toEqual([
@@ -286,10 +260,7 @@ describe("getColumnLayoutRichResult (deepened module validation surface)", () =>
 
 describe("column layout evolution operations (add / remove)", () => {
   it("should add a breakpoint with a unique min-width starting at 768", () => {
-    const result = addBreakpointLayout(
-      [{ columns: "4", minWidthPx: null }],
-      "responsive",
-    );
+    const result = addBreakpointLayout([{ columns: "4", minWidthPx: null }]);
 
     expect(result).toEqual([
       { columns: "4", minWidthPx: null },
@@ -303,17 +274,20 @@ describe("column layout evolution operations (add / remove)", () => {
       { columns: "8", minWidthPx: "768" },
     ];
 
-    const result = addBreakpointLayout(initial, "responsive");
+    const result = addBreakpointLayout(initial);
 
     expect(result[2].minWidthPx).toBe("1024");
   });
 
-  it("addBreakpointLayout should be a no-op for single mode (returns copy)", () => {
+  it("addBreakpointLayout always appends a breakpoint", () => {
     const initial = [{ columns: "4", minWidthPx: null }];
-    const result = addBreakpointLayout(initial, "single");
+    const result = addBreakpointLayout(initial);
 
-    expect(result).not.toBe(initial); // should be a copy
-    expect(result).toEqual(initial);
+    expect(result).not.toBe(initial);
+    expect(result).toEqual([
+      { columns: "4", minWidthPx: null },
+      { columns: "6", minWidthPx: "768" },
+    ]);
   });
 
   it("should remove a breakpoint row by index", () => {
@@ -331,7 +305,7 @@ describe("column layout evolution operations (add / remove)", () => {
     ]);
   });
 
-  it("should not remove the last remaining breakpoint", () => {
+  it("should allow removing the last remaining breakpoint", () => {
     const initial = [
       { columns: "4", minWidthPx: null },
       { columns: "8", minWidthPx: "768" },
@@ -339,7 +313,7 @@ describe("column layout evolution operations (add / remove)", () => {
 
     const result = removeBreakpointLayout(initial, 1);
 
-    expect(result).toEqual(initial);
+    expect(result).toEqual([{ columns: "4", minWidthPx: null }]);
   });
 
   it("remove on non-breakpoint or out of range should return a copy", () => {

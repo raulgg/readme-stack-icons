@@ -1,5 +1,3 @@
-export type LayoutMode = "single" | "responsive";
-
 export type EditableColumnLayout = {
   columns: string;
   minWidthPx: string | null;
@@ -45,14 +43,12 @@ export const DEFAULT_RESPONSIVE_COLUMN_LAYOUTS: EditableColumnLayout[] = [
   { columns: "12", minWidthPx: "1200" },
 ];
 
-export function getDefaultColumnLayouts(
-  layoutMode: LayoutMode,
-): EditableColumnLayout[] {
-  return copyEditableColumnLayouts(
-    layoutMode === "responsive"
-      ? DEFAULT_RESPONSIVE_COLUMN_LAYOUTS
-      : DEFAULT_SINGLE_COLUMN_LAYOUTS,
-  );
+export const DEFAULT_COLUMN_LAYOUTS: EditableColumnLayout[] = [
+  { columns: DEFAULT_BASE_COLUMNS, minWidthPx: null },
+];
+
+export function getDefaultColumnLayouts(): EditableColumnLayout[] {
+  return copyEditableColumnLayouts(DEFAULT_COLUMN_LAYOUTS);
 }
 
 export function getEditableBaseColumnLayout(
@@ -85,23 +81,34 @@ export function getEditableBreakpointColumnLayouts(
 
 export function parseEditableColumnLayouts(
   value: unknown,
-  layoutMode: LayoutMode,
 ): EditableColumnLayout[] | null {
-  if (!Array.isArray(value)) {
+  if (!Array.isArray(value) || value.length === 0) {
     return null;
   }
 
-  return layoutMode === "responsive"
-    ? parseResponsiveColumnLayouts(value)
-    : parseSingleColumnLayouts(value);
+  if (!value.every(isEditableColumnLayout)) {
+    return null;
+  }
+
+  const columnLayouts = value as EditableColumnLayout[];
+  const baseLayouts = columnLayouts.filter(
+    (layout) => layout.minWidthPx === null,
+  );
+
+  if (
+    baseLayouts.length !== 1 ||
+    parseColumns(baseLayouts[0].columns) === null
+  ) {
+    return null;
+  }
+
+  return copyEditableColumnLayouts(columnLayouts);
 }
 
 export function validateColumnLayouts({
   columnLayouts,
-  layoutMode,
 }: {
   columnLayouts: readonly EditableColumnLayout[];
-  layoutMode: LayoutMode;
 }): ColumnLayoutValidationResult {
   const errors: string[] = [];
   const baseLayouts = columnLayouts.filter(
@@ -143,19 +150,6 @@ export function validateColumnLayouts({
     errors.push("Breakpoint px values must be unique.");
   }
 
-  if (
-    layoutMode === "single" &&
-    (columnLayouts.length !== 1 || columnLayouts[0]?.minWidthPx !== null)
-  ) {
-    errors.push("Single layout mode must have exactly one base layout.");
-  }
-
-  if (layoutMode === "responsive" && validBreakpointLayouts.length === 0) {
-    errors.push(
-      "Responsive layout mode must have a base layout and at least one breakpoint layout.",
-    );
-  }
-
   if (errors.length > 0) {
     return {
       success: false,
@@ -180,43 +174,6 @@ export function copyEditableColumnLayouts(
   columnLayouts: readonly EditableColumnLayout[],
 ): EditableColumnLayout[] {
   return columnLayouts.map((layout) => ({ ...layout }));
-}
-
-function parseSingleColumnLayouts(
-  value: unknown[],
-): EditableColumnLayout[] | null {
-  if (
-    value.length !== 1 ||
-    !isEditableColumnLayout(value[0]) ||
-    value[0].minWidthPx !== null ||
-    parseColumns(value[0].columns) === null
-  ) {
-    return null;
-  }
-
-  return [{ ...value[0] }];
-}
-
-function parseResponsiveColumnLayouts(
-  value: unknown[],
-): EditableColumnLayout[] | null {
-  if (value.length < 2 || !value.every(isEditableColumnLayout)) {
-    return null;
-  }
-
-  const columnLayouts = value as EditableColumnLayout[];
-  const baseLayouts = columnLayouts.filter(
-    (layout) => layout.minWidthPx === null,
-  );
-
-  if (
-    baseLayouts.length !== 1 ||
-    parseColumns(baseLayouts[0].columns) === null
-  ) {
-    return null;
-  }
-
-  return copyEditableColumnLayouts(columnLayouts);
 }
 
 function parseBaseColumnLayout(
@@ -371,12 +328,10 @@ export function projectColumnLayoutFormErrors(
 
 export function getColumnLayoutRichResult({
   columnLayouts,
-  layoutMode,
 }: {
   columnLayouts: readonly EditableColumnLayout[];
-  layoutMode: LayoutMode;
 }): ColumnLayoutRichResult {
-  const validation = validateColumnLayouts({ columnLayouts, layoutMode });
+  const validation = validateColumnLayouts({ columnLayouts });
   const { baseColumns, breakpointColumnsByIndex, breakpointMinWidthByIndex } =
     projectColumnLayoutFormErrors(columnLayouts);
   const previewBands = getColumnLayoutPreviewBands(columnLayouts);
@@ -493,12 +448,7 @@ export function getNextAvailableBreakpointMinWidthPx(
 
 export function addBreakpointLayout(
   columnLayouts: readonly EditableColumnLayout[],
-  layoutMode: LayoutMode,
 ): EditableColumnLayout[] {
-  if (layoutMode !== "responsive") {
-    return copyEditableColumnLayouts(columnLayouts);
-  }
-
   return [
     ...copyEditableColumnLayouts(columnLayouts),
     {
@@ -513,15 +463,8 @@ export function removeBreakpointLayout(
   layoutIndex: number,
 ): EditableColumnLayout[] {
   const targetLayout = columnLayouts[layoutIndex];
-  const breakpointLayoutCount = columnLayouts.filter(
-    (layout) => layout.minWidthPx !== null,
-  ).length;
 
-  if (
-    targetLayout === undefined ||
-    targetLayout.minWidthPx === null ||
-    breakpointLayoutCount <= 1
-  ) {
+  if (targetLayout === undefined || targetLayout.minWidthPx === null) {
     return copyEditableColumnLayouts(columnLayouts);
   }
 
@@ -530,16 +473,4 @@ export function removeBreakpointLayout(
       (_layout, currentIndex) => currentIndex !== layoutIndex,
     ),
   );
-}
-
-export function getColumnLayoutsForMode(
-  rememberedSingle: EditableColumnLayout,
-  rememberedResponsive: readonly EditableColumnLayout[],
-  targetMode: LayoutMode,
-): EditableColumnLayout[] {
-  if (targetMode === "single") {
-    return [{ ...rememberedSingle }];
-  }
-
-  return copyEditableColumnLayouts(rememberedResponsive);
 }

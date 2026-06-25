@@ -16,13 +16,12 @@ describe("StackIconsEditor state", () => {
       iconSize: "56",
       gap: "10",
       icons: "react,nextjs",
-      layoutMode: "responsive",
     };
 
     const params = new URLSearchParams(buildStackIconsEditorPageQuery(state));
 
     expect(params.get("s")).toBe("react,nextjs");
-    expect(params.get("layout")).toBe("responsive");
+    expect(params.has("layout")).toBe(false);
     expect(params.get("column-layouts")).toBe(
       JSON.stringify([
         { columns: "6", minWidthPx: null },
@@ -41,7 +40,6 @@ describe("StackIconsEditor state", () => {
       iconSize: "32",
       gap: "12",
       icons: "typescript,react",
-      layoutMode: "single",
     };
     const searchParams = Object.fromEntries(
       new URLSearchParams(buildStackIconsEditorPageQuery(state)),

@@ -38,7 +38,6 @@ function renderColumnLayoutPreview(
       columnLayouts={singleColumnLayouts("4")}
       gap="8"
       iconSize="48"
-      layoutMode="single"
       onPreviewThemeChange={vi.fn()}
       previewTheme="light"
       slugs={KNOWN_SLUGS}
@@ -234,11 +233,10 @@ describe("ColumnLayoutPreview", () => {
     ).toBeInTheDocument();
   });
 
-  it("should show one column-layout tab per band labeled by column count when the layout mode is responsive", () => {
+  it("should show one column-layout tab per band labeled by column count for multi-band layouts", () => {
     // Given — a responsive layout with a base layout and two breakpoints
     renderColumnLayoutPreview({
       columnLayouts: RESPONSIVE_COLUMN_LAYOUTS,
-      layoutMode: "responsive",
     });
 
     // When — the preview renders (render is the action)
@@ -259,11 +257,10 @@ describe("ColumnLayoutPreview", () => {
     ).toHaveAttribute("aria-selected", "false");
   });
 
-  it("should show a lone Base tab when the layout mode is single", () => {
+  it("should show a lone Base tab for base-only layouts", () => {
     // Given
     renderColumnLayoutPreview({
       columnLayouts: singleColumnLayouts("4"),
-      layoutMode: "single",
     });
 
     // When — the preview renders (render is the action)
@@ -287,7 +284,6 @@ describe("ColumnLayoutPreview", () => {
         { columns: "", minWidthPx: "768" },
         { columns: "12", minWidthPx: "" },
       ],
-      layoutMode: "responsive",
     });
 
     // When — the preview renders (render is the action)
@@ -307,7 +303,6 @@ describe("ColumnLayoutPreview", () => {
     // Given
     renderColumnLayoutPreview({
       columnLayouts: RESPONSIVE_COLUMN_LAYOUTS,
-      layoutMode: "responsive",
     });
 
     // When — Radix tab triggers activate on pointer-down + focus, not a click
@@ -333,7 +328,6 @@ describe("ColumnLayoutPreview", () => {
     // Given — the widest band is selected
     const { rerender } = renderColumnLayoutPreview({
       columnLayouts: RESPONSIVE_COLUMN_LAYOUTS,
-      layoutMode: "responsive",
     });
 
     const widestTab = screen.getByRole("tab", { name: "12 cols" });
@@ -347,7 +341,6 @@ describe("ColumnLayoutPreview", () => {
         columnLayouts={RESPONSIVE_COLUMN_LAYOUTS.slice(0, 2)}
         gap="8"
         iconSize="48"
-        layoutMode="responsive"
         onPreviewThemeChange={vi.fn()}
         previewTheme="light"
         slugs={KNOWN_SLUGS}

@@ -1,9 +1,8 @@
 import {
+  DEFAULT_COLUMN_LAYOUTS,
   DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
-  getDefaultColumnLayouts,
   parseEditableColumnLayouts,
   type EditableColumnLayout,
-  type LayoutMode,
 } from "@/lib/icons/column-layout";
 
 const DEFAULT_ICONS = "typescript,nextjs,tailwindcss,vercel";
@@ -17,11 +16,8 @@ export const MIN_ICON_SIZE = 24;
 export const MAX_ICON_SIZE = 64;
 export const ICON_SIZE_STEP = 2;
 
-export type { LayoutMode };
-
 type EditorState = {
   icons: string;
-  layoutMode: LayoutMode;
   columnLayouts: EditableColumnLayout[];
   iconSize: string;
   gap: string;
@@ -31,8 +27,7 @@ export type StackIconsEditorState = EditorState;
 
 export const DEFAULT_STACK_ICONS_EDITOR_STATE: StackIconsEditorState = {
   icons: DEFAULT_ICONS,
-  layoutMode: "responsive",
-  columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+  columnLayouts: DEFAULT_COLUMN_LAYOUTS,
   iconSize: DEFAULT_ICON_SIZE,
   gap: DEFAULT_GAP,
 };
@@ -44,15 +39,11 @@ type SearchParamValue = string | string[] | undefined;
 export function getStackIconsEditorInitialState(
   searchParams: Record<string, SearchParamValue>,
 ): StackIconsEditorState {
-  const layoutMode = getLayoutMode(searchParams);
-  const activeLayoutMode = layoutMode ?? "responsive";
-  const columnLayouts =
-    layoutMode === null ? null : getColumnLayouts(searchParams, layoutMode);
+  const columnLayouts = getColumnLayouts(searchParams);
 
   return {
     icons: getSearchParamValue(searchParams.s) ?? DEFAULT_ICONS,
-    layoutMode: activeLayoutMode,
-    columnLayouts: columnLayouts ?? getDefaultColumnLayouts(activeLayoutMode),
+    columnLayouts: columnLayouts ?? DEFAULT_COLUMN_LAYOUTS,
     iconSize: getIconSize(searchParams),
     gap: getSearchParamValue(searchParams.gap) ?? DEFAULT_GAP,
   };
@@ -64,7 +55,6 @@ export function buildStackIconsEditorPageQuery(
   const params = new URLSearchParams();
 
   params.set("s", state.icons);
-  params.set("layout", state.layoutMode);
   params.set("column-layouts", JSON.stringify(state.columnLayouts));
   params.set("size", state.iconSize);
   params.set("gap", state.gap);
@@ -72,40 +62,17 @@ export function buildStackIconsEditorPageQuery(
   return params.toString();
 }
 
-function getLayoutMode(
-  searchParams: Record<string, SearchParamValue>,
-): LayoutMode | null {
-  const layoutMode = getSearchParamValue(searchParams.layout);
-
-  if (layoutMode === undefined || layoutMode === "responsive") {
-    return "responsive";
-  }
-
-  if (layoutMode === "single") {
-    return "single";
-  }
-
-  return null;
-}
-
 function getColumnLayouts(
   searchParams: Record<string, SearchParamValue>,
-  layoutMode: LayoutMode | null,
 ): EditableColumnLayout[] | null | undefined {
-  if (layoutMode === null) {
-    return null;
-  }
-
-  const rawColumnLayouts = getSearchParamValue(searchParams["column-layouts"]);
-
-  if (rawColumnLayouts === undefined) {
+  const raw = getSearchParamValue(searchParams["column-layouts"]);
+  if (raw === undefined) {
     return undefined;
   }
 
   try {
-    const parsed = JSON.parse(rawColumnLayouts);
-
-    return parseEditableColumnLayouts(parsed, layoutMode);
+    const parsed = JSON.parse(raw);
+    return parseEditableColumnLayouts(parsed);
   } catch {
     return null;
   }

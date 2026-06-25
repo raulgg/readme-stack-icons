@@ -48,18 +48,17 @@ function mockClipboard(writeText: ReturnType<typeof vi.fn>) {
   });
 }
 
-const SINGLE_LAYOUT_EDITOR_STATE: StackIconsEditorState = {
+const BASE_ONLY_EDITOR_STATE: StackIconsEditorState = {
   ...DEFAULT_STACK_ICONS_EDITOR_STATE,
   columnLayouts: [{ columns: "4", minWidthPx: null }],
-  layoutMode: "single",
 };
 
 function renderEditor() {
   render(<StackIconsEditor initialState={DEFAULT_STACK_ICONS_EDITOR_STATE} />);
 }
 
-function renderSingleLayoutEditor() {
-  render(<StackIconsEditor initialState={SINGLE_LAYOUT_EDITOR_STATE} />);
+function renderBaseOnlyEditor() {
+  render(<StackIconsEditor initialState={BASE_ONLY_EDITOR_STATE} />);
 }
 
 function generatePreview() {
@@ -76,18 +75,6 @@ function getIconSlugsTextarea() {
   }
 
   return screen.getByLabelText("Icon slugs");
-}
-
-function getLayoutModeTab(name: "Responsive" | "Single") {
-  return screen.getByRole("tab", { name });
-}
-
-function selectLayoutMode(name: "Responsive" | "Single") {
-  // Radix tab triggers activate on pointer-down + focus, not a bare click.
-  const tab = getLayoutModeTab(name);
-
-  fireEvent.mouseDown(tab);
-  fireEvent.focus(tab);
 }
 
 function getColumnInputs() {
@@ -152,7 +139,7 @@ describe("StackIconsEditor", () => {
 
   it("should reflect raw form state in the page query when fields change", async () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     expect(getIconsImageCodeText()).toContain("<picture>");
 
     // When
@@ -169,7 +156,7 @@ describe("StackIconsEditor", () => {
       const params = new URLSearchParams(window.location.search);
 
       expect(params.get("s")).toBe("react,nextjs");
-      expect(params.get("layout")).toBe("single");
+      expect(params.has("layout")).toBe(false);
       expect(params.get("column-layouts")).toBe(
         JSON.stringify([{ columns: "4", minWidthPx: null }]),
       );
@@ -208,7 +195,7 @@ describe("StackIconsEditor", () => {
 
   it("should step icon size by 2 and update generated image sources and URL when arrow keys move the slider", async () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
 
     // When
     fireEvent.keyDown(getIconSizeSlider(), { key: "ArrowRight" });
@@ -261,13 +248,11 @@ describe("StackIconsEditor", () => {
       screen.queryByLabelText("Include dark theme source"),
     ).not.toBeInTheDocument();
     expect(getBaseColumnsInput()).toBeEnabled();
-    expect(getLayoutModeTab("Single")).toHaveAttribute("aria-selected", "true");
-    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
-      "aria-selected",
-      "false",
-    );
     expect(
-      screen.queryByLabelText("Include responsive sources"),
+      screen.queryByRole("tab", { name: "Single" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Responsive" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Base URL")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Version")).not.toBeInTheDocument();
@@ -300,7 +285,7 @@ describe("StackIconsEditor", () => {
 
   it("should generate icons image code with dark source by default", async () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     fireEvent.change(getIconSlugsTextarea(), {
       target: { value: "react,nextjs" },
     });
@@ -335,7 +320,7 @@ describe("StackIconsEditor", () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     fireEvent.change(getIconSlugsTextarea(), {
       target: { value: "react,nextjs" },
     });
@@ -381,7 +366,7 @@ describe("StackIconsEditor", () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     generatePreview();
 
     // When
@@ -398,7 +383,7 @@ describe("StackIconsEditor", () => {
 
   it("should hide the code and its copy button when the disclosure is collapsed", () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     generatePreview();
 
     // When
@@ -415,7 +400,7 @@ describe("StackIconsEditor", () => {
 
   it("should show the add-icons placeholder and disable copying when no icons are selected", () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
 
     // When
     fireEvent.change(getIconSlugsTextarea(), {
@@ -453,7 +438,6 @@ describe("StackIconsEditor", () => {
           ],
           gap: "10",
           icons: "react,nextjs",
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -480,7 +464,6 @@ describe("StackIconsEditor", () => {
             { columns: "8", minWidthPx: "640" },
           ],
           icons: "react,nextjs",
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -507,7 +490,6 @@ describe("StackIconsEditor", () => {
             { columns: "16", minWidthPx: "1440" },
             { columns: "12", minWidthPx: "1024" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -534,7 +516,6 @@ describe("StackIconsEditor", () => {
             { columns: "4", minWidthPx: null },
             { columns: "8", minWidthPx: "640" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -575,7 +556,6 @@ describe("StackIconsEditor", () => {
             { columns: "12", minWidthPx: "1024" },
           ],
           icons: "react,nextjs",
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -598,7 +578,6 @@ describe("StackIconsEditor", () => {
             { columns: "8", minWidthPx: "640" },
             { columns: "12", minWidthPx: "640" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -620,7 +599,6 @@ describe("StackIconsEditor", () => {
             { columns: "4", minWidthPx: null },
             { columns: "8", minWidthPx: "0" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -641,7 +619,6 @@ describe("StackIconsEditor", () => {
             { columns: "4", minWidthPx: null },
             { columns: "21", minWidthPx: "640" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -656,13 +633,12 @@ describe("StackIconsEditor", () => {
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
-  it("should reject missing base layout in single mode on generation", () => {
+  it("should reject missing base layout on generation", () => {
     render(
       <StackIconsEditor
         initialState={{
           ...DEFAULT_STACK_ICONS_EDITOR_STATE,
           columnLayouts: [{ columns: "4", minWidthPx: "640" }],
-          layoutMode: "single",
         }}
       />,
     );
@@ -672,16 +648,11 @@ describe("StackIconsEditor", () => {
     expect(
       screen.getByText(/Exactly one base column layout is required\./u),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Single layout mode must have exactly one base layout\./u,
-      ),
-    ).toBeInTheDocument();
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should clear stale generated output when column layout generation fails", () => {
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     generatePreview();
 
     expectGeneratedImageSourceUrl(
@@ -689,7 +660,6 @@ describe("StackIconsEditor", () => {
     );
     expect(getIconsImageCodeText()).toContain("<picture>");
 
-    selectLayoutMode("Responsive");
     fireEvent.change(getBaseColumnsInput(), {
       target: { value: "1" },
     });
@@ -702,7 +672,7 @@ describe("StackIconsEditor", () => {
 
   it("should generate basic icons image code without icons param for explicit all icons", async () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     fireEvent.change(getIconSlugsTextarea(), {
       target: { value: "all" },
     });
@@ -719,7 +689,7 @@ describe("StackIconsEditor", () => {
 
   it("should preserve icons image code URL param order and escape attribute separators", async () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     fireEvent.change(getIconSlugsTextarea(), {
       target: { value: "typescript,react,nextjs" },
     });
@@ -759,7 +729,7 @@ describe("StackIconsEditor", () => {
 
   it("should flag unknown slugs inline while still generating icons image code", () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
 
     // When
     fireEvent.change(getIconSlugsTextarea(), {
@@ -827,7 +797,7 @@ describe("StackIconsEditor", () => {
 
   it("should clear stale validation errors after successful preview generation", () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     fireEvent.change(getIconSlugsTextarea(), {
       target: { value: "not-real" },
     });
@@ -855,7 +825,7 @@ describe("StackIconsEditor", () => {
 
   it("should refresh the generated preview when valid form fields are changed", () => {
     // Given
-    renderSingleLayoutEditor();
+    renderBaseOnlyEditor();
     generatePreview();
     const generatedUrl =
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light";
@@ -892,75 +862,11 @@ describe("StackIconsEditor", () => {
     expect(setItem).not.toHaveBeenCalled();
   });
 
-  it("should switch to the default responsive column layouts", async () => {
-    renderSingleLayoutEditor();
+  it("should start with base-only default column layout", () => {
+    renderBaseOnlyEditor();
 
-    selectLayoutMode("Responsive");
-
-    await waitFor(() => {
-      const params = new URLSearchParams(window.location.search);
-
-      expect(params.get("layout")).toBe("responsive");
-      expect(params.get("column-layouts")).toBe(
-        JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
-      );
-    });
-    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
     expect(getBaseColumnsInput()).toHaveValue(4);
-    expect(getBreakpointColumnsInput(0)).toHaveValue(8);
-    expect(getMinWidthInputs()[0]).toHaveValue(768);
-    expect(getBreakpointColumnsInput(1)).toHaveValue(12);
-    expect(getMinWidthInputs()[1]).toHaveValue(1200);
-  });
-
-  it("should restore previous single and responsive layouts in the current editor session", async () => {
-    renderSingleLayoutEditor();
-
-    fireEvent.change(getBaseColumnsInput(), {
-      target: { value: "6" },
-    });
-    selectLayoutMode("Responsive");
-    fireEvent.change(getBaseColumnsInput(), {
-      target: { value: "10" },
-    });
-    fireEvent.change(getBreakpointColumnsInput(0), {
-      target: { value: "16" },
-    });
-    fireEvent.change(getMinWidthInputs()[0], {
-      target: { value: "1024" },
-    });
-    selectLayoutMode("Single");
-
-    expect(getBaseColumnsInput()).toHaveValue(6);
-    await waitFor(() => {
-      const params = new URLSearchParams(window.location.search);
-
-      expect(params.get("layout")).toBe("single");
-      expect(params.get("column-layouts")).toBe(
-        JSON.stringify([{ columns: "6", minWidthPx: null }]),
-      );
-    });
-
-    selectLayoutMode("Responsive");
-
-    expect(getBaseColumnsInput()).toHaveValue(10);
-    expect(getBreakpointColumnsInput(0)).toHaveValue(16);
-    expect(getMinWidthInputs()[0]).toHaveValue(1024);
-    await waitFor(() => {
-      const params = new URLSearchParams(window.location.search);
-
-      expect(params.get("layout")).toBe("responsive");
-      expect(params.get("column-layouts")).toBe(
-        JSON.stringify([
-          { columns: "10", minWidthPx: null },
-          { columns: "16", minWidthPx: "1024" },
-          { columns: "12", minWidthPx: "1200" },
-        ]),
-      );
-    });
+    expect(screen.queryByLabelText("Min width")).not.toBeInTheDocument();
   });
 
   it("should render and edit responsive breakpoint layouts in user order", async () => {
@@ -973,7 +879,6 @@ describe("StackIconsEditor", () => {
             { columns: "6", minWidthPx: null },
             { columns: "4", minWidthPx: "640" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1019,25 +924,23 @@ describe("StackIconsEditor", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
 
-    expect(getColumnInputs()).toHaveLength(4);
-    expect(getMinWidthInputs()).toHaveLength(3);
-    expect(getBreakpointColumnsInput(2)).toHaveValue(6);
-    expect(getMinWidthInputs()[2]).toHaveValue(1024);
+    expect(getColumnInputs()).toHaveLength(2);
+    expect(getMinWidthInputs()).toHaveLength(1);
+    expect(getBreakpointColumnsInput(0)).toHaveValue(6);
+    expect(getMinWidthInputs()[0]).toHaveValue(768);
 
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
 
-    expect(getBreakpointColumnsInput(3)).toHaveValue(6);
-    expect(getMinWidthInputs()[3]).toHaveValue(1280);
+    expect(getBreakpointColumnsInput(1)).toHaveValue(6);
+    expect(getMinWidthInputs()[1]).toHaveValue(1024);
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
 
       expect(params.get("column-layouts")).toBe(
         JSON.stringify([
           { columns: "4", minWidthPx: null },
-          { columns: "8", minWidthPx: "768" },
-          { columns: "12", minWidthPx: "1200" },
+          { columns: "6", minWidthPx: "768" },
           { columns: "6", minWidthPx: "1024" },
-          { columns: "6", minWidthPx: "1280" },
         ]),
       );
     });
@@ -1047,25 +950,25 @@ describe("StackIconsEditor", () => {
     renderEditor();
 
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
-    fireEvent.change(getBreakpointColumnsInput(2), {
+    // Empty the (only) breakpoint row we just added
+    fireEvent.change(getBreakpointColumnsInput(0), {
       target: { value: "" },
     });
-    fireEvent.change(getMinWidthInputs()[2], {
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "" },
     });
 
     generatePreview();
 
+    // No validation errors from the emptied row
     expect(screen.queryByText("2–20 columns")).not.toBeInTheDocument();
     expect(screen.queryByText("1–3840px")).not.toBeInTheDocument();
+
+    // Only base layout is used
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
     expect(getIconsImageCodeText()).toBe(`<picture>
-  <source media="(min-width: 1200px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=dark" />
-  <source media="(min-width: 1200px)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=light" />
-  <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=dark" />
-  <source media="(min-width: 768px)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=light" />
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="TypeScript, Next.js, Tailwind CSS, Vercel" title="TypeScript, Next.js, Tailwind CSS, Vercel" />
 </picture>`);
@@ -1075,18 +978,19 @@ describe("StackIconsEditor", () => {
     renderEditor();
 
     fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
-    fireEvent.change(getMinWidthInputs()[2], {
+    // Partially empty the breakpoint we just added (columns filled, min-width empty)
+    fireEvent.change(getMinWidthInputs()[0], {
       target: { value: "" },
     });
 
     generatePreview();
 
-    expect(getMinWidthInputs()[2]).toHaveAttribute("aria-invalid", "true");
+    expect(getMinWidthInputs()[0]).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("1–3840px")).toBeInTheDocument();
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
-  it("should not render remove controls for the base row or the last breakpoint row", () => {
+  it("should not render remove control for the base row (but does for last breakpoint)", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -1095,15 +999,14 @@ describe("StackIconsEditor", () => {
             { columns: "12", minWidthPx: null },
             { columns: "18", minWidthPx: "768" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
 
-    expect(
-      screen.queryByRole("button", { name: /Remove.*breakpoint/u }),
-    ).toBeNull();
     expect(getBaseColumnsInput()).toHaveValue(12);
+    expect(
+      screen.getByRole("button", { name: /Remove 768px breakpoint/u }),
+    ).toBeInTheDocument();
   });
 
   it("should render remove controls only for optional breakpoint rows", () => {
@@ -1116,7 +1019,6 @@ describe("StackIconsEditor", () => {
             { columns: "16", minWidthPx: "768" },
             { columns: "20", minWidthPx: "1280" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1129,7 +1031,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should remove optional breakpoint rows without switching to single layout", async () => {
+  it("should remove a breakpoint row (even the last one)", async () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -1139,7 +1041,6 @@ describe("StackIconsEditor", () => {
             { columns: "16", minWidthPx: "768" },
             { columns: "20", minWidthPx: "1280" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1148,60 +1049,26 @@ describe("StackIconsEditor", () => {
       screen.getByRole("button", { name: "Remove 768px breakpoint" }),
     );
 
-    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
     expect(getBaseColumnsInput()).toHaveValue(12);
     expect(getBreakpointColumnsInput(0)).toHaveValue(20);
     expect(getMinWidthInputs()[0]).toHaveValue(1280);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Remove 1280px breakpoint/u }),
+    );
+
     expect(
       screen.queryByRole("button", { name: /Remove.*breakpoint/u }),
-    ).toBeNull();
+    ).not.toBeInTheDocument();
+
     await waitFor(() => {
       const params = new URLSearchParams(window.location.search);
 
-      expect(params.get("layout")).toBe("responsive");
+      expect(params.has("layout")).toBe(false);
       expect(params.get("column-layouts")).toBe(
-        JSON.stringify([
-          { columns: "12", minWidthPx: null },
-          { columns: "20", minWidthPx: "1280" },
-        ]),
+        JSON.stringify([{ columns: "12", minWidthPx: null }]),
       );
     });
-  });
-
-  it("should update responsive layout memory after removing a breakpoint", () => {
-    render(
-      <StackIconsEditor
-        initialState={{
-          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
-          columnLayouts: [
-            { columns: "12", minWidthPx: null },
-            { columns: "16", minWidthPx: "768" },
-            { columns: "20", minWidthPx: "1280" },
-          ],
-          layoutMode: "responsive",
-        }}
-      />,
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Remove 768px breakpoint" }),
-    );
-    selectLayoutMode("Single");
-    selectLayoutMode("Responsive");
-
-    expect(getLayoutModeTab("Responsive")).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(getBaseColumnsInput()).toHaveValue(12);
-    expect(getBreakpointColumnsInput(0)).toHaveValue(20);
-    expect(getMinWidthInputs()[0]).toHaveValue(1280);
-    expect(
-      screen.queryByRole("button", { name: /Remove.*breakpoint/u }),
-    ).toBeNull();
   });
 
   it("should keep breakpoint rows stable while breakpoint px is temporarily invalid", async () => {
@@ -1214,7 +1081,6 @@ describe("StackIconsEditor", () => {
             { columns: "8", minWidthPx: "640" },
             { columns: "12", minWidthPx: "1024" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1254,7 +1120,6 @@ describe("StackIconsEditor", () => {
             { columns: "16", minWidthPx: "768" },
             { columns: "20", minWidthPx: "1280" },
           ],
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1274,8 +1139,6 @@ describe("StackIconsEditor", () => {
     fireEvent.change(getMinWidthInputs()[1], {
       target: { value: "1100" },
     });
-    selectLayoutMode("Single");
-    selectLayoutMode("Responsive");
 
     expect(getBaseColumnsInput()).toHaveValue(10);
     expect(getBreakpointColumnsInput(0)).toHaveValue(14);
@@ -1295,7 +1158,6 @@ describe("StackIconsEditor", () => {
             { columns: "20", minWidthPx: "1280" },
           ],
           icons: "react,nextjs",
-          layoutMode: "responsive",
         }}
       />,
     );
@@ -1330,60 +1192,6 @@ describe("StackIconsEditor", () => {
 </picture>`);
   });
 
-  it("should initialize inactive responsive memory to defaults from a single layout URL", async () => {
-    render(
-      <StackIconsEditor
-        initialState={getStackIconsEditorInitialState({
-          "column-layouts": JSON.stringify([
-            { columns: "6", minWidthPx: null },
-          ]),
-          layout: "single",
-        })}
-      />,
-    );
-
-    selectLayoutMode("Responsive");
-
-    await waitFor(() => {
-      const params = new URLSearchParams(window.location.search);
-
-      expect(params.get("column-layouts")).toBe(
-        JSON.stringify(DEFAULT_RESPONSIVE_COLUMN_LAYOUTS),
-      );
-    });
-    expect(getBaseColumnsInput()).toHaveValue(4);
-    expect(getBreakpointColumnsInput(0)).toHaveValue(8);
-  });
-
-  it("should initialize inactive single memory to defaults from a responsive layout URL", async () => {
-    render(
-      <StackIconsEditor
-        initialState={getStackIconsEditorInitialState({
-          "column-layouts": JSON.stringify([
-            { columns: "8", minWidthPx: null },
-            { columns: "14", minWidthPx: "900" },
-          ]),
-          layout: "responsive",
-        })}
-      />,
-    );
-
-    expect(getBaseColumnsInput()).toHaveValue(8);
-    expect(getBreakpointColumnsInput(0)).toHaveValue(14);
-
-    selectLayoutMode("Single");
-
-    await waitFor(() => {
-      const params = new URLSearchParams(window.location.search);
-
-      expect(params.get("layout")).toBe("single");
-      expect(params.get("column-layouts")).toBe(
-        JSON.stringify(DEFAULT_SINGLE_COLUMN_LAYOUTS),
-      );
-    });
-    expect(getBaseColumnsInput()).toHaveValue(4);
-  });
-
   it("should derive initial editor state when page query params are parsed", () => {
     // Given
     const searchParams = {
@@ -1402,7 +1210,6 @@ describe("StackIconsEditor", () => {
       iconSize: "48",
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "single",
     });
   });
 
@@ -1425,14 +1232,12 @@ describe("StackIconsEditor", () => {
       iconSize: "48",
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "single",
     });
   });
 
-  it("should use the default responsive column layout state", () => {
+  it("should use the default base-only column layout state", () => {
     expect(DEFAULT_STACK_ICONS_EDITOR_STATE).toMatchObject({
-      columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
-      layoutMode: "responsive",
+      columnLayouts: [{ columns: "4", minWidthPx: null }],
     });
   });
 
@@ -1441,14 +1246,12 @@ describe("StackIconsEditor", () => {
       "column-layouts": "{bad-json",
       gap: "10",
       s: "solid,typescript",
-      layout: "single",
     });
 
     expect(initialState).toMatchObject({
-      columnLayouts: DEFAULT_SINGLE_COLUMN_LAYOUTS,
+      columnLayouts: [{ columns: "4", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "single",
     });
   });
 
@@ -1457,14 +1260,12 @@ describe("StackIconsEditor", () => {
       "column-layouts": JSON.stringify([{ columns: "21", minWidthPx: null }]),
       gap: "10",
       s: "solid,typescript",
-      layout: "single",
     });
 
     expect(initialState).toMatchObject({
-      columnLayouts: DEFAULT_SINGLE_COLUMN_LAYOUTS,
+      columnLayouts: [{ columns: "4", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "single",
     });
   });
 
@@ -1473,14 +1274,12 @@ describe("StackIconsEditor", () => {
       "column-layouts": JSON.stringify([{ columns: "abc", minWidthPx: null }]),
       gap: "10",
       s: "solid,typescript",
-      layout: "single",
     });
 
     expect(initialState).toMatchObject({
-      columnLayouts: DEFAULT_SINGLE_COLUMN_LAYOUTS,
+      columnLayouts: [{ columns: "4", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "single",
     });
   });
 
@@ -1502,38 +1301,33 @@ describe("StackIconsEditor", () => {
       ],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "responsive",
     });
   });
 
-  it("should use default responsive layouts when responsive layout params omit column layouts", () => {
+  it("should use default base-only when no column-layouts provided", () => {
     const initialState = getStackIconsEditorInitialState({
       gap: "10",
       s: "solid,typescript",
-      layout: "responsive",
     });
 
     expect(initialState).toMatchObject({
-      columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+      columnLayouts: [{ columns: "4", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "responsive",
     });
   });
 
-  it("should fall back to default responsive layouts when responsive layout has no breakpoint", () => {
+  it("should use provided base-only column-layouts (even if previously called 'responsive' without bps)", () => {
     const initialState = getStackIconsEditorInitialState({
       "column-layouts": JSON.stringify([{ columns: "6", minWidthPx: null }]),
       gap: "10",
       s: "solid,typescript",
-      layout: "responsive",
     });
 
     expect(initialState).toMatchObject({
-      columnLayouts: DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
+      columnLayouts: [{ columns: "6", minWidthPx: null }],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "responsive",
     });
   });
 
@@ -1555,7 +1349,6 @@ describe("StackIconsEditor", () => {
       ],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "responsive",
     });
   });
 
@@ -1579,7 +1372,6 @@ describe("StackIconsEditor", () => {
       ],
       gap: "10",
       icons: "solid,typescript",
-      layoutMode: "responsive",
     });
   });
 
@@ -1602,10 +1394,6 @@ describe("StackIconsEditor", () => {
         "typescript,nextjs,tailwindcss,vercel,react",
       );
     });
-    expect(screen.getByRole("option", { name: "React react" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
     expect(
       screen.getByRole("button", { name: "Remove React" }),
     ).toBeInTheDocument();
@@ -1898,29 +1686,27 @@ describe("StackIconsEditor", () => {
       expect(getSectionSummary("icons")).toHaveTextContent("none yet");
     });
 
-    it("should reflect single layout columns live in the Layout summary", () => {
-      renderSingleLayoutEditor();
+    it("should reflect base columns live in the Layout summary", () => {
+      renderBaseOnlyEditor();
 
-      expect(getSectionSummary("layout")).toHaveTextContent("single · 4 cols");
+      expect(getSectionSummary("layout")).toHaveTextContent("4 cols");
 
       fireEvent.change(getBaseColumnsInput(), {
         target: { value: "6" },
       });
 
-      expect(getSectionSummary("layout")).toHaveTextContent("single · 6 cols");
+      expect(getSectionSummary("layout")).toHaveTextContent("6 cols");
     });
 
-    it("should count column layouts in the Layout summary in responsive mode", () => {
+    it("should count breakpoints in the Layout summary when present", () => {
       renderEditor();
 
-      expect(getSectionSummary("layout")).toHaveTextContent(
-        "responsive · 3 layouts",
-      );
+      expect(getSectionSummary("layout")).toHaveTextContent("4 cols");
 
       fireEvent.click(screen.getByRole("button", { name: "Add breakpoint" }));
 
       expect(getSectionSummary("layout")).toHaveTextContent(
-        "responsive · 4 layouts",
+        "4 cols · 1 breakpoint",
       );
     });
 
@@ -2070,7 +1856,7 @@ describe("StackIconsEditor", () => {
 
     it("should re-render the stage and caption when layout settings change", () => {
       // Given
-      renderSingleLayoutEditor();
+      renderBaseOnlyEditor();
 
       // When
       fireEvent.change(getBaseColumnsInput(), { target: { value: "2" } });
