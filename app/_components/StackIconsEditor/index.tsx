@@ -10,9 +10,9 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import {
-  ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
-  FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-  ReadmeImageCodePanel,
+  ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
+  FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
+  IconsImageCodePanel,
   useResolvedPreviewTheme,
   type StackIconsPreviewTheme,
 } from "@/app/_components/readme";
@@ -63,7 +63,7 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
   const {
     addBreakpointLayout,
     columnLayoutResult,
-    copyReadmeImageCode,
+    copyIconsImageCode,
     generatedHtml,
     generatedImageSources,
     hasGeneratedOutput,
@@ -396,14 +396,14 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
 
       <ColumnLayoutPreview
         codePanel={
-          <ReadmeImageCodePanel
+          <IconsImageCodePanel
             emptyPlaceholder={
               selectedIconSlugs.length > 0
-                ? FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER
-                : ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER
+                ? FIX_ERRORS_IMAGE_CODE_PLACEHOLDER
+                : ADD_ICONS_IMAGE_CODE_PLACEHOLDER
             }
-            onCopy={copyReadmeImageCode}
-            readmeImageCode={generatedHtml}
+            onCopy={copyIconsImageCode}
+            iconsImageCode={generatedHtml}
           />
         }
         columnLayouts={state.columnLayouts}

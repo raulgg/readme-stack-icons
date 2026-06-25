@@ -5,40 +5,38 @@ import { CheckIcon, ChevronDownIcon, CopyIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export const ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER =
+export const ADD_ICONS_IMAGE_CODE_PLACEHOLDER =
   "<!-- add icons to generate code -->";
-export const FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER =
+export const FIX_ERRORS_IMAGE_CODE_PLACEHOLDER =
   "<!-- fix the validation errors above to generate code -->";
 
-export type ReadmeImageCodeTokenKind =
+export type IconsImageCodeTokenKind =
   | "attribute"
   | "punctuation"
   | "string"
   | "tag"
   | "text";
 
-export type ReadmeImageCodeToken = {
-  kind: ReadmeImageCodeTokenKind;
+export type IconsImageCodeToken = {
+  kind: IconsImageCodeTokenKind;
   text: string;
 };
 
-// Matches the README image code shapes renderReadmeHtml emits: tag openers,
+// Matches the icons image code shapes renderIconsImageCode emits: tag openers,
 // attribute="value" pairs, tag closers, and a catch-all single character so
 // concatenating every token always reproduces the input exactly.
-const README_IMAGE_CODE_TOKEN_PATTERN =
+const ICONS_IMAGE_CODE_TOKEN_PATTERN =
   /(<\/?)([a-zA-Z][\w-]*)|([a-zA-Z][\w-]*)(=)(")([^"]*)(")|(\/?>)|([\s\S])/g;
 
-// Splits README image code into syntax-highlighting tokens. The token texts
+// Splits icons image code into syntax-highlighting tokens. The token texts
 // concatenate back to the exact input, so a highlighted render's text content
 // always equals the clipboard payload.
-export function tokenizeReadmeImageCode(
-  readmeImageCode: string,
-): ReadmeImageCodeToken[] {
-  const tokens: ReadmeImageCodeToken[] = [];
+export function tokenizeIconsImageCode(
+  iconsImageCode: string,
+): IconsImageCodeToken[] {
+  const tokens: IconsImageCodeToken[] = [];
 
-  for (const match of readmeImageCode.matchAll(
-    README_IMAGE_CODE_TOKEN_PATTERN,
-  )) {
+  for (const match of iconsImageCode.matchAll(ICONS_IMAGE_CODE_TOKEN_PATTERN)) {
     const [
       ,
       tagOpener,
@@ -85,7 +83,7 @@ export function tokenizeReadmeImageCode(
   return tokens;
 }
 
-const TOKEN_KIND_CLASS_NAMES: Record<ReadmeImageCodeTokenKind, string> = {
+const TOKEN_KIND_CLASS_NAMES: Record<IconsImageCodeTokenKind, string> = {
   attribute: "text-syntax-attribute",
   punctuation: "text-syntax-punctuation",
   string: "text-syntax-string",
@@ -95,27 +93,27 @@ const TOKEN_KIND_CLASS_NAMES: Record<ReadmeImageCodeTokenKind, string> = {
 
 const COPIED_FEEDBACK_DURATION_MS = 2000;
 
-type ReadmeImageCodePanelProps = {
+type IconsImageCodePanelProps = {
   emptyPlaceholder?: string;
-  readmeImageCode: string;
+  iconsImageCode: string;
 } & (
   | { showCopyButton?: true; onCopy: () => Promise<boolean> }
   | { showCopyButton: false; onCopy?: never }
 );
 
-export function ReadmeImageCodePanel({
+export function IconsImageCodePanel({
   emptyPlaceholder,
   onCopy,
-  readmeImageCode,
+  iconsImageCode,
   showCopyButton = true,
-}: ReadmeImageCodePanelProps) {
+}: IconsImageCodePanelProps) {
   const [isCodeVisible, setIsCodeVisible] = React.useState(true);
   const [isCopied, setIsCopied] = React.useState(false);
   const copiedResetTimeoutRef = React.useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
   const codeBlockId = React.useId();
-  const hasReadmeImageCode = readmeImageCode !== "";
+  const hasIconsImageCode = iconsImageCode !== "";
 
   React.useEffect(() => {
     return () => {
@@ -161,29 +159,25 @@ export function ReadmeImageCodePanel({
             !isCodeVisible && "-rotate-90",
           )}
         />
-        {"README code · <picture>"}
+        {"Image code · <picture>"}
       </button>
       {isCodeVisible ? (
         <div className="relative mt-3">
           <pre
-            aria-label="README image code"
+            aria-label="Icons image code"
             className="max-w-full overflow-x-auto whitespace-pre rounded-[6px] border border-code-bg-2 bg-code-bg px-4 py-[15px] font-mono text-[12.5px] leading-[1.75]"
             id={codeBlockId}
           >
-            {hasReadmeImageCode ? (
+            {hasIconsImageCode ? (
               <code>
-                {tokenizeReadmeImageCode(readmeImageCode).map(
-                  (token, index) => (
-                    <span
-                      className={
-                        TOKEN_KIND_CLASS_NAMES[token.kind] || undefined
-                      }
-                      key={index}
-                    >
-                      {token.text}
-                    </span>
-                  ),
-                )}
+                {tokenizeIconsImageCode(iconsImageCode).map((token, index) => (
+                  <span
+                    className={TOKEN_KIND_CLASS_NAMES[token.kind] || undefined}
+                    key={index}
+                  >
+                    {token.text}
+                  </span>
+                ))}
               </code>
             ) : (
               <code className="text-syntax-punctuation">
@@ -193,13 +187,13 @@ export function ReadmeImageCodePanel({
           </pre>
           {showCopyButton ? (
             <button
-              aria-label={isCopied ? "Copied" : "Copy README code"}
+              aria-label={isCopied ? "Copied" : "Copy image code"}
               aria-live="polite"
               className={cn(
                 "absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-[6px] border bg-surface-3 transition-[color] disabled:pointer-events-none disabled:opacity-45",
                 isCopied ? "text-accent-ink" : "text-ink-2 hover:text-ink",
               )}
-              disabled={!hasReadmeImageCode}
+              disabled={!hasIconsImageCode}
               onClick={copyWithCopiedFeedback}
               type="button"
             >

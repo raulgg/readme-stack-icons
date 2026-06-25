@@ -12,7 +12,7 @@ import {
   removeBreakpointLayout,
 } from "@/lib/icons/column-layout";
 import { showToast } from "@/components/ui/sonner";
-import { generateReadmeImage } from "@/lib/icons/readme-image";
+import { generateIconsImage } from "@/lib/icons/icons-image";
 
 import {
   buildStackIconsEditorPageQuery,
@@ -96,7 +96,7 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   const [layoutMemory, setLayoutMemory] = React.useState<LayoutMemoryState>(
     () => buildInitialLayoutMemory(initialState),
   );
-  const generatedReadmeImageResult = generateReadmeImage({
+  const generatedIconsImageResult = generateIconsImage({
     columnLayouts: editorState.columnLayouts,
     currentOrigin,
     gap: editorState.gap,
@@ -105,8 +105,8 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     layoutMode: editorState.layoutMode,
     size: editorState.iconSize,
   });
-  const generatedReadmeImage = generatedReadmeImageResult.success
-    ? generatedReadmeImageResult
+  const generatedIconsImage = generatedIconsImageResult.success
+    ? generatedIconsImageResult
     : null;
 
   const columnLayoutResult = getColumnLayoutRichResult({
@@ -124,13 +124,13 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     commitEditorState(nextState);
   }
 
-  const generatedHtml = generatedReadmeImage?.readmeHtml ?? "";
-  const generatedImageSources = generatedReadmeImage?.imageSources ?? [];
-  const unknownSlugs = generatedReadmeImage?.unknownSlugs ?? [];
-  const hasGeneratedOutput = generatedReadmeImage !== null;
-  const validationErrors = generatedReadmeImageResult.success
+  const generatedHtml = generatedIconsImage?.iconsImageCode ?? "";
+  const generatedImageSources = generatedIconsImage?.imageSources ?? [];
+  const unknownSlugs = generatedIconsImage?.unknownSlugs ?? [];
+  const hasGeneratedOutput = generatedIconsImage !== null;
+  const validationErrors = generatedIconsImageResult.success
     ? []
-    : generatedReadmeImageResult.errors;
+    : generatedIconsImageResult.errors;
   function commitEditorState(nextState: StackIconsEditorState) {
     setEditorState(nextState);
     setLayoutMemory((currentLayoutMemory) =>
@@ -235,21 +235,18 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
     replaceEditorUrl(nextState);
   }
 
-  // Copies the exact generated README image code string — the same string the
-  // highlighted code panel renders. Success is reported by the caller's copy
-  // button via the returned flag; failures surface a toast here.
-  async function copyReadmeImageCode(): Promise<boolean> {
+  async function copyIconsImageCode(): Promise<boolean> {
     if (generatedHtml === "") {
       return false;
     }
 
     const clipboard = navigator.clipboard;
+    if (!clipboard) {
+      showToast("Copy failed — select and copy manually");
+      return false;
+    }
 
     try {
-      if (clipboard === undefined) {
-        throw new Error("Clipboard is unavailable");
-      }
-
       await clipboard.writeText(generatedHtml);
       return true;
     } catch {
@@ -261,7 +258,7 @@ export function useStackIconsEditorForm(initialState: StackIconsEditorState) {
   return {
     addBreakpointLayout: handleAddBreakpointLayout,
     columnLayoutResult,
-    copyReadmeImageCode,
+    copyIconsImageCode,
     generatedHtml,
     generatedImageSources,
     hasGeneratedOutput,

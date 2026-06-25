@@ -4,7 +4,7 @@ import {
   buildGeneratedImageSourceZip,
   getGeneratedImageSourceFileName,
 } from "./generated-image-zip";
-import type { GeneratedImageSource } from "./readme-image";
+import type { GeneratedIconsImage } from "./icons-image";
 
 const { zipSyncMock } = vi.hoisted(() => ({
   zipSyncMock: vi.fn(
@@ -17,8 +17,8 @@ vi.mock("fflate", () => ({
 }));
 
 function buildImageSource(
-  overrides: Partial<GeneratedImageSource>,
-): GeneratedImageSource {
+  overrides: Partial<GeneratedIconsImage>,
+): GeneratedIconsImage {
   return {
     columns: 4,
     minWidthPx: null,

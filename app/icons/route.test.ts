@@ -56,7 +56,7 @@ describe("/icons route", () => {
   });
 
   it("should render icons at 40px when the size param is absent", async () => {
-    // Given — README image code copied before the size param existed (ADR 0001)
+    // Given — icons image code copied before the size param existed (ADR 0001)
     const request = new Request(
       "http://localhost/icons?s=typescript,react&cols=2&gap=12",
     );

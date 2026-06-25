@@ -12,8 +12,8 @@ letting the user flip the preview independently until the next UI theme change.
 
 Shareable editor URLs already encode icons, layout, spacing, and icon size.
 Preview theme is a transient viewing preference — like which breakpoint band
-is selected in the preview box — not part of the README image the user copies.
-Persisting it in the URL would suggest it affects generated output when README
+is selected in the preview box — not part of the icons image the user copies.
+Persisting it in the URL would suggest it affects generated output when icons
 image code always emits both light and dark sources via `<picture>` media
 queries.
 

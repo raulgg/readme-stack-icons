@@ -2,7 +2,7 @@
 
 import {
   ReadmeCardHeader,
-  ReadmeImageCodePanel,
+  IconsImageCodePanel,
   ReadmePreviewStage,
   useResolvedPreviewTheme,
 } from "@/app/_components/readme";
@@ -38,8 +38,8 @@ export function DemoCard() {
         4 columns · 48px icons — exactly what your README shows
       </p>
 
-      <ReadmeImageCodePanel
-        readmeImageCode={ABBREVIATED_SNIPPET}
+      <IconsImageCodePanel
+        iconsImageCode={ABBREVIATED_SNIPPET}
         showCopyButton={false}
       />
     </section>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { generateReadmeImage } from "./readme-image";
+import { generateIconsImage } from "./icons-image";
 
 const baseInput = {
   columnLayouts: [{ columns: "4", minWidthPx: null }],
@@ -12,9 +12,9 @@ const baseInput = {
   size: "48",
 };
 
-describe("README image", () => {
-  it("should generate single layout README image code with generated image sources", () => {
-    expect(generateReadmeImage(baseInput)).toEqual({
+describe("icons image", () => {
+  it("should generate single layout icons image code with generated icons images", () => {
+    expect(generateIconsImage(baseInput)).toEqual({
       success: true,
       unknownSlugs: [],
       imageSources: [
@@ -31,16 +31,16 @@ describe("README image", () => {
           url: "http://localhost:3000/icons?s=react%2Cnextjs&cols=4&gap=8&size=48&theme=dark",
         },
       ],
-      readmeHtml: `<picture>
+      iconsImageCode: `<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`,
     });
   });
 
-  it("should generate single layout README image code without dark generated image sources", () => {
+  it("should generate single layout icons image code without dark generated icons images", () => {
     expect(
-      generateReadmeImage({
+      generateIconsImage({
         ...baseInput,
         includeDarkTheme: false,
       }),
@@ -55,14 +55,14 @@ describe("README image", () => {
           url: "http://localhost:3000/icons?s=react%2Cnextjs&cols=4&gap=8&size=48&theme=light",
         },
       ],
-      readmeHtml: `<picture>
+      iconsImageCode: `<picture>
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`,
     });
   });
 
-  it("should generate only README image code sources when dark sources are excluded", () => {
-    const result = generateReadmeImage({
+  it("should generate only icons image code sources when dark sources are excluded", () => {
+    const result = generateIconsImage({
       ...baseInput,
       columnLayouts: [
         { columns: "4", minWidthPx: null },
@@ -88,7 +88,7 @@ describe("README image", () => {
           url: "http://localhost:3000/icons?s=react%2Cnextjs&cols=8&gap=8&size=48&theme=light",
         },
       ],
-      readmeHtml: `<picture>
+      iconsImageCode: `<picture>
   <source media="(min-width: 640px)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=light" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`,
@@ -98,8 +98,8 @@ describe("README image", () => {
     );
   });
 
-  it("should generate responsive sources from widest breakpoint to narrowest in README image code", () => {
-    const result = generateReadmeImage({
+  it("should generate responsive sources from widest breakpoint to narrowest in icons image code", () => {
+    const result = generateIconsImage({
       ...baseInput,
       columnLayouts: [
         { columns: "4", minWidthPx: null },
@@ -121,7 +121,7 @@ describe("README image", () => {
         { columns: 12, minWidthPx: 1024, theme: "dark" },
       ],
     });
-    expect(result.success ? result.readmeHtml : "").toBe(`<picture>
+    expect(result.success ? result.iconsImageCode : "").toBe(`<picture>
   <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=12&amp;gap=10&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=12&amp;gap=10&amp;size=48&amp;theme=light" />
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=8&amp;gap=10&amp;size=48&amp;theme=dark" />
@@ -132,7 +132,7 @@ describe("README image", () => {
   });
 
   it("should omit the icons query param for explicit all icons", () => {
-    const result = generateReadmeImage({
+    const result = generateIconsImage({
       ...baseInput,
       icons: "all",
     });
@@ -151,20 +151,20 @@ describe("README image", () => {
         url: "http://localhost:3000/icons?cols=4&gap=8&size=48&theme=dark",
       },
     ]);
-    expect(result.success ? result.readmeHtml : "").toBe(`<picture>
+    expect(result.success ? result.iconsImageCode : "").toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="All stack icons" title="All stack icons" />
 </picture>`);
   });
 
-  it("should escape query separators inside generated README image code", () => {
-    const result = generateReadmeImage(baseInput);
+  it("should escape query separators inside generated icons image code", () => {
+    const result = generateIconsImage(baseInput);
 
-    expect(result.success ? result.readmeHtml : "").not.toContain("&cols=");
-    expect(result.success ? result.readmeHtml : "").toContain("&amp;cols=");
+    expect(result.success ? result.iconsImageCode : "").not.toContain("&cols=");
+    expect(result.success ? result.iconsImageCode : "").toContain("&amp;cols=");
   });
 
-  it("should emit the icon size in every generated image source URL when README image code is generated", () => {
+  it("should emit the icon size in every generated icons image URL when icons image code is generated", () => {
     // Given
     const input = {
       ...baseInput,
@@ -177,7 +177,7 @@ describe("README image", () => {
     };
 
     // When
-    const result = generateReadmeImage(input);
+    const result = generateIconsImage(input);
 
     // Then
     expect(result.success).toBe(true);
@@ -190,15 +190,17 @@ describe("README image", () => {
 
   it("should omit the width attribute when the fallback img is generated", () => {
     // Given / When
-    const result = generateReadmeImage(baseInput);
+    const result = generateIconsImage(baseInput);
 
     // Then
-    expect(result.success ? result.readmeHtml : "").not.toContain('width="');
+    expect(result.success ? result.iconsImageCode : "").not.toContain(
+      'width="',
+    );
   });
 
   it("should return a validation error when the icon size is out of range", () => {
     expect(
-      generateReadmeImage({
+      generateIconsImage({
         ...baseInput,
         size: "100",
       }),
@@ -208,7 +210,7 @@ describe("README image", () => {
     });
   });
 
-  it("should carry unknown slugs in generated image source URLs while labeling only known icons", () => {
+  it("should carry unknown slugs in generated icons image URLs while labeling only known icons", () => {
     // Given
     const input = {
       ...baseInput,
@@ -216,7 +218,7 @@ describe("README image", () => {
     };
 
     // When
-    const result = generateReadmeImage(input);
+    const result = generateIconsImage(input);
 
     // Then
     expect(result).toEqual({
@@ -236,7 +238,7 @@ describe("README image", () => {
           url: "http://localhost:3000/icons?s=react%2Cnot-real%2Cnextjs&cols=4&gap=8&size=48&theme=dark",
         },
       ],
-      readmeHtml: `<picture>
+      iconsImageCode: `<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnot-real%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnot-real%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`,
@@ -245,7 +247,7 @@ describe("README image", () => {
 
   it("should return validation errors when every icon slug is unknown", () => {
     expect(
-      generateReadmeImage({
+      generateIconsImage({
         ...baseInput,
         columnLayouts: [{ columns: "1", minWidthPx: null }],
         icons: "not-real",
@@ -261,7 +263,7 @@ describe("README image", () => {
 
   it("should return empty errors when the origin is not available", () => {
     expect(
-      generateReadmeImage({
+      generateIconsImage({
         ...baseInput,
         currentOrigin: "",
       }),

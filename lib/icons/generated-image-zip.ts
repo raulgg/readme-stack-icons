@@ -1,11 +1,11 @@
 import { zipSync } from "fflate";
 
-import type { GeneratedImageSource } from "./readme-image";
+import type { GeneratedIconsImage } from "./icons-image";
 
-// File name for one generated image source inside the download zip, e.g.
+// File name for one generated icons image inside the download zip, e.g.
 // `stack-8col-dark.svg`.
 export function getGeneratedImageSourceFileName(
-  imageSource: GeneratedImageSource,
+  imageSource: GeneratedIconsImage,
 ): string {
   return `stack-${imageSource.columns}col-${imageSource.theme}.svg`;
 }
@@ -16,11 +16,11 @@ export type GeneratedImageSourceZipResult = {
   zipBytes: Uint8Array | null;
 };
 
-// Fetches each generated image source's SVG and bundles the successful
+// Fetches each generated icons image's SVG and bundles the successful
 // fetches into one zip. Failed fetches are skipped rather than aborting the
 // whole bundle; when every fetch fails there is no zip to download.
 export async function buildGeneratedImageSourceZip(
-  imageSources: readonly GeneratedImageSource[],
+  imageSources: readonly GeneratedIconsImage[],
 ): Promise<GeneratedImageSourceZipResult> {
   const zipEntries: Record<string, Uint8Array> = {};
   let failedCount = 0;

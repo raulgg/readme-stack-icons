@@ -7,18 +7,18 @@ import {
 import { parseIconRequest } from "./parse-request";
 import { escapeXml } from "../utils";
 
-export type GeneratedImageSource = {
+export type GeneratedIconsImage = {
   columns: number;
   minWidthPx: number | null;
   theme: "dark" | "light";
   url: string;
 };
 
-export type ReadmeImageGenerationResult =
+export type IconsImageGenerationResult =
   | {
       success: true;
-      imageSources: GeneratedImageSource[];
-      readmeHtml: string;
+      imageSources: GeneratedIconsImage[];
+      iconsImageCode: string;
       unknownSlugs: string[];
     }
   | {
@@ -26,7 +26,7 @@ export type ReadmeImageGenerationResult =
       errors: string[];
     };
 
-type GenerateReadmeImageInput = {
+type GenerateIconsImageInput = {
   columnLayouts: readonly EditableColumnLayout[];
   currentOrigin: string;
   gap: string;
@@ -36,7 +36,7 @@ type GenerateReadmeImageInput = {
   size: string;
 };
 
-export function generateReadmeImage({
+export function generateIconsImage({
   columnLayouts,
   currentOrigin,
   gap,
@@ -44,7 +44,7 @@ export function generateReadmeImage({
   includeDarkTheme,
   layoutMode,
   size,
-}: GenerateReadmeImageInput): ReadmeImageGenerationResult {
+}: GenerateIconsImageInput): IconsImageGenerationResult {
   const columnLayoutResult = validateColumnLayouts({
     columnLayouts,
     layoutMode,
@@ -73,8 +73,7 @@ export function generateReadmeImage({
       errors: [],
     };
   }
-
-  const imageSources = buildGeneratedImageSources({
+  const imageSources = buildGeneratedIconsImages({
     columnLayouts: columnLayoutResult.columnLayouts,
     currentOrigin,
     gap,
@@ -82,6 +81,7 @@ export function generateReadmeImage({
     includeDarkTheme,
     size,
   });
+
   const labels = isAllIconInput(icons)
     ? "All stack icons"
     : parsedRequest.data.icons.map((icon) => icon.label).join(", ");
@@ -89,12 +89,12 @@ export function generateReadmeImage({
   return {
     success: true,
     imageSources,
-    readmeHtml: renderReadmeHtml({ imageSources, labels }),
+    iconsImageCode: renderIconsImageCode({ imageSources, labels }),
     unknownSlugs: parsedRequest.data.unknownSlugs,
   };
 }
 
-function buildGeneratedImageSources({
+function buildGeneratedIconsImages({
   columnLayouts,
   currentOrigin,
   gap,
@@ -108,9 +108,9 @@ function buildGeneratedImageSources({
   icons: string;
   includeDarkTheme: boolean;
   size: string;
-}): GeneratedImageSource[] {
+}): GeneratedIconsImage[] {
   return columnLayouts.flatMap((layout) => {
-    const lightSource = buildGeneratedImageSource({
+    const lightSource = buildGeneratedIconsImage({
       columnLayout: layout,
       currentOrigin,
       gap,
@@ -125,7 +125,7 @@ function buildGeneratedImageSources({
 
     return [
       lightSource,
-      buildGeneratedImageSource({
+      buildGeneratedIconsImage({
         columnLayout: layout,
         currentOrigin,
         gap,
@@ -137,7 +137,7 @@ function buildGeneratedImageSources({
   });
 }
 
-function buildGeneratedImageSource({
+function buildGeneratedIconsImage({
   columnLayout,
   currentOrigin,
   gap,
@@ -151,12 +151,12 @@ function buildGeneratedImageSource({
   icons: string;
   size: string;
   theme: "dark" | "light";
-}): GeneratedImageSource {
+}): GeneratedIconsImage {
   return {
     columns: columnLayout.columns,
     minWidthPx: columnLayout.minWidthPx,
     theme,
-    url: buildReadmeImageUrl({
+    url: buildIconsImageUrl({
       columns: columnLayout.columns,
       currentOrigin,
       gap,
@@ -167,14 +167,14 @@ function buildGeneratedImageSource({
   };
 }
 
-function renderReadmeHtml({
+function renderIconsImageCode({
   imageSources,
   labels,
 }: {
-  imageSources: readonly GeneratedImageSource[];
+  imageSources: readonly GeneratedIconsImage[];
   labels: string;
 }): string {
-  const baseLightSource = getGeneratedImageSource({
+  const baseLightSource = getGeneratedIconsImage({
     imageSources,
     minWidthPx: null,
     theme: "light",
@@ -186,12 +186,12 @@ function renderReadmeHtml({
 
   const sourceMarkup = [
     ...getResponsiveLightSources(imageSources).flatMap((layout) => {
-      const darkSource = getGeneratedImageSource({
+      const darkSource = getGeneratedIconsImage({
         imageSources,
         minWidthPx: layout.minWidthPx,
         theme: "dark",
       });
-      const lightSource = getGeneratedImageSource({
+      const lightSource = getGeneratedIconsImage({
         imageSources,
         minWidthPx: layout.minWidthPx,
         theme: "light",
@@ -221,17 +221,17 @@ ${sourceMarkupText}  <img src="${escapeXml(baseLightSource.url)}" alt="${escapeX
 }
 
 function getResponsiveLightSources(
-  imageSources: readonly GeneratedImageSource[],
-): GeneratedImageSource[] {
+  imageSources: readonly GeneratedIconsImage[],
+): GeneratedIconsImage[] {
   return imageSources
     .filter((source) => source.theme === "light" && source.minWidthPx !== null)
     .sort((a, b) => Number(b.minWidthPx) - Number(a.minWidthPx));
 }
 
 function getBaseDarkSourceMarkup(
-  imageSources: readonly GeneratedImageSource[],
+  imageSources: readonly GeneratedIconsImage[],
 ): string[] {
-  const baseDarkSource = getGeneratedImageSource({
+  const baseDarkSource = getGeneratedIconsImage({
     imageSources,
     minWidthPx: null,
     theme: "dark",
@@ -244,15 +244,15 @@ function getBaseDarkSourceMarkup(
       ];
 }
 
-function getGeneratedImageSource({
+function getGeneratedIconsImage({
   imageSources,
   minWidthPx,
   theme,
 }: {
-  imageSources: readonly GeneratedImageSource[];
+  imageSources: readonly GeneratedIconsImage[];
   minWidthPx: number | null;
   theme: "dark" | "light";
-}): GeneratedImageSource | undefined {
+}): GeneratedIconsImage | undefined {
   return imageSources.find(
     (source) => source.minWidthPx === minWidthPx && source.theme === theme,
   );
@@ -276,7 +276,7 @@ function buildIconRequestParams({
   return params;
 }
 
-function buildReadmeImageUrl({
+function buildIconsImageUrl({
   columns,
   currentOrigin,
   gap,
@@ -300,7 +300,7 @@ function buildReadmeImageUrl({
 
   params.set("cols", String(columns));
   params.set("gap", gap);
-  // Icon size is always explicit so a generated image source never depends on
+  // Icon size is always explicit so a generated icons image never depends on
   // the endpoint's back-compat default of 40 (ADR 0001).
   params.set("size", size);
   params.set("theme", theme);

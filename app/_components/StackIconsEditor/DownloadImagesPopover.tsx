@@ -6,7 +6,7 @@ import { CheckIcon, DownloadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/components/ui/sonner";
 import { buildGeneratedImageSourceZip } from "@/lib/icons/generated-image-zip";
-import type { GeneratedImageSource } from "@/lib/icons/readme-image";
+import type { GeneratedIconsImage } from "@/lib/icons/icons-image";
 import { cn } from "@/lib/utils";
 
 export function getDownloadZipFileName(date = new Date()): string {
@@ -26,7 +26,7 @@ export type DownloadMatrixRow = {
 // One matrix row per unique column layout: the light/dark generated image
 // source pair for the same column layout collapses into a single row.
 export function getDownloadMatrixRows(
-  imageSources: readonly GeneratedImageSource[],
+  imageSources: readonly GeneratedIconsImage[],
 ): DownloadMatrixRow[] {
   const rows: DownloadMatrixRow[] = [];
 
@@ -44,13 +44,13 @@ export function getDownloadMatrixRows(
 
 function getMatrixCellKey(
   minWidthPx: number | null,
-  theme: GeneratedImageSource["theme"],
+  theme: GeneratedIconsImage["theme"],
 ): string {
   return `${minWidthPx ?? "base"}-${theme}`;
 }
 
 function triggerZipDownload(zipBytes: Uint8Array) {
-  const zipBlob = new Blob([zipBytes as BlobPart], {
+  const zipBlob = new Blob([zipBytes], {
     type: "application/zip",
   });
   const zipObjectUrl = URL.createObjectURL(zipBlob);
@@ -65,7 +65,7 @@ function triggerZipDownload(zipBytes: Uint8Array) {
 }
 
 type DownloadImagesPopoverProps = {
-  generatedImageSources: readonly GeneratedImageSource[];
+  generatedImageSources: readonly GeneratedIconsImage[];
   isDisabled: boolean;
 };
 

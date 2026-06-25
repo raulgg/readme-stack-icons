@@ -2,29 +2,29 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
-  FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-  ReadmeImageCodePanel,
-  tokenizeReadmeImageCode,
-} from "./ReadmeImageCodePanel";
+  ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
+  FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
+  IconsImageCodePanel,
+  tokenizeIconsImageCode,
+} from "./IconsImageCodePanel";
 
-const README_IMAGE_CODE = `<picture>
+const ICONS_IMAGE_CODE = `<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`;
 
-describe("tokenizeReadmeImageCode", () => {
-  it("should reproduce the exact README image code when token texts are concatenated", () => {
+describe("tokenizeIconsImageCode", () => {
+  it("should reproduce the exact icons image code when token texts are concatenated", () => {
     // Given / When
-    const tokens = tokenizeReadmeImageCode(README_IMAGE_CODE);
+    const tokens = tokenizeIconsImageCode(ICONS_IMAGE_CODE);
 
     // Then
-    expect(tokens.map((token) => token.text).join("")).toBe(README_IMAGE_CODE);
+    expect(tokens.map((token) => token.text).join("")).toBe(ICONS_IMAGE_CODE);
   });
 
   it("should classify tags, attributes, string values, and punctuation when tokenizing picture markup", () => {
     // Given / When
-    const tokens = tokenizeReadmeImageCode(
+    const tokens = tokenizeIconsImageCode(
       '<source media="(prefers-color-scheme: dark)" />',
     );
 
@@ -44,37 +44,37 @@ describe("tokenizeReadmeImageCode", () => {
   });
 });
 
-describe("ReadmeImageCodePanel", () => {
-  it("should render highlighted code matching the clipboard payload when README image code exists", () => {
+describe("IconsImageCodePanel", () => {
+  it("should render highlighted code matching the clipboard payload when icons image code exists", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
+      <IconsImageCodePanel
         onCopy={vi.fn()}
-        readmeImageCode={README_IMAGE_CODE}
+        iconsImageCode={ICONS_IMAGE_CODE}
       />,
     );
 
     // When — panel renders open by default (render is the action)
 
     // Then
-    expect(screen.getByLabelText("README image code")).toHaveTextContent(
+    expect(screen.getByLabelText("Icons image code")).toHaveTextContent(
       "picture",
     );
-    expect(screen.getByLabelText("README image code").textContent).toBe(
-      README_IMAGE_CODE,
+    expect(screen.getByLabelText("Icons image code").textContent).toBe(
+      ICONS_IMAGE_CODE,
     );
   });
 
   it("should omit aria-controls on the disclosure button when the code is collapsed", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
+      <IconsImageCodePanel
         onCopy={vi.fn()}
-        readmeImageCode={README_IMAGE_CODE}
+        iconsImageCode={ICONS_IMAGE_CODE}
       />,
     );
     const disclosureButton = screen.getByRole("button", {
-      name: "README code · <picture>",
+      name: "Image code · <picture>",
     });
 
     // When
@@ -87,15 +87,15 @@ describe("ReadmeImageCodePanel", () => {
   it("should point aria-controls at the code block id when the code is expanded", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
+      <IconsImageCodePanel
         onCopy={vi.fn()}
-        readmeImageCode={README_IMAGE_CODE}
+        iconsImageCode={ICONS_IMAGE_CODE}
       />,
     );
     const disclosureButton = screen.getByRole("button", {
-      name: "README code · <picture>",
+      name: "Image code · <picture>",
     });
-    const codeBlock = screen.getByLabelText("README image code");
+    const codeBlock = screen.getByLabelText("Icons image code");
 
     // When — panel renders open by default (render is the action)
 
@@ -106,39 +106,37 @@ describe("ReadmeImageCodePanel", () => {
   it("should hide the code and its copy button when the disclosure collapses", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
+      <IconsImageCodePanel
         onCopy={vi.fn()}
-        readmeImageCode={README_IMAGE_CODE}
+        iconsImageCode={ICONS_IMAGE_CODE}
       />,
     );
 
     // When
     fireEvent.click(
-      screen.getByRole("button", { name: "README code · <picture>" }),
+      screen.getByRole("button", { name: "Image code · <picture>" }),
     );
 
     // Then
+    expect(screen.queryByLabelText("Icons image code")).not.toBeInTheDocument();
     expect(
-      screen.queryByLabelText("README image code"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Copy README code" }),
+      screen.queryByRole("button", { name: "Copy image code" }),
     ).not.toBeInTheDocument();
   });
 
   it("should render code without a copy button when showCopyButton is false", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
-        readmeImageCode={README_IMAGE_CODE}
+      <IconsImageCodePanel
+        iconsImageCode={ICONS_IMAGE_CODE}
         showCopyButton={false}
       />,
     );
 
     // Then
-    expect(screen.getByLabelText("README image code")).toBeInTheDocument();
+    expect(screen.getByLabelText("Icons image code")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Copy README code" }),
+      screen.queryByRole("button", { name: "Copy image code" }),
     ).not.toBeInTheDocument();
   });
 
@@ -148,16 +146,16 @@ describe("ReadmeImageCodePanel", () => {
     });
 
     function getCopyButton() {
-      return screen.getByRole("button", { name: "Copy README code" });
+      return screen.getByRole("button", { name: "Copy image code" });
     }
 
     it("should show Copied temporarily when copying succeeds", async () => {
       // Given
       vi.useFakeTimers();
       render(
-        <ReadmeImageCodePanel
+        <IconsImageCodePanel
           onCopy={vi.fn().mockResolvedValue(true)}
-          readmeImageCode={README_IMAGE_CODE}
+          iconsImageCode={ICONS_IMAGE_CODE}
         />,
       );
 
@@ -182,9 +180,9 @@ describe("ReadmeImageCodePanel", () => {
     it("should keep showing Copy when copying fails", async () => {
       // Given
       render(
-        <ReadmeImageCodePanel
+        <IconsImageCodePanel
           onCopy={vi.fn().mockResolvedValue(false)}
-          readmeImageCode={README_IMAGE_CODE}
+          iconsImageCode={ICONS_IMAGE_CODE}
         />,
       );
 
@@ -201,40 +199,40 @@ describe("ReadmeImageCodePanel", () => {
     });
   });
 
-  it("should show the empty placeholder and disable copying when README image code is empty", () => {
+  it("should show the empty placeholder and disable copying when icons image code is empty", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
-        emptyPlaceholder={ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER}
+      <IconsImageCodePanel
+        emptyPlaceholder={ADD_ICONS_IMAGE_CODE_PLACEHOLDER}
         onCopy={vi.fn()}
-        readmeImageCode=""
+        iconsImageCode=""
       />,
     );
 
     // When — panel renders without code (render is the action)
 
     // Then
-    expect(screen.getByLabelText("README image code").textContent).toBe(
-      ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
+    expect(screen.getByLabelText("Icons image code").textContent).toBe(
+      ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
     );
     expect(
-      screen.getByRole("button", { name: "Copy README code" }),
+      screen.getByRole("button", { name: "Copy image code" }),
     ).toBeDisabled();
   });
 
   it("should render a custom empty placeholder when provided", () => {
     // Given
     render(
-      <ReadmeImageCodePanel
-        emptyPlaceholder={FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER}
+      <IconsImageCodePanel
+        emptyPlaceholder={FIX_ERRORS_IMAGE_CODE_PLACEHOLDER}
         onCopy={vi.fn()}
-        readmeImageCode=""
+        iconsImageCode=""
       />,
     );
 
     // Then
-    expect(screen.getByLabelText("README image code").textContent).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
+    expect(screen.getByLabelText("Icons image code").textContent).toBe(
+      FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
     );
   });
 });

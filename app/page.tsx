@@ -25,8 +25,8 @@ export default function Home() {
             <code className="rounded border border-border bg-surface-2 px-[5px] py-[1px] font-mono text-[0.86em]">
               &lt;picture&gt;
             </code>{" "}
-            element into your README. Responsive and dark-mode aware — no
-            badges, no build step.
+            element into any Markdown or HTML. Responsive and dark-mode aware —
+            no badges, no build step.
           </p>
           <div className="mt-7">
             <Link

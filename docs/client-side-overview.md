@@ -1,7 +1,7 @@
 # Client-Side Application Overview
 
-StackIcons is a README image editor: users compose technology icon slugs into
-README image code with configurable column layouts, then copy the code or
+StackIcons is an icons image editor: users compose technology icon slugs into
+icons image code with configurable column layouts, then copy the code or
 download the generated image sources. This document describes the client-side
 architecture shipped by the UI overhaul.
 
@@ -13,13 +13,13 @@ architecture shipped by the UI overhaul.
 - `/` (`app/page.tsx`) is the **landing page**: hero copy, a CTA to `/editor`,
   and `DemoCard` — a read-only README card that mirrors the UI theme. Below
   the hero, `CatalogStrip` lists registered icon categories.
-- `/editor` (`app/editor/page.tsx`) is the **README image editor**: a server
+- `/editor` (`app/editor/page.tsx`) is the **icons image editor**: a server
   component that resolves `searchParams` through
   `getStackIconsEditorInitialState` so shared URLs reopen the editor in the
   same state, then renders `StackIconsEditor`.
 - **UI theme** (light / dark / system) is toggled from `UiThemeMenu` in
   `SiteHeader`; it affects only editor chrome and landing surfaces, not
-  generated README image code.
+  generated icons image code.
 - Styling uses GitHub Primer design tokens (`app/globals.css`,
   `tailwind.config.ts`) with full light and dark variants.
 
@@ -32,8 +32,8 @@ card chrome and preview behavior:
   (editor download trigger).
 - `ReadmePreviewStage` — themed stage surface (`STAGE_COLORS` from
   `preview-theme.ts`) wrapping the preview image or icon grid.
-- `ReadmeImageCodePanel` — collapsible `<picture>` code block with syntax
-  highlighting (`tokenizeReadmeImageCode`) and an optional inline copy button.
+- `IconsImageCodePanel` — collapsible `<picture>` code block with syntax
+  highlighting (`tokenizeIconsImageCode`) and an optional inline copy button.
 - `useResolvedPreviewTheme` — maps the resolved UI theme to `"light"` or
   `"dark"` for preview rendering (used by `DemoCard` and to seed editor preview
   theme).
@@ -45,7 +45,7 @@ The landing card is a static showcase, not the editor:
 
 - Preview theme **mirrors the UI theme** via `useResolvedPreviewTheme`; there
   is no preview-theme control on the landing page.
-- `ReadmeImageCodePanel` renders an abbreviated sample snippet with
+- `IconsImageCodePanel` renders an abbreviated sample snippet with
   `showCopyButton={false}` (no `onCopy` prop).
 - No download action; `ReadmeCardHeader` has no right-side actions.
 
@@ -64,7 +64,7 @@ independently.
   ("All" plus the registry's icon categories). Clicking an icon toggles it in
   the selection.
 - `SelectedIconTiles` renders the chosen slugs as a tile grid mirroring the
-  generated README image; tiles support drag-reorder (drops splice the
+  generated icons image; tiles support drag-reorder (drops splice the
   dragged slug into place) and per-tile removal. Unknown slugs render as
   flagged tiles instead of disappearing.
 - A collapsible plain-text editor exposes the raw comma-separated slug string
@@ -84,7 +84,7 @@ independently.
 ### Spacing & size
 
 - Sliders for icon size (24–64px, step 2, default 48 per ADR 0001) and gap
-  (0–24px). One icon size applies to the whole README image; it is not
+  (0–24px). One icon size applies to the whole icons image; it is not
   configured per column layout.
 
 ### Output card
@@ -99,10 +99,10 @@ independently.
   `ReadmePreviewStage`. Band selection is ephemeral UI state. Unknown slugs
   do not appear in the preview, matching how generated image sources render
   (ADR 0002).
-- `ReadmeImageCodePanel` (from the shared readme module) shows the generated
-  README image code with custom highlighting. Copy is **inline in the panel**
+- `IconsImageCodePanel` (from the shared readme module) shows the generated
+  icons image code with custom highlighting. Copy is **inline in the panel**
   (copy button with brief "Copied" feedback); clipboard failures surface a
-  toast from `copyReadmeImageCode` in `useStackIconsEditorForm`.
+  toast from `copyIconsImageCode` in `useStackIconsEditorForm`.
 - `DownloadImagesPopover` opens a theme × breakpoint matrix of generated
   image sources; selected cells are fetched and zipped client-side with
   fflate (`lib/icons/generated-image-zip.ts`). Failed fetches are skipped
@@ -110,9 +110,9 @@ independently.
 
 ## State and URL
 
-`useStackIconsEditorForm` owns the editor state and regenerates the README
-image on every change via `generateReadmeImage`
-(`lib/icons/readme-image.ts`).
+`useStackIconsEditorForm` owns the editor state and regenerates the icons
+image on every change via `generateIconsImage`
+(`lib/icons/icons-image.ts`).
 
 State shape (`state.ts`):
 
@@ -154,6 +154,6 @@ theme on every UI theme change; see ADR 0004.
 - **Preview theme**: which color theme of the generated image source the
   column layout preview (and landing `DemoCard`) recreates. It follows the
   UI theme on change, can be overridden in the editor until the next UI
-  theme change, and is never persisted or shareable (ADR 0004). README image
+  theme change, and is never persisted or shareable (ADR 0004). Icons image
   code always emits both light and dark sources via `<picture>` media
   queries, regardless of either theme setting.

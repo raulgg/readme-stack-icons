@@ -12,7 +12,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "StackIcons",
-  description: "Generate cached SVG stack icon images for GitHub READMEs.",
+  description: "Generate cached SVG stack icon images for Markdown and HTML.",
   icons: {
     icon: [{ url: stackIconsLogo.src, type: "image/svg+xml" }],
     apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],

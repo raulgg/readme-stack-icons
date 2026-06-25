@@ -16,7 +16,7 @@ type SelectedIconTilesProps = {
 };
 
 // Draggable tile grid for the selected icons. Tile order is the icon order in
-// the generated README image, so drops splice the dragged slug into place.
+// the generated icons image, so drops splice the dragged slug into place.
 export function SelectedIconTiles({
   onAddIconRequest,
   onRemoveSlug,

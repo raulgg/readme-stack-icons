@@ -1,6 +1,6 @@
 # StackIcons
 
-Compose an ordered stack of technology slugs into one cached SVG image for GitHub READMEs.
+Compose an ordered stack of technology slugs into one cached SVG image for Markdown and HTML.
 
 ## Editor
 

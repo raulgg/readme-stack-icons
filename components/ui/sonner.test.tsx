@@ -10,12 +10,12 @@ describe("Toaster", () => {
 
     // When
     act(() => {
-      showToast("README image code copied");
+      showToast("Icons image code copied");
     });
 
     // Then
     expect(
-      await screen.findByText("README image code copied"),
+      await screen.findByText("Icons image code copied"),
     ).toBeInTheDocument();
   });
 

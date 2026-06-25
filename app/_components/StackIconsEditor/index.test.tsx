@@ -14,8 +14,8 @@ import { UiThemeMenu } from "@/components/UiThemeMenu";
 import { showToast } from "@/components/ui/sonner";
 import { DEFAULT_SINGLE_COLUMN_LAYOUTS } from "@/lib/icons/column-layout";
 import {
-  ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
-  FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
+  ADD_ICONS_IMAGE_CODE_PLACEHOLDER,
+  FIX_ERRORS_IMAGE_CODE_PLACEHOLDER,
 } from "@/app/_components/readme";
 import {
   DEFAULT_RESPONSIVE_COLUMN_LAYOUTS,
@@ -28,11 +28,11 @@ vi.mock("@/components/ui/sonner", () => ({
   Toaster: () => null,
 }));
 
-// The README image code panel renders highlighted spans whose combined text
-// content is the exact generated README image code string (or a placeholder
+// The icons image code panel renders highlighted spans whose combined text
+// content is the exact generated icons image code string (or a placeholder
 // comment when there is nothing to generate).
-function getReadmeImageCodeText() {
-  return screen.getByLabelText("README image code").textContent;
+function getIconsImageCodeText() {
+  return screen.getByLabelText("Icons image code").textContent;
 }
 
 function setLocation(url: string) {
@@ -67,7 +67,7 @@ function generatePreview() {
 }
 
 function expectGeneratedImageSourceUrl(url: string) {
-  expect(getReadmeImageCodeText()).toContain(url.replaceAll("&", "&amp;"));
+  expect(getIconsImageCodeText()).toContain(url.replaceAll("&", "&amp;"));
 }
 
 function getIconSlugsTextarea() {
@@ -153,7 +153,7 @@ describe("StackIconsEditor", () => {
   it("should reflect raw form state in the page query when fields change", async () => {
     // Given
     renderSingleLayoutEditor();
-    expect(getReadmeImageCodeText()).toContain("<picture>");
+    expect(getIconsImageCodeText()).toContain("<picture>");
 
     // When
     fireEvent.change(getIconSlugsTextarea(), {
@@ -183,7 +183,7 @@ describe("StackIconsEditor", () => {
       expect(params.has("baseUrl")).toBe(false);
       expect(params.has("v")).toBe(false);
     });
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=12&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=12&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`);
@@ -291,16 +291,14 @@ describe("StackIconsEditor", () => {
 
       expect(params.get("s")).toBe("");
     });
-    expect(getReadmeImageCodeText()).toBe(
-      ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(ADD_ICONS_IMAGE_CODE_PLACEHOLDER);
     expect(getIconSlugsTextarea()).toHaveAttribute("aria-invalid", "true");
     expect(
       screen.getByText("`s` must include at least one icon slug."),
     ).toBeInTheDocument();
   });
 
-  it("should generate README image code with dark source by default", async () => {
+  it("should generate icons image code with dark source by default", async () => {
     // Given
     renderSingleLayoutEditor();
     fireEvent.change(getIconSlugsTextarea(), {
@@ -315,25 +313,25 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // Then
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`);
-    expect(getReadmeImageCodeText()).not.toContain("loading=");
-    expect(getReadmeImageCodeText()).not.toContain("decoding=");
+    expect(getIconsImageCodeText()).not.toContain("loading=");
+    expect(getIconsImageCodeText()).not.toContain("decoding=");
   });
 
-  it("should show the Copy README code button when current editor state is valid", () => {
+  it("should show the Copy image code button when current editor state is valid", () => {
     // Given
     renderEditor();
 
     // Then
     expect(
-      screen.getByRole("button", { name: "Copy README code" }),
+      screen.getByRole("button", { name: "Copy image code" }),
     ).toBeEnabled();
   });
 
-  it("should copy generated README image code exactly as displayed", async () => {
+  it("should copy generated icons image code exactly as displayed", async () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
@@ -348,14 +346,14 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Copy README code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy image code" }));
 
     // Then
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(getReadmeImageCodeText());
+      expect(writeText).toHaveBeenCalledWith(getIconsImageCodeText());
     });
     expect(writeText).toHaveBeenCalledTimes(1);
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`);
@@ -368,7 +366,7 @@ describe("StackIconsEditor", () => {
     renderEditor();
     generatePreview();
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Copy README code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy image code" }));
 
     // Then
     await waitFor(() => {
@@ -376,7 +374,7 @@ describe("StackIconsEditor", () => {
         "Copy failed — select and copy manually",
       );
     });
-    expect(writeText).toHaveBeenCalledWith(getReadmeImageCodeText());
+    expect(writeText).toHaveBeenCalledWith(getIconsImageCodeText());
   });
 
   it("should show Copied feedback on the copy button when copying succeeds", async () => {
@@ -387,7 +385,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // When
-    fireEvent.click(screen.getByRole("button", { name: "Copy README code" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy image code" }));
 
     // Then
     await waitFor(() => {
@@ -405,15 +403,13 @@ describe("StackIconsEditor", () => {
 
     // When
     fireEvent.click(
-      screen.getByRole("button", { name: "README code · <picture>" }),
+      screen.getByRole("button", { name: "Image code · <picture>" }),
     );
 
     // Then
+    expect(screen.queryByLabelText("Icons image code")).not.toBeInTheDocument();
     expect(
-      screen.queryByLabelText("README image code"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Copy README code" }),
+      screen.queryByRole("button", { name: "Copy image code" }),
     ).not.toBeInTheDocument();
   });
 
@@ -427,11 +423,9 @@ describe("StackIconsEditor", () => {
     });
 
     // Then
-    expect(getReadmeImageCodeText()).toBe(
-      ADD_ICONS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(ADD_ICONS_IMAGE_CODE_PLACEHOLDER);
     expect(
-      screen.getByRole("button", { name: "Copy README code" }),
+      screen.getByRole("button", { name: "Copy image code" }),
     ).toBeDisabled();
   });
 
@@ -447,7 +441,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should generate responsive README image code with dark breakpoint sources before light sources", () => {
+  it("should generate responsive icons image code with dark breakpoint sources before light sources", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -466,7 +460,7 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=12&amp;gap=10&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=12&amp;gap=10&amp;size=48&amp;theme=light" />
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=8&amp;gap=10&amp;size=48&amp;theme=dark" />
@@ -476,7 +470,7 @@ describe("StackIconsEditor", () => {
 </picture>`);
   });
 
-  it("should generate responsive README image code with dark sources", () => {
+  it("should generate responsive icons image code with dark sources", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -493,13 +487,13 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 640px)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=light" />
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="React, Next.js" title="React, Next.js" />
 </picture>`);
-    expect(getReadmeImageCodeText()).toContain("theme=dark");
+    expect(getIconsImageCodeText()).toContain("theme=dark");
   });
 
   it("should sort responsive README breakpoint sources by descending min width", () => {
@@ -520,7 +514,7 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
-    const value = getReadmeImageCodeText();
+    const value = getIconsImageCodeText();
 
     expect(value.indexOf("(min-width: 1440px)")).toBeLessThan(
       value.indexOf("(min-width: 1024px)"),
@@ -530,7 +524,7 @@ describe("StackIconsEditor", () => {
     );
   });
 
-  it("should preserve user breakpoint order while sorting generated README image code", () => {
+  it("should preserve user breakpoint order while sorting generated icons image code", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -561,7 +555,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(min-width: 1024px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 1024px)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=light" />
   <source media="(min-width: 640px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=dark" />
@@ -614,9 +608,7 @@ describe("StackIconsEditor", () => {
     expect(screen.getAllByText("duplicate min-width")).toHaveLength(2);
     expect(getMinWidthInputs()[0]).toHaveAttribute("aria-invalid", "true");
     expect(getMinWidthInputs()[1]).toHaveAttribute("aria-invalid", "true");
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should reject invalid responsive breakpoint min width on generation", () => {
@@ -637,9 +629,7 @@ describe("StackIconsEditor", () => {
 
     expect(getMinWidthInputs()[0]).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("1–3840px")).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should reject invalid column layout columns on generation", () => {
@@ -663,9 +653,7 @@ describe("StackIconsEditor", () => {
       "true",
     );
     expect(screen.getByText("2–20 columns")).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should reject missing base layout in single mode on generation", () => {
@@ -689,9 +677,7 @@ describe("StackIconsEditor", () => {
         /Single layout mode must have exactly one base layout\./u,
       ),
     ).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should clear stale generated output when column layout generation fails", () => {
@@ -701,7 +687,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
-    expect(getReadmeImageCodeText()).toContain("<picture>");
+    expect(getIconsImageCodeText()).toContain("<picture>");
 
     selectLayoutMode("Responsive");
     fireEvent.change(getBaseColumnsInput(), {
@@ -711,12 +697,10 @@ describe("StackIconsEditor", () => {
 
     expect(getBaseColumnsInput()).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("2–20 columns")).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
-  it("should generate basic README image code without icons param for explicit all icons", async () => {
+  it("should generate basic icons image code without icons param for explicit all icons", async () => {
     // Given
     renderSingleLayoutEditor();
     fireEvent.change(getIconSlugsTextarea(), {
@@ -727,13 +711,13 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // Then
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="All stack icons" title="All stack icons" />
 </picture>`);
   });
 
-  it("should preserve README image code URL param order and escape attribute separators", async () => {
+  it("should preserve icons image code URL param order and escape attribute separators", async () => {
     // Given
     renderSingleLayoutEditor();
     fireEvent.change(getIconSlugsTextarea(), {
@@ -744,7 +728,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     // Then
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Creact%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=typescript%2Creact%2Cnextjs&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="TypeScript, React, Next.js" title="TypeScript, React, Next.js" />
 </picture>`);
@@ -773,7 +757,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedImageSourceUrl(expectedUrl);
   });
 
-  it("should flag unknown slugs inline while still generating README image code", () => {
+  it("should flag unknown slugs inline while still generating icons image code", () => {
     // Given
     renderSingleLayoutEditor();
 
@@ -788,13 +772,13 @@ describe("StackIconsEditor", () => {
     expect(
       screen.getByText("Unknown icon slug: not-real."),
     ).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnot-real%2Creact&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=dark" />
   <img src="http://localhost:3000/icons?s=typescript%2Cnot-real%2Creact&amp;cols=4&amp;gap=8&amp;size=48&amp;theme=light" alt="TypeScript, React" title="TypeScript, React" />
 </picture>`);
   });
 
-  it("should copy README image code carrying unknown slugs when copy is clicked", async () => {
+  it("should copy icons image code carrying unknown slugs when copy is clicked", async () => {
     // Given
     const writeText = vi.fn().mockResolvedValue(undefined);
     mockClipboard(writeText);
@@ -805,7 +789,7 @@ describe("StackIconsEditor", () => {
     generatePreview();
 
     const copyButton = screen.getByRole("button", {
-      name: "Copy README code",
+      name: "Copy image code",
     });
 
     expect(copyButton).toBeEnabled();
@@ -815,7 +799,7 @@ describe("StackIconsEditor", () => {
 
     // Then
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(getReadmeImageCodeText());
+      expect(writeText).toHaveBeenCalledWith(getIconsImageCodeText());
     });
     expect(writeText.mock.calls[0]?.[0]).toContain(
       "s=typescript%2Cnot-real%2Creact",
@@ -838,9 +822,7 @@ describe("StackIconsEditor", () => {
     expect(
       screen.getByText("Unknown icon slug: not-real."),
     ).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should clear stale validation errors after successful preview generation", () => {
@@ -1079,7 +1061,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(min-width: 1200px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 1200px)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=12&amp;gap=8&amp;size=48&amp;theme=light" />
   <source media="(min-width: 768px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&amp;cols=8&amp;gap=8&amp;size=48&amp;theme=dark" />
@@ -1101,9 +1083,7 @@ describe("StackIconsEditor", () => {
 
     expect(getMinWidthInputs()[2]).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("1–3840px")).toBeInTheDocument();
-    expect(getReadmeImageCodeText()).toBe(
-      FIX_ERRORS_README_IMAGE_CODE_PLACEHOLDER,
-    );
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should not render remove controls for the base row or the last breakpoint row", () => {
@@ -1304,7 +1284,7 @@ describe("StackIconsEditor", () => {
     expect(getMinWidthInputs()[1]).toHaveValue(1100);
   });
 
-  it("should generate responsive README image code from edited breakpoint rows", () => {
+  it("should generate responsive icons image code from edited breakpoint rows", () => {
     render(
       <StackIconsEditor
         initialState={{
@@ -1340,7 +1320,7 @@ describe("StackIconsEditor", () => {
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=react%2Cnextjs&cols=6&gap=8&size=48&theme=light",
     );
-    expect(getReadmeImageCodeText()).toBe(`<picture>
+    expect(getIconsImageCodeText()).toBe(`<picture>
   <source media="(min-width: 1100px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=15&amp;gap=8&amp;size=48&amp;theme=dark" />
   <source media="(min-width: 1100px)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=15&amp;gap=8&amp;size=48&amp;theme=light" />
   <source media="(min-width: 700px) and (prefers-color-scheme: dark)" srcset="http://localhost:3000/icons?s=react%2Cnextjs&amp;cols=9&amp;gap=8&amp;size=48&amp;theme=dark" />
@@ -1711,7 +1691,7 @@ describe("StackIconsEditor", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should reorder icons in the page query and README image code when a tile is dropped on another tile", async () => {
+  it("should reorder icons in the page query and icons image code when a tile is dropped on another tile", async () => {
     // Given — typescript,nextjs,tailwindcss,vercel
     renderEditor();
 
@@ -1958,16 +1938,16 @@ describe("StackIconsEditor", () => {
       expect(getSectionSummary("spacing")).toHaveTextContent("56px · gap 12px");
     });
 
-    it("should keep README image code output rendered outside the accordion sections", () => {
+    it("should keep icons image code output rendered outside the accordion sections", () => {
       renderEditor();
 
       fireEvent.click(getSectionToggle("icons"));
       fireEvent.click(getSectionToggle("layout"));
       fireEvent.click(getSectionToggle("spacing"));
 
-      expect(getReadmeImageCodeText()).toContain("<picture>");
+      expect(getIconsImageCodeText()).toContain("<picture>");
       expect(
-        screen.getByRole("button", { name: "Copy README code" }),
+        screen.getByRole("button", { name: "Copy image code" }),
       ).toBeInTheDocument();
     });
   });

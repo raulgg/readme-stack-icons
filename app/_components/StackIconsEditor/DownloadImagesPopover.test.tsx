@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { GeneratedImageSource } from "@/lib/icons/readme-image";
+import type { GeneratedIconsImage } from "@/lib/icons/icons-image";
 import {
   DownloadImagesPopover,
   getDownloadZipFileName,
@@ -14,7 +14,7 @@ vi.mock("@/components/ui/sonner", () => ({
   showToast: showToastMock,
 }));
 
-const RESPONSIVE_IMAGE_SOURCES: GeneratedImageSource[] = [
+const RESPONSIVE_IMAGE_SOURCES: GeneratedIconsImage[] = [
   { columns: 4, minWidthPx: null, theme: "light", url: "/icons?c=4&t=light" },
   { columns: 4, minWidthPx: null, theme: "dark", url: "/icons?c=4&t=dark" },
   { columns: 8, minWidthPx: 768, theme: "light", url: "/icons?c=8&t=light" },
@@ -24,7 +24,7 @@ const RESPONSIVE_IMAGE_SOURCES: GeneratedImageSource[] = [
 const SINGLE_LAYOUT_IMAGE_SOURCES = RESPONSIVE_IMAGE_SOURCES.slice(0, 2);
 
 function renderPopover(
-  imageSources: readonly GeneratedImageSource[] = RESPONSIVE_IMAGE_SOURCES,
+  imageSources: readonly GeneratedIconsImage[] = RESPONSIVE_IMAGE_SOURCES,
   isDisabled = false,
 ) {
   return render(
