@@ -453,7 +453,9 @@ function getStackIconsEditorFieldValidation({
     breakpointMinWidthByIndex: {},
     gap: validationErrors.filter(isGapValidationError),
     icons: [
-      ...validationErrors.filter(isIconsValidationError),
+      ...validationErrors
+        .filter(isIconsValidationError)
+        .map(toIconsErrorMessage),
       ...(unknownSlugs.length > 0
         ? [formatUnknownSlugsMessage(unknownSlugs)]
         : []),
@@ -497,6 +499,17 @@ function hasErrors(
   errors: readonly string[] | undefined,
 ): errors is readonly string[] {
   return errors !== undefined && errors.length > 0;
+}
+
+function toIconsErrorMessage(error: string): string {
+  if (
+    error === "`s` is required." ||
+    error === "`s` must include at least one icon slug."
+  )
+    return "Add at least one icon.";
+  if (error === "`s` must include 1000 icons or fewer.")
+    return "Add 1000 icons or fewer.";
+  return error;
 }
 
 type SpacingSliderRowProps = {
