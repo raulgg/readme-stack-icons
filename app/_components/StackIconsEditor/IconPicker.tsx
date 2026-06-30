@@ -218,7 +218,11 @@ export function StackIconPicker({
               : undefined
           }
           aria-autocomplete="list"
-          aria-controls={isOpen ? "icon-picker-listbox" : undefined}
+          aria-controls={
+            isOpen && matchingIcons.length > 0
+              ? "icon-picker-listbox"
+              : undefined
+          }
           aria-describedby={describedBy}
           aria-expanded={isOpen}
           aria-label="Search icons"
