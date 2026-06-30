@@ -5,6 +5,11 @@ import { createPortal } from "react-dom";
 import { SearchIcon } from "lucide-react";
 
 import {
+  addIconSlugs,
+  removeIconSlugs,
+  toggleIconSlug,
+} from "@/lib/icons/icon-slugs";
+import {
   listIconCategories,
   listRegisteredIcons,
   type IconCategory,
@@ -18,13 +23,6 @@ import { IconThumbnail } from "./IconThumbnail";
 
 const registeredIcons = listRegisteredIcons();
 const iconCategories = listIconCategories();
-
-export function parseIconSlugs(icons: string): string[] {
-  return icons
-    .split(",")
-    .map((slug) => slug.trim())
-    .filter(Boolean);
-}
 
 function getIconOptionId(slug: string): string {
   return `icon-picker-option-${slug}`;
@@ -53,18 +51,14 @@ function getSelectAllChecked(
 
 type StackIconPickerProps = {
   describedBy?: string;
-  onAddIconSlugs: (iconSlugs: readonly string[]) => void;
-  onRemoveIconSlugs: (iconSlugs: readonly string[]) => void;
-  onToggleSlug: (slug: string) => void;
+  onSelectedSlugsChange: (iconSlugs: readonly string[]) => void;
   searchInputRef?: React.Ref<HTMLInputElement>;
   selectedSlugs: readonly string[];
 };
 
 export function StackIconPicker({
   describedBy,
-  onAddIconSlugs,
-  onRemoveIconSlugs,
-  onToggleSlug,
+  onSelectedSlugsChange,
   searchInputRef,
   selectedSlugs,
 }: StackIconPickerProps) {
@@ -168,13 +162,11 @@ export function StackIconPicker({
 
   function handleSelectAllChange() {
     if (selectAllChecked === true) {
-      onRemoveIconSlugs(matchingIconSlugs);
+      onSelectedSlugsChange(removeIconSlugs(selectedSlugs, matchingIconSlugs));
       return;
     }
 
-    onAddIconSlugs(
-      matchingIconSlugs.filter((slug) => !selectedSlugs.includes(slug)),
-    );
+    onSelectedSlugsChange(addIconSlugs(selectedSlugs, matchingIconSlugs));
   }
 
   function handleSearchKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -193,7 +185,7 @@ export function StackIconPicker({
     if (event.key === "Enter") {
       event.preventDefault();
       if (activeIcon !== undefined) {
-        onToggleSlug(activeIcon.slug);
+        onSelectedSlugsChange(toggleIconSlug(selectedSlugs, activeIcon.slug));
       }
       return;
     }
@@ -319,7 +311,11 @@ export function StackIconPicker({
                               index === activeIndex && "bg-surface-3",
                             )}
                             id={getIconOptionId(icon.slug)}
-                            onClick={() => onToggleSlug(icon.slug)}
+                            onClick={() =>
+                              onSelectedSlugsChange(
+                                toggleIconSlug(selectedSlugs, icon.slug),
+                              )
+                            }
                             onMouseDown={(event) => event.preventDefault()}
                             onMouseEnter={() => setActiveIndex(index)}
                             role="option"

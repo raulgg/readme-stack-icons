@@ -9,14 +9,6 @@ type CheckboxIndicatorProps = {
   state: CheckboxIndicatorState;
 };
 
-/**
- * Presentational checkbox indicator used for both the interactive picker
- * Checkbox (composed inside Radix Root) and decorative list-row indicators
- * (e.g., inside role="option" rows in the icon picker).
- *
- * Owns the full picker visual surface: size, border, background, rounding,
- * and the check/minus icons. Does not handle focus, disabled, or Radix state.
- */
 export function CheckboxIndicator({
   className,
   state,

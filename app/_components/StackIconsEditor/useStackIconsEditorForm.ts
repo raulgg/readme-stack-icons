@@ -16,7 +16,7 @@ import {
 } from "@/lib/icons/column-layout";
 import { generateIconsImage } from "@/lib/icons/icons-image";
 
-import { parseIconSlugs } from "./IconPicker";
+import { parseIconSlugs } from "@/lib/icons/icon-slugs";
 import {
   buildStackIconsEditorPageQuery,
   DEFAULT_STACK_ICONS_EDITOR_STATE,
