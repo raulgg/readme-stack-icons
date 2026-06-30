@@ -14,25 +14,8 @@ function ControlledStackIconPicker({
 
   return (
     <StackIconPicker
-      onAddIconSlugs={(iconSlugs) =>
-        setSelectedSlugs((slugs) => [
-          ...slugs,
-          ...iconSlugs.filter((slug) => !slugs.includes(slug)),
-        ])
-      }
-      onRemoveIconSlugs={(iconSlugs) =>
-        setSelectedSlugs((slugs) => {
-          const iconSlugSet = new Set(iconSlugs);
-
-          return slugs.filter((slug) => !iconSlugSet.has(slug));
-        })
-      }
-      onToggleSlug={(slug) =>
-        setSelectedSlugs((slugs) =>
-          slugs.includes(slug)
-            ? slugs.filter((selectedSlug) => selectedSlug !== slug)
-            : [...slugs, slug],
-        )
+      onSelectedSlugsChange={(nextIconSlugs) =>
+        setSelectedSlugs([...nextIconSlugs])
       }
       selectedSlugs={selectedSlugs}
     />
@@ -367,13 +350,11 @@ describe("StackIconPicker", () => {
 
   it("should move the active row with arrows, toggle with Enter without closing, and close with Escape", () => {
     // Given
-    const onToggleSlug = vi.fn();
+    const onSelectedSlugsChange = vi.fn();
 
     render(
       <StackIconPicker
-        onAddIconSlugs={vi.fn()}
-        onRemoveIconSlugs={vi.fn()}
-        onToggleSlug={onToggleSlug}
+        onSelectedSlugsChange={onSelectedSlugsChange}
         selectedSlugs={[]}
       />,
     );
@@ -399,7 +380,7 @@ describe("StackIconPicker", () => {
     fireEvent.keyDown(getSearchInput(), { key: "Enter" });
 
     // Then
-    expect(onToggleSlug).toHaveBeenCalledWith(secondIcon.slug);
+    expect(onSelectedSlugsChange).toHaveBeenCalledWith([secondIcon.slug]);
     expect(screen.getByRole("listbox")).toBeInTheDocument();
 
     // When

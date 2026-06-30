@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils";
 import { ColumnLayoutPreview } from "./ColumnLayoutPreview";
 import { DownloadImagesPopover } from "./DownloadImagesPopover";
 import { EditorSection, type EditorSectionKey } from "./EditorSection";
-import { parseIconSlugs, StackIconPicker } from "./IconPicker";
+import { parseIconSlugs } from "@/lib/icons/icon-slugs";
+import { StackIconPicker } from "./IconPicker";
 import { SelectedIconTiles } from "./SelectedIconTiles";
 import {
   ICON_SIZE_STEP,
@@ -103,33 +104,6 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
 
   const selectedIconSlugs = parseIconSlugs(state.icons);
 
-  function toggleIconSlug(slug: string) {
-    const nextSlugs = selectedIconSlugs.includes(slug)
-      ? selectedIconSlugs.filter((selectedSlug) => selectedSlug !== slug)
-      : [...selectedIconSlugs, slug];
-
-    updateField("icons", nextSlugs.join(","));
-  }
-
-  function addIconSlugs(iconSlugs: readonly string[]) {
-    updateField(
-      "icons",
-      [
-        ...selectedIconSlugs,
-        ...iconSlugs.filter((slug) => !selectedIconSlugs.includes(slug)),
-      ].join(","),
-    );
-  }
-
-  function removeIconSlugs(iconSlugs: readonly string[]) {
-    const iconSlugSet = new Set(iconSlugs);
-
-    updateField(
-      "icons",
-      selectedIconSlugs.filter((slug) => !iconSlugSet.has(slug)).join(","),
-    );
-  }
-
   function removeIconSlugAt(slugIndex: number) {
     updateField(
       "icons",
@@ -181,9 +155,9 @@ export function StackIconsEditor({ initialState }: StackIconsEditorProps) {
             describedBy={
               hasErrors(fieldValidation.icons) ? "icons-error" : undefined
             }
-            onAddIconSlugs={addIconSlugs}
-            onRemoveIconSlugs={removeIconSlugs}
-            onToggleSlug={toggleIconSlug}
+            onSelectedSlugsChange={(nextIconSlugs) =>
+              updateField("icons", nextIconSlugs.join(","))
+            }
             searchInputRef={pickerSearchInputRef}
             selectedSlugs={selectedIconSlugs}
           />
