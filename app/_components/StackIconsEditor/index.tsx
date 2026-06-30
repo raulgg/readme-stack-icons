@@ -460,14 +460,7 @@ function getStackIconsEditorFieldValidation({
     icons: [
       ...validationErrors
         .filter(isIconsValidationError)
-        .map((e) =>
-          e === "`s` is required." ||
-          e === "`s` must include at least one icon slug."
-            ? "Add at least one icon."
-            : e === "`s` must include 1000 icons or fewer."
-              ? "Add 1000 icons or fewer."
-              : e,
-        ),
+        .map(toIconsErrorMessage),
       ...(unknownSlugs.length > 0
         ? [formatUnknownSlugsMessage(unknownSlugs)]
         : []),
@@ -551,6 +544,17 @@ function toLayoutErrorMessage(error: string): string {
     return "A base layout is required.";
   if (error === "Breakpoint px values must be unique.")
     return "Breakpoint widths must be unique.";
+  return error;
+}
+
+function toIconsErrorMessage(error: string): string {
+  if (
+    error === "`s` is required." ||
+    error === "`s` must include at least one icon slug."
+  )
+    return "Add at least one icon.";
+  if (error === "`s` must include 1000 icons or fewer.")
+    return "Add 1000 icons or fewer.";
   return error;
 }
 
