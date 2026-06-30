@@ -60,6 +60,10 @@ describe("StackIconPicker", () => {
 
     // Then
     expect(getSearchInput()).toHaveAttribute("aria-expanded", "true");
+    expect(getSearchInput()).toHaveAttribute(
+      "aria-controls",
+      "icon-picker-listbox",
+    );
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
       "aria-pressed",
@@ -201,6 +205,7 @@ describe("StackIconPicker", () => {
 
     // Then
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(getSearchInput()).not.toHaveAttribute("aria-controls");
     expect(getSelectAllCheckbox()).toBeDisabled();
     expect(getSelectAllCheckbox()).toHaveAccessibleName("Select All (0)");
     expect(screen.getByText('No icons match "zzz-nope".')).toBeInTheDocument();
