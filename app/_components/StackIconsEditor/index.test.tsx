@@ -729,6 +729,7 @@ describe("StackIconsEditor", () => {
   it("should clear stale generated output when column layout generation fails", () => {
     renderBaseOnlyEditor();
     generatePreview();
+
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
@@ -738,6 +739,7 @@ describe("StackIconsEditor", () => {
       target: { value: "1" },
     });
     generatePreview();
+
     expect(getBaseColumnsInput()).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("2–20 columns")).toBeInTheDocument();
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
