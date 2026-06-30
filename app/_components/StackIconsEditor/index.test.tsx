@@ -644,16 +644,91 @@ describe("StackIconsEditor", () => {
 
     generatePreview();
 
+    expect(screen.getByText("A base layout is required.")).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when gap is not an integer", () => {
+    render(
+      <StackIconsEditor
+        initialState={{ ...BASE_ONLY_EDITOR_STATE, gap: "1.5" }}
+      />,
+    );
+    generatePreview();
+    expect(screen.getByText("Gap must be a whole number.")).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when gap is out of range", () => {
+    render(
+      <StackIconsEditor
+        initialState={{ ...BASE_ONLY_EDITOR_STATE, gap: "25" }}
+      />,
+    );
+    generatePreview();
+    expect(screen.getByText("Gap must be 24 or less.")).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when icon size is not an integer", () => {
+    render(
+      <StackIconsEditor
+        initialState={{ ...BASE_ONLY_EDITOR_STATE, iconSize: "48.5" }}
+      />,
+    );
+    generatePreview();
     expect(
-      screen.getByText(/Exactly one base column layout is required\./u),
+      screen.getByText("Icon size must be a whole number."),
     ).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when icon size is out of range", () => {
+    render(
+      <StackIconsEditor
+        initialState={{ ...BASE_ONLY_EDITOR_STATE, iconSize: "100" }}
+      />,
+    );
+    generatePreview();
+    expect(
+      screen.getByText("Icon size must be at most 64."),
+    ).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when no column layouts are provided", () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...DEFAULT_STACK_ICONS_EDITOR_STATE,
+          columnLayouts: [],
+        }}
+      />,
+    );
+    generatePreview();
+    expect(
+      screen.getByText(/Add at least one column layout\./u),
+    ).toBeInTheDocument();
+    expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
+  });
+
+  it("should show friendly error when too many icons are provided", () => {
+    render(
+      <StackIconsEditor
+        initialState={{
+          ...BASE_ONLY_EDITOR_STATE,
+          icons: Array(1001).fill("typescript").join(","),
+        }}
+      />,
+    );
+    generatePreview();
+    expect(screen.getByText("Add 1000 icons or fewer.")).toBeInTheDocument();
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
   });
 
   it("should clear stale generated output when column layout generation fails", () => {
     renderBaseOnlyEditor();
     generatePreview();
-
     expectGeneratedImageSourceUrl(
       "http://localhost:3000/icons?s=typescript%2Cnextjs%2Ctailwindcss%2Cvercel&cols=4&gap=8&size=48&theme=light",
     );
@@ -663,7 +738,6 @@ describe("StackIconsEditor", () => {
       target: { value: "1" },
     });
     generatePreview();
-
     expect(getBaseColumnsInput()).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("2–20 columns")).toBeInTheDocument();
     expect(getIconsImageCodeText()).toBe(FIX_ERRORS_IMAGE_CODE_PLACEHOLDER);
